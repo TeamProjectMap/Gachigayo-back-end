@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 길안내</title>
+    <link rel="stylesheet" href="/css/route-search.css">
+</head>
+<body>
+<main class="route-page hidden" id="routeSearchPage">
+    <header class="route-header">
+        <h1>어디로 갈까요?</h1>
+    </header>
+
+    <section class="search-panel" aria-label="목적지 검색">
+        <div class="search-box">
+            <input
+                    type="text"
+                    id="destinationSearchInput"
+                    autocomplete="off"
+                    placeholder="장소 이름을 입력해주세요">
+            <button type="button" id="destinationSearchButton">검색</button>
+        </div>
+        <div id="autocompleteList" class="autocomplete-list hidden" aria-label="자동완성"></div>
+        <p id="searchMessage" class="search-message" role="status"></p>
+    </section>
+
+    <section class="tab-panel" id="defaultPanel">
+        <div class="tab-buttons" role="tablist" aria-label="장소 목록">
+            <button type="button" class="tab-button active" data-tab="favorite" role="tab" aria-selected="true">자주 가는 곳</button>
+            <button type="button" class="tab-button" data-tab="recent" role="tab" aria-selected="false">최근 검색</button>
+        </div>
+        <div class="saved-list-heading">
+            <strong id="savedListTitle">자주 가는 곳</strong>
+            <button type="button" id="editSavedListButton" class="edit-list-button hidden">편집</button>
+        </div>
+        <div id="defaultPlaceList" class="saved-place-list"></div>
+        <div class="empty-state" id="defaultEmptyText">아직 저장한 장소가 없습니다.</div>
+    </section>
+
+    <section class="result-panel hidden" id="resultPanel" aria-label="검색 결과">
+        <div class="result-heading">
+            <strong>검색 결과</strong>
+            <button type="button" id="backToTabsButton">기본 목록</button>
+        </div>
+        <div id="placeResultList" class="place-result-list"></div>
+    </section>
+
+    <p id="routeSearchNotice" class="route-search-notice"></p>
+
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <button type="button" id="homeButton">홈</button>
+        <button type="button" class="active">길안내</button>
+        <button type="button" id="settingButton">설정</button>
+    </nav>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/route-search.js"></script>
+</body>
+</html>
