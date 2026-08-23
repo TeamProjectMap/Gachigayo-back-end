@@ -104,6 +104,22 @@
         WHERE loginId = #{loginId}
     </update>
 
+    <select id="getGuardianNameByUserId" parameterType="long" resultType="string">
+        SELECT guardianUser.userName
+        FROM GUARDIAN_LINKS gl
+                 INNER JOIN USERS guardianUser
+                            ON gl.guardianId = guardianUser.userId
+        WHERE gl.userId = #{userId}
+    </select>
+
+    <select id="getUserNameByGuardianId" parameterType="long" resultType="string">
+        SELECT linkedUser.userName
+        FROM GUARDIAN_LINKS gl
+                 INNER JOIN USERS linkedUser
+                            ON gl.userId = linkedUser.userId
+        WHERE gl.guardianId = #{guardianId}
+    </select>
+
     <insert id="insertUser" parameterType="com.baegopa.onestep.dto.UserDTO"
             useGeneratedKeys="true" keyProperty="userId">
         INSERT INTO USERS (

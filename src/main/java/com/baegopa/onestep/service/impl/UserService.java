@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -56,6 +58,25 @@ public class UserService implements IUserService {
                 rDTO.getUserId(), rDTO.getLoginId(), rDTO.getUserRole());
 
         return rDTO;
+    }
+
+    @Override
+    public Map<String, Object> getHomeInfo(Long userId, String userRole) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("userId", userId);
+        result.put("userRole", userRole);
+
+        if (isBlank(userRole) || userId == null) {
+            return result;
+        }
+
+        if (ROLE_USER.equals(userRole)) {
+            result.put("linkedName", userMapper.getGuardianNameByUserId(userId));
+        } else if (ROLE_GUARDIAN.equals(userRole)) {
+            result.put("linkedName", userMapper.getUserNameByGuardianId(userId));
+        }
+
+        return result;
     }
 
     @Override

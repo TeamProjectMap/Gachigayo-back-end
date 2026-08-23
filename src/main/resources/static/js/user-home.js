@@ -1,0 +1,83 @@
+(function ($) {
+    $(function () {
+        checkSession();
+
+        $(".route-search-link").on("click", function () {
+            window.location.href = "/route-search.html";
+        });
+
+        $(".action-card").not(".route-search-link").on("click", function () {
+            setMessage($(this).data("ready-message") || "다음 단계에서 연결 예정입니다.");
+        });
+
+        $(".logout-button").on("click", function () {
+            logout();
+        });
+    });
+
+    function checkSession() {
+        $.ajax({
+            url: "/user/session",
+            type: "get",
+            dataType: "JSON",
+            success: function (json) {
+                if (!json.success) {
+                    window.location.replace("/login.html");
+                    return;
+                }
+
+                if (json.userRole !== "USER") {
+                    window.location.replace("/guardian-home.html");
+                    return;
+                }
+
+                $("#userHomePage").removeClass("hidden");
+                loadHomeInfo();
+            },
+            error: function () {
+                window.location.replace("/login.html");
+            }
+        });
+    }
+
+    function loadHomeInfo() {
+        $.ajax({
+            url: "/user/home-info",
+            type: "get",
+            dataType: "JSON",
+            success: function (json) {
+                if (!json.success) {
+                    window.location.replace("/login.html");
+                    return;
+                }
+
+                if (json.linkedName) {
+                    $("#linkedGuardianText").text(json.linkedName + "님과 연결되어 있어요");
+                } else {
+                    $("#linkedGuardianText").text("연결된 보호자가 없습니다");
+                }
+            },
+            error: function () {
+                $("#linkedGuardianText").text("연결 상태를 확인할 수 없습니다");
+            }
+        });
+    }
+
+    function logout() {
+        $.ajax({
+            url: "/user/logout",
+            type: "post",
+            dataType: "JSON",
+            success: function () {
+                window.location.replace("/login.html");
+            },
+            error: function () {
+                setMessage("로그아웃 처리 중 오류가 발생했습니다.");
+            }
+        });
+    }
+
+    function setMessage(message) {
+        $("#homeMessage").text(message);
+    }
+})(jQuery);
