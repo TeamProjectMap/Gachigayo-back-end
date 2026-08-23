@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.IRouteMapper">
+
+    <select id="getRoutes" parameterType="long" resultType="com.baegopa.onestep.dto.RouteDTO">
+        SELECT routeId,
+               userId,
+               routeName,
+               routeType,
+               startName,
+               endName,
+               totalDistance,
+               totalDuration,
+               riskLevel,
+               regDt,
+               updDt
+        FROM ROUTES
+        WHERE userId = #{userId}
+        ORDER BY updDt DESC, routeId DESC
+    </select>
+
+    <select id="getRoute" parameterType="long" resultType="com.baegopa.onestep.dto.RouteDTO">
+        SELECT routeId,
+               userId,
+               routeName,
+               routeType,
+               startName,
+               endName,
+               totalDistance,
+               totalDuration,
+               riskLevel,
+               regDt,
+               updDt
+        FROM ROUTES
+        WHERE routeId = #{routeId}
+    </select>
+
+    <select id="getRouteSteps" parameterType="long" resultType="com.baegopa.onestep.dto.RouteStepDTO">
+        SELECT routeStepId,
+               routeId,
+               stepOrder,
+               stepType,
+               mainText,
+               landmark,
+               lineName,
+               lat,
+               lng,
+               distance,
+               checkpointName,
+               recordedYn
+        FROM ROUTE_STEPS
+        WHERE routeId = #{routeId}
+        ORDER BY stepOrder
+    </select>
+
+    <insert id="insertRoute" parameterType="com.baegopa.onestep.dto.RouteDTO"
+            useGeneratedKeys="true" keyProperty="routeId">
+        INSERT INTO ROUTES (
+            userId,
+            routeName,
+            routeType,
+            startName,
+            endName,
+            totalDistance,
+            totalDuration,
+            riskLevel
+        ) VALUES (
+            #{userId},
+            #{routeName},
+            #{routeType},
+            #{startName},
+            #{endName},
+            #{totalDistance},
+            #{totalDuration},
+            #{riskLevel}
+        )
+    </insert>
+
+    <!-- 구간은 한 번에 여러 건이 들어간다 -->
+    <insert id="insertRouteSteps">
+        INSERT INTO ROUTE_STEPS (
+            routeId,
+            stepOrder,
+            stepType,
+            mainText,
+            landmark,
+            lineName,
+            distance,
+            recordedYn
+        ) VALUES
+        <foreach collection="steps" item="step" separator=",">
+            (
+                #{routeId},
+                #{step.stepOrder},
+                #{step.stepType},
+                #{step.mainText},
+                #{step.landmark},
+                #{step.lineName},
+                #{step.distance},
+                'N'
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteRoute" parameterType="long">
+        DELETE
+        FROM ROUTES
+        WHERE routeId = #{routeId}
+    </delete>
+
+    <select id="getRouteStep" parameterType="long" resultType="com.baegopa.onestep.dto.RouteStepDTO">
+        SELECT routeStepId,
+               routeId,
+               stepOrder,
+               stepType,
+               mainText,
+               landmark,
+               lineName,
+               lat,
+               lng,
+               distance,
+               checkpointName,
+               recordedYn
+        FROM ROUTE_STEPS
+        WHERE routeStepId = #{routeStepId}
+    </select>
+
+    <update id="updateStepRecorded">
+        UPDATE ROUTE_STEPS
+        SET lat        = #{lat},
+            lng        = #{lng},
+            recordedYn = 'Y'
+        WHERE routeStepId = #{routeStepId}
+    </update>
+
+    <!--
+        값이 실제로 바뀌지 않으면 ON UPDATE CURRENT_TIMESTAMP 가 동작하지 않는다.
+        그래서 updDt를 직접 지금으로 올린다.
+    -->
+    <update id="touchRoute" parameterType="long">
+        UPDATE ROUTES
+        SET updDt = CURRENT_TIMESTAMP
+        WHERE routeId = #{routeId}
+    </update>
+
+    <select id="getRouteNameCount" resultType="int">
+        SELECT COUNT(*)
+        FROM ROUTES
+        WHERE userId = #{userId}
+          AND routeName = #{routeName}
+    </select>
+
+</mapper>

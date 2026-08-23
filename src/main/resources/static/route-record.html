@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 경로 기록</title>
+    <link rel="stylesheet" href="/css/route-manage.css">
+</head>
+<body>
+<main class="route-page new-route hidden" id="recordPage">
+    <header class="route-header">
+        <button type="button" class="back-button" id="backButton" aria-label="뒤로">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <h1 id="routeName">경로</h1>
+    </header>
+
+    <p class="record-summary" id="recordSummary"></p>
+
+    <ol class="step-list" id="stepList"></ol>
+
+    <p class="page-message" id="recordMessage"></p>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/route-record.js"></script>
+</body>
+</html>
