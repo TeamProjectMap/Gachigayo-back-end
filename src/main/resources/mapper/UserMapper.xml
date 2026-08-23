@@ -120,6 +120,19 @@
         WHERE gl.guardianId = #{guardianId}
     </select>
 
+    <select id="getLinkCodeByUserId" parameterType="long" resultType="string">
+        SELECT linkCode
+        FROM USERS
+        WHERE userId = #{userId}
+    </select>
+
+    <update id="updateLinkCode">
+        UPDATE USERS
+        SET linkCode = #{linkCode}
+        WHERE userId = #{userId}
+          AND userRole = 'USER'
+    </update>
+
     <insert id="insertUser" parameterType="com.baegopa.onestep.dto.UserDTO"
             useGeneratedKeys="true" keyProperty="userId">
         INSERT INTO USERS (

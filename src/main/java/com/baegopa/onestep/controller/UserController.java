@@ -31,7 +31,7 @@ public class UserController {
     private static final String SESSION_EMAIL_AUTH_EXPIRE_TIME = "emailAuthExpireTime";
     private static final String SESSION_NEW_PASSWORD_LOGIN_ID = "newPasswordLoginId";
 
-    // 아이디/비밀번호 찾기 전용 이메일 인증 세션 (회원가입 인증과 섞이지 않도록 키를 분리함)
+    // 아이디/비밀번호 찾기 전용 이메일 인증 세션
     private static final String SESSION_FIND_AUTH_CODE = "findAuthCode";
     private static final String SESSION_FIND_AUTH_EMAIL = "findAuthEmail";
     private static final String SESSION_FIND_AUTH_EXPIRE_TIME = "findAuthExpireTime";
@@ -219,13 +219,14 @@ public class UserController {
         String linkCode = getParameter(request, "linkCode");
         log.info("linkCode : {}", linkCode);
 
-        if (isBlank(linkCode)) {
-            return createResponse(false, "연결코드를 입력해주세요.");
+        try {
+            // 코드가 있는지 + 그 이용자가 아직 연결 전인지 확인
+            userService.validateLinkCode(linkCode);
+
+            return createResponse(true, "연결코드가 확인되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
         }
-
-        boolean valid = userService.isValidLinkCode(linkCode);
-
-        return createResponse(valid, valid ? "연결코드가 확인되었습니다." : "유효하지 않은 코드입니다.");
     }
 
     @ResponseBody
@@ -305,8 +306,6 @@ public class UserController {
 
     /**
      * 아이디 찾기 1단계 : 이름 + 이메일이 DB 정보와 일치하면 그 이메일로 인증번호를 발송함
-     * <p>
-     * 본인 이메일임을 확인해야 아이디를 알려주기 위해 인증 단계를 둠
      */
     @ResponseBody
     @PostMapping("/sendFindIdAuth")
@@ -362,7 +361,7 @@ public class UserController {
     }
 
     /**
-     * 비밀번호 찾기 1단계 : 아이디 + 이름 + 이메일이 DB 정보와 일치하면 그 이메일로 인증번호를 발송함
+     * 비밀번호 찾기 1단계 : 아이디 + 이름 + 이메일이 DB 정보와 일치하면 그 이메일로 인증번호를 발송
      */
     @ResponseBody
     @PostMapping("/sendFindPasswordAuth")
@@ -466,7 +465,7 @@ public class UserController {
     }
 
     /**
-     * 아이디/비밀번호 찾기 공용 : 회원 조회 후 일치하면 인증번호를 발송하고 세션에 인증정보를 저장함
+     * 아이디/비밀번호 찾기 공용 : 회원 조회 후 일치하면 인증번호를 발송하고 세션에 인증정보를 저장
      */
     private Map<String, Object> sendFindAuth(HttpSession session, UserDTO pDTO, String purpose, String notFoundMessage) {
         UserDTO rDTO;

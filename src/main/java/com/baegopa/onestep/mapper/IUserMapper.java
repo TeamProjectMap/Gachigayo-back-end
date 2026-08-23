@@ -28,6 +28,12 @@ public interface IUserMapper {
 
     String getUserNameByGuardianId(Long guardianId);
 
+    /** 이용자가 보호자에게 알려줄 연결코드 */
+    String getLinkCodeByUserId(@Param("userId") Long userId);
+
+    /** 연결코드 다시 받기 */
+    int updateLinkCode(@Param("userId") Long userId, @Param("linkCode") String linkCode);
+
     int insertUser(UserDTO userDTO);
 
     int insertGuardianLink(@Param("userId") Long userId, @Param("guardianId") Long guardianId);
