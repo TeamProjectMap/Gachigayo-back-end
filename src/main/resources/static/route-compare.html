@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 경로 선택</title>
+    <link rel="stylesheet" href="/css/route-compare.css">
+</head>
+<body>
+<main class="route-compare-page hidden" id="routeComparePage">
+    <header class="compare-header">
+        <button type="button" class="back-button" id="backButton" aria-label="장소 상세로 돌아가기">&lt;</button>
+        <div class="route-points" aria-label="출발지와 도착지">
+            <div class="point-row">
+                <span>출발</span>
+                <strong>현재 위치</strong>
+            </div>
+            <div class="point-row destination">
+                <span>도착</span>
+                <strong id="destinationName">목적지</strong>
+            </div>
+        </div>
+    </header>
+
+    <section class="route-tabs" role="tablist" aria-label="경로 종류">
+        <button type="button" class="route-tab" id="publicTransitTab" data-tab="publicTransit" role="tab" aria-selected="false">버스/지하철</button>
+        <button type="button" class="route-tab" id="walkingTab" data-tab="walking" role="tab" aria-selected="false">걷기</button>
+    </section>
+
+    <section class="route-list" id="routeList" aria-label="경로 후보"></section>
+
+    <p id="compareMessage" class="compare-message" role="status"></p>
+
+    <button type="button" class="guide-button" id="guideButton">안내하기</button>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/route-compare.js"></script>
+</body>
+</html>
