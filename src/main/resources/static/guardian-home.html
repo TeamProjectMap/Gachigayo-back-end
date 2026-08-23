@@ -10,72 +10,104 @@
 <main class="guardian-page hidden" id="guardianHomePage">
     <header class="guardian-header">
         <h1>같이가요</h1>
-        <div class="header-actions">
-            <button type="button" class="notice-button action-card" data-ready-message="알림 기능은 다음 단계에서 연결 예정입니다.">알림</button>
-            <button type="button" class="logout-button">로그아웃</button>
-        </div>
+
+        <button type="button" class="bell-button" id="noticeButton" aria-label="알림">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="bell-dot hidden" id="bellDot" aria-hidden="true"></span>
+        </button>
     </header>
 
     <section class="status-grid">
+        <!-- 연결된 이용자 + 현재 이동 상태 -->
         <section class="user-status-card">
-            <strong id="linkedUserName">연결 사용자 확인 중</strong>
-            <span>이동 정보 없음</span>
-            <p>경로 정보 없음</p>
+            <strong id="linkedUserName">연결 확인 중</strong>
+            <span class="status-badge" id="tripStatusBadge">이동 정보 없음</span>
+            <p id="tripRoute">경로 정보 없음</p>
         </section>
 
+        <!-- 연결 상태 -->
         <section class="connection-card">
-            <strong>사용자와 연결되어 있어요</strong>
-            <p>이동을 시작하면 위치가 공유됩니다</p>
+            <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <strong id="connectionTitle">연결 상태를 확인하고 있어요</strong>
+            <p id="connectionDesc">잠시만 기다려주세요</p>
         </section>
     </section>
 
+    <!-- 이용자의 마지막 위치 -->
     <section class="location-card">
-        <div>
-            <strong>현재 위치</strong>
-            <p>위치 정보 없음</p>
-            <span>실시간 위치는 이후 단계에서 연결합니다</span>
+        <div class="location-text">
+            <span class="card-label">현재 위치</span>
+            <strong id="currentPlace">위치 정보 없음</strong>
+            <p id="locationTime">이동을 시작하면 위치가 공유됩니다</p>
         </div>
-        <div class="location-mark" aria-hidden="true">위치</div>
+
+        <div class="location-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/>
+            </svg>
+        </div>
     </section>
 
     <section class="info-grid">
         <section class="info-card">
-            <strong>다음 체크포인트</strong>
-            <p>정보 없음</p>
-            <span>경로 기능 연결 전입니다</span>
+            <span class="card-label">다음 체크포인트</span>
+            <strong id="checkpointName">정보 없음</strong>
+            <p id="checkpointDistance">이동 중이 아닙니다</p>
         </section>
+
         <section class="info-card">
-            <strong>예상 도착 시간</strong>
-            <p>정보 없음</p>
-            <span>이동 기록이 없습니다</span>
+            <span class="card-label">예상 도착 시간</span>
+            <strong id="arrivalTime">정보 없음</strong>
+            <p id="arrivalDesc">이동 기록이 없습니다</p>
         </section>
     </section>
 
     <section class="notification-card">
         <div class="section-title">
             <strong>최근 알림</strong>
-            <button type="button" class="action-card" data-ready-message="전체 알림은 다음 단계에서 연결 예정입니다.">전체 보기 &gt;</button>
+            <button type="button" id="notificationMore">전체 보기 &gt;</button>
         </div>
-        <p>최근 알림이 없습니다.</p>
+
+        <ul class="notification-list hidden" id="notificationList"></ul>
+        <p class="empty-text" id="notificationEmpty">최근 알림이 없습니다.</p>
     </section>
 
     <p id="guardianMessage" class="home-message"></p>
 
     <nav class="bottom-nav" aria-label="하단 메뉴">
-        <button type="button" class="active">홈</button>
-        <button type="button" class="action-card" data-ready-message="경로 화면은 다음 단계에서 연결 예정입니다.">경로</button>
-        <button type="button" class="action-card" data-ready-message="설정 화면은 다음 단계에서 연결 예정입니다.">설정</button>
+        <button type="button" class="active">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M13.45 2.53295C13.0442 2.19098 12.5307 2.00342 12 2.00342C11.4693 2.00342 10.9558 2.19098 10.55 2.53295L3.8 8.22795C3.54946 8.43911 3.34806 8.70243 3.20988 8.99952C3.0717 9.29661 3.00007 9.6203 3 9.94795V19.253C3 20.219 3.784 21.003 4.75 21.003H7.75C8.21413 21.003 8.65925 20.8186 8.98744 20.4904C9.31563 20.1622 9.5 19.7171 9.5 19.253V15.25C9.5 14.57 10.042 14.018 10.717 14H13.283C13.6088 14.0086 13.9183 14.144 14.1456 14.3775C14.373 14.611 14.5001 14.9241 14.5 15.25V19.253C14.5 20.219 15.284 21.003 16.25 21.003H19.25C19.7141 21.003 20.1592 20.8186 20.4874 20.4904C20.8156 20.1622 21 19.7171 21 19.253V9.94695C20.9999 9.6193 20.9283 9.29561 20.7901 8.99852C20.6519 8.70143 20.4505 8.43811 20.2 8.22695L13.45 2.53295Z"/>
+            </svg>
+            <span>홈</span>
+        </button>
+
+        <button type="button" id="routeButton">
+            <svg viewBox="0 0 22 20" fill="currentColor" aria-hidden="true">
+                <path d="M14.6667 18.5977L7.33333 16.4532V1.40237L14.6667 3.54691V18.5977ZM15.8889 18.5508V3.45316L20.7434 1.46487C21.3469 1.21878 22 1.67191 22 2.33597V15.4141C22 15.7969 21.7708 16.1407 21.4233 16.2852L15.8889 18.5469V18.5508ZM0.576736 3.71487L6.11111 1.45316V16.5508L1.2566 18.5352C0.653125 18.7813 0 18.3282 0 17.6641V4.58597C0 4.20316 0.229167 3.85941 0.576736 3.71487Z"/>
+            </svg>
+            <span>경로</span>
+        </button>
+
+        <button type="button" id="settingButton">
+            <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" aria-hidden="true">
+                <path d="M4.33337 6.5H21.6667M4.33337 13H21.6667M4.33337 19.5H21.6667"/>
+            </svg>
+            <span>설정</span>
+        </button>
     </nav>
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/js/guardian-home.js"></script>
-    <title>GUARDIAN HOME</title>
-</head>
-<body>
-<main>
-    <h1>GUARDIAN HOME</h1>
-    <p>6단계에서 구현 예정</p>
-</main>
 </body>
 </html>

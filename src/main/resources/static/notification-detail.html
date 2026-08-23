@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 알림</title>
+    <link rel="stylesheet" href="/css/notifications.css">
+</head>
+<body>
+<main class="detail-page hidden" id="detailPage">
+    <button type="button" class="back-button" id="backButton" aria-label="뒤로">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6"/>
+        </svg>
+    </button>
+
+    <div class="detail-mark" id="detailMark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2.8c.6-1.05 2.1-1.05 2.7 0l8.4 15.4c.6 1.06-.15 2.4-1.35 2.4H4.95c-1.2 0-1.95-1.34-1.35-2.4L12 2.8z"
+                  transform="translate(-1.35 0)"/>
+            <rect x="11" y="8" width="2" height="6" rx="1" fill="#FFFFFF"/>
+            <rect x="11" y="15.5" width="2" height="2" rx="1" fill="#FFFFFF"/>
+        </svg>
+    </div>
+
+    <strong class="detail-title" id="detailTitle">-</strong>
+    <p class="detail-time" id="detailTime"></p>
+
+    <section class="detail-card hidden" id="locationCard">
+        <span class="card-label">현재 위치</span>
+        <strong class="card-value" id="address">-</strong>
+        <div class="map-placeholder" id="mapArea">지도는 다음 단계에서 연결 예정입니다</div>
+    </section>
+
+    <section class="detail-card hidden" id="destinationCard">
+        <span class="card-label">목적지</span>
+        <strong class="card-value" id="destination">-</strong>
+    </section>
+
+    <section class="detail-card hidden" id="contentCard">
+        <span class="card-label">내용</span>
+        <strong class="card-value" id="content">-</strong>
+    </section>
+
+    <button type="button" class="main-button" id="confirmButton">확인했어요</button>
+
+    <p class="page-message" id="detailMessage"></p>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/notification-detail.js"></script>
+</body>
+</html>

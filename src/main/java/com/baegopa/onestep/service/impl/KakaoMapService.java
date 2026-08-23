@@ -19,6 +19,8 @@ import tools.jackson.databind.JsonNode;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -27,10 +29,13 @@ public class KakaoMapService implements IKakaoMapService {
     private static final String KAKAO_KEYWORD_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/keyword.json";
     private static final String KAKAO_PUBLIC_TRANSIT_URL = "https://dapi.kakao.com/v2/routing/publictraffic";
     private static final String KAKAO_WALKING_URL = "https://dapi.kakao.com/v2/routing/walk";
+    private static final String KAKAO_COORD_TO_ADDRESS_URL = "https://dapi.kakao.com/v2/local/geo/coord2address.json";
     private static final int SEARCH_SIZE = 10;
     private static final String ROUTE_MODE_ACCESSIBLE = "ACCESSIBLE";
+    private static final int ADDRESS_CACHE_LIMIT = 500;
 
     private final RestClient restClient = RestClient.create();
+    private final Map<String, String> addressCache = new ConcurrentHashMap<>();
 
     @Value("${kakao.rest-api-key:}")
     private String kakaoRestApiKey;
@@ -149,6 +154,75 @@ public class KakaoMapService implements IKakaoMapService {
             log.error("Kakao walking route search failed.", e);
             throw e;
         }
+    }
+
+    /**
+     * 좌표 -> 주소 변환
+     * 보호자 화면은 이동 중 15초마다 다시 물어보는데 이용자가 멈춰 있으면 좌표가 그대로
+     */
+    @Override
+    public String searchAddressByCoordinate(String longitude, String latitude) {
+        if (isBlank(kakaoRestApiKey) || isBlank(longitude) || isBlank(latitude)) {
+            return null;
+        }
+
+        String cacheKey = longitude + "," + latitude;
+        String cachedAddress = addressCache.get(cacheKey);
+
+        if (cachedAddress != null) {
+            return cachedAddress;
+        }
+
+        try {
+            JsonNode responseNode = restClient
+                    .get()
+                    .uri(KAKAO_COORD_TO_ADDRESS_URL, uriBuilder -> uriBuilder
+                            .queryParam("x", longitude)
+                            .queryParam("y", latitude)
+                            .build())
+                    .header("Authorization", "KakaoAK " + kakaoRestApiKey)
+                    .retrieve()
+                    .body(JsonNode.class);
+
+            String address = toAddressName(responseNode);
+
+            if (address != null) {
+                // 오래 돌아도 메모리가 계속 늘지 않도록 일정 개수가 넘으면 비운다
+                if (addressCache.size() >= ADDRESS_CACHE_LIMIT) {
+                    addressCache.clear();
+                }
+
+                addressCache.put(cacheKey, address);
+            }
+
+            return address;
+        } catch (Exception e) {
+            // 주소 변환은 있으면 좋은 정보라 실패해도 화면을 막지 않는다
+            log.warn("Kakao coord to address failed. x={}, y={}", longitude, latitude, e);
+            return null;
+        }
+    }
+
+    /** 도로명 주소를 먼저 쓰고, 없으면 지번 주소 */
+    private String toAddressName(JsonNode responseNode) {
+        if (responseNode == null) {
+            return null;
+        }
+
+        JsonNode documentsNode = responseNode.path("documents");
+
+        if (!documentsNode.isArray() || documentsNode.isEmpty()) {
+            return null;
+        }
+
+        JsonNode documentNode = documentsNode.get(0);
+        String roadAddress = text(documentNode.path("road_address"), "address_name");
+
+        if (!isBlank(roadAddress)) {
+            return roadAddress;
+        }
+
+        return text(documentNode.path("address"), "address_name");
     }
 
     private PublicTransitRouteResultDTO toPublicTransitResult(JsonNode responseNode) {

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 알림</title>
+    <link rel="stylesheet" href="/css/notifications.css">
+</head>
+<body>
+<main class="noti-page hidden" id="notiPage">
+    <header class="noti-header">
+        <button type="button" class="back-button" id="backButton" aria-label="뒤로">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <h1>알림</h1>
+    </header>
+
+    <ul class="noti-list" id="notiList"></ul>
+
+    <p class="empty-text hidden" id="notiEmpty">받은 알림이 없습니다.</p>
+    <p class="page-message" id="notiMessage"></p>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/notifications.js"></script>
+</body>
+</html>
