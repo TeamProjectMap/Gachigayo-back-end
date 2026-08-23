@@ -15,6 +15,13 @@
             }
         });
 
+        $("[data-action='go-find-id']").on("click", function () {
+            window.location.href = "/find-id.html";
+        });
+
+        $("[data-action='go-find-password']").on("click", function () {
+            window.location.href = "/find-password.html";
+        });
     });
 
     function login($button) {

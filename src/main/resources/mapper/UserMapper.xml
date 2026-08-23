@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.baegopa.onestep.mapper.IUserMapper">
@@ -70,6 +71,38 @@
         FROM USERS
         WHERE loginId = #{loginId}
     </select>
+
+    <!--
+        아이디 찾기, 비밀번호 찾기에 함께 사용
+        1. 이름과 이메일이 맞다면, 아이디 알려주기
+        2. 아이디, 이름, 이메일이 맞다면, 비밀번호 재설정하기
+        loginId 파라미터 존재 여부에 따라 조건절을 동적으로 변경함
+    -->
+    <select id="searchUser" parameterType="com.baegopa.onestep.dto.UserDTO" resultMap="UserResultMap">
+        SELECT
+            userId,
+            userName,
+            userRole,
+            loginId,
+            phone,
+            email,
+            linkCode,
+            regDt,
+            updDt
+        FROM USERS
+        WHERE 1 = 1
+        <if test="loginId != null and loginId != ''"><!-- 비밀번호 찾기라면, loginId 조회 추가 -->
+            AND loginId = #{loginId}
+        </if>
+          AND userName = #{userName}
+          AND email = #{email}
+    </select>
+
+    <update id="updatePassword" parameterType="com.baegopa.onestep.dto.UserDTO">
+        UPDATE USERS
+        SET password = #{password}
+        WHERE loginId = #{loginId}
+    </update>
 
     <insert id="insertUser" parameterType="com.baegopa.onestep.dto.UserDTO"
             useGeneratedKeys="true" keyProperty="userId">

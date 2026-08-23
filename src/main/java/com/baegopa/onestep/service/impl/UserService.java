@@ -18,9 +18,9 @@ public class UserService implements IUserService {
 
     private static final String ROLE_USER = "USER";
     private static final String ROLE_GUARDIAN = "GUARDIAN";
-    private static final int LINK_CODE_LENGTH = 8;
+    private static final String LINK_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int LINK_CODE_RETRY_LIMIT = 20;
-    private static final char[] LINK_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
+    private static final String PASSWORD_PATTERN = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,16}$";
 
     private final IUserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -89,7 +89,7 @@ public class UserService implements IUserService {
         validateCommonUserInfo(userDTO);
 
         if (isBlank(userDTO.getPhone())) {
-            throw new IllegalArgumentException("보호자 연락처는 필수입니다.");
+            throw new IllegalArgumentException("보호자 전화번호는 필수입니다.");
         }
 
         if (isLoginIdDuplicated(userDTO.getLoginId())) {
@@ -122,13 +122,58 @@ public class UserService implements IUserService {
         return result;
     }
 
+    /**
+     * 아이디 찾기, 비밀번호 찾기 공용 회원 조회
+     * <p>
+     * 이름 + 이메일만 넘어오면 아이디 찾기, 아이디까지 넘어오면 비밀번호 찾기로 동작함
+     */
+    @Override
+    public UserDTO searchUserIdOrPassword(UserDTO userDTO) {
+        if (userDTO == null || isBlank(userDTO.getUserName()) || isBlank(userDTO.getEmail())) {
+            throw new IllegalArgumentException("이름과 이메일을 입력해주세요.");
+        }
+
+        UserDTO rDTO = userMapper.searchUser(userDTO);
+
+        log.info("회원 찾기 결과 userName={}, email={}, 조회여부={}",
+                userDTO.getUserName(), userDTO.getEmail(), rDTO != null);
+
+        return rDTO;
+    }
+
+    /**
+     * 비밀번호 재설정
+     */
+    @Override
+    @Transactional
+    public int newPassword(UserDTO userDTO) {
+        if (userDTO == null || isBlank(userDTO.getLoginId())) {
+            throw new IllegalArgumentException("비정상 접근입니다.");
+        }
+
+        if (!isValidPassword(userDTO.getPassword())) {
+            throw new IllegalArgumentException("8~16자 영문, 숫자, 특수문자를 포함해주세요.");
+        }
+
+        // 비밀번호는 절대로 복호화되지 않도록 BCrypt로 암호화해서 저장함
+        userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+
+        log.info("비밀번호 재설정 처리 loginId={}", userDTO.getLoginId());
+
+        return userMapper.updatePassword(userDTO);
+    }
+
+    private boolean isValidPassword(String password) {
+        return password != null && password.matches(PASSWORD_PATTERN);
+    }
+
     private void validateCommonUserInfo(UserDTO userDTO) {
         if (userDTO == null) {
-            throw new IllegalArgumentException("회원 정보가 올바르지 않습니다.");
+            throw new IllegalArgumentException("회원 정보가 없습니다.");
         }
 
         if (isBlank(userDTO.getUserName())) {
-            throw new IllegalArgumentException("이름은 필수입니다.");
+            throw new IllegalArgumentException("사용자 이름은 필수입니다.");
         }
 
         if (isBlank(userDTO.getLoginId())) {
@@ -156,17 +201,21 @@ public class UserService implements IUserService {
             log.info("보호자 연결코드 중복 발생 linkCode={}, retryCount={}", linkCode, i);
         }
 
-        throw new IllegalStateException("보호자 연결코드를 생성하지 못했습니다. 다시 시도해주세요.");
+        throw new IllegalStateException("보호자 연결코드 생성에 실패했습니다.");
     }
 
     private String createLinkCode() {
         StringBuilder code = new StringBuilder();
-        for (int i = 0; i < LINK_CODE_LENGTH; i++) {
+
+        for (int i = 0; i < 8; i++) {
             if (i == 4) {
-                code.append('-');
+                code.append("-");
             }
-            code.append(LINK_CODE_CHARS[secureRandom.nextInt(LINK_CODE_CHARS.length)]);
+
+            int index = secureRandom.nextInt(LINK_CODE_CHARS.length());
+            code.append(LINK_CODE_CHARS.charAt(index));
         }
+
         return code.toString();
     }
 
