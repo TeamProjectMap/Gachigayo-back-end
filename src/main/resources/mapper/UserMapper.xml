@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.IUserMapper">
+
+    <resultMap id="UserResultMap" type="com.baegopa.onestep.dto.UserDTO">
+        <id property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="userRole" column="userRole"/>
+        <result property="loginId" column="loginId"/>
+        <result property="password" column="password"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="linkCode" column="linkCode"/>
+        <result property="pushToken" column="pushToken"/>
+        <result property="regDt" column="regDt"/>
+        <result property="updDt" column="updDt"/>
+    </resultMap>
+
+    <select id="getLoginIdCount" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE loginId = #{loginId}
+    </select>
+
+    <select id="getEmailCount" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE email = #{email}
+    </select>
+
+    <select id="getLinkCodeCount" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM USERS
+        WHERE linkCode = #{linkCode}
+    </select>
+
+    <select id="getUserByLinkCode" parameterType="string" resultMap="UserResultMap">
+        SELECT
+            userId,
+            userName,
+            userRole,
+            loginId,
+            password,
+            phone,
+            email,
+            linkCode,
+            pushToken,
+            regDt,
+            updDt
+        FROM USERS
+        WHERE linkCode = #{linkCode}
+          AND userRole = 'USER'
+    </select>
+
+    <select id="getUserByLoginId" parameterType="string" resultMap="UserResultMap">
+        SELECT
+            userId,
+            userName,
+            userRole,
+            loginId,
+            password,
+            phone,
+            email,
+            linkCode,
+            pushToken,
+            regDt,
+            updDt
+        FROM USERS
+        WHERE loginId = #{loginId}
+    </select>
+
+    <insert id="insertUser" parameterType="com.baegopa.onestep.dto.UserDTO"
+            useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO USERS (
+            userName,
+            userRole,
+            loginId,
+            password,
+            phone,
+            email,
+            linkCode,
+            pushToken
+        ) VALUES (
+            #{userName},
+            #{userRole},
+            #{loginId},
+            #{password},
+            #{phone},
+            #{email},
+            #{linkCode},
+            #{pushToken}
+        )
+    </insert>
+
+    <insert id="insertGuardianLink">
+        INSERT INTO GUARDIAN_LINKS (
+            userId,
+            guardianId
+        ) VALUES (
+            #{userId},
+            #{guardianId}
+        )
+    </insert>
+
+</mapper>

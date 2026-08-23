@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 회원가입</title>
+    <link rel="stylesheet" href="/css/signup.css">
+</head>
+<body>
+<main class="signup-page">
+    <section id="signupSection" class="signup-panel">
+        <header class="page-header">
+            <h1>회원가입</h1>
+        </header>
+
+        <nav class="signup-tabs" aria-label="회원가입 유형">
+            <button type="button" class="tab-button active" data-tab="user">본인</button>
+            <button type="button" class="tab-button" data-tab="guardian">보호자</button>
+        </nav>
+
+        <form id="userForm" class="signup-form" novalidate>
+            <div class="form-field">
+                <label for="userName">이름 <span>*</span></label>
+                <input id="userName" name="userName" type="text" placeholder="김철수" autocomplete="name">
+                <p class="field-message" data-message-for="userName"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="userLoginId">아이디 <span>*</span></label>
+                <div class="inline-control">
+                    <input id="userLoginId" name="loginId" type="text" placeholder="예) abc1234" autocomplete="username">
+                    <button type="button" class="small-button" data-action="check-login-id" data-form="user">중복 확인</button>
+                </div>
+                <p class="field-message" data-message-for="userLoginId"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="userEmail">이메일 주소 <span>*</span></label>
+                <div class="inline-control">
+                    <input id="userEmail" name="email" type="email" placeholder="예) abc123@email.com" autocomplete="email">
+                    <button type="button" class="small-button" data-action="send-email-auth" data-form="user">인증하기</button>
+                </div>
+                <p class="field-message" data-message-for="userEmail"></p>
+            </div>
+
+            <div class="form-field auth-field hidden" data-auth-field="user">
+                <label for="userAuthCode">인증번호</label>
+                <div class="auth-control">
+                    <input id="userAuthCode" name="authCode" type="text" inputmode="numeric" maxlength="6" placeholder="6자리 입력">
+                    <span class="timer" data-timer-for="user">05:00</span>
+                    <button type="button" class="small-button" data-action="check-email-auth" data-form="user">확인</button>
+                </div>
+                <p class="field-message" data-message-for="userAuthCode"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="userPassword">비밀번호 <span>*</span></label>
+                <input id="userPassword" name="password" type="password" placeholder="8~16자 영문, 숫자, 특수문자" autocomplete="new-password">
+                <p class="field-message" data-message-for="userPassword"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="userPasswordConfirm">비밀번호 확인 <span>*</span></label>
+                <input id="userPasswordConfirm" name="passwordConfirm" type="password" placeholder="비밀번호 재입력" autocomplete="new-password">
+                <p class="field-message" data-message-for="userPasswordConfirm"></p>
+            </div>
+
+            <section class="terms-box" aria-label="약관 동의">
+                <label class="check-row check-all">
+                    <input id="agreeAll" type="checkbox">
+                    <span>모두 동의합니다</span>
+                </label>
+                <label class="check-row">
+                    <input class="term-check required-term" type="checkbox" data-term="age">
+                    <span>[필수] 만 14세 이상입니다</span>
+                </label>
+                <label class="check-row">
+                    <input class="term-check required-term" type="checkbox" data-term="service">
+                    <span>[필수] 이용약관 동의</span>
+                </label>
+                <label class="check-row">
+                    <input class="term-check required-term" type="checkbox" data-term="privacy">
+                    <span>[필수] 개인정보 수집 및 이용 동의</span>
+                </label>
+                <label class="check-row">
+                    <input class="term-check" type="checkbox" data-term="marketing">
+                    <span>[선택] 광고성 정보 수신 동의</span>
+                </label>
+                <p class="field-message" data-message-for="userTerms"></p>
+            </section>
+
+            <button type="button" class="submit-button" data-action="register-user">가입하기</button>
+        </form>
+
+        <form id="guardianForm" class="signup-form hidden" novalidate>
+            <div class="form-field">
+                <label for="guardianLinkCode">연결코드 <span>*</span></label>
+                <div class="inline-control">
+                    <input id="guardianLinkCode" name="linkCode" type="text" placeholder="A8F3-7K9L" maxlength="9" autocomplete="off">
+                    <button type="button" class="small-button" data-action="check-link-code">코드 확인</button>
+                </div>
+                <p class="field-message" data-message-for="guardianLinkCode"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="guardianName">이름 <span>*</span></label>
+                <input id="guardianName" name="userName" type="text" placeholder="김철수" autocomplete="name">
+                <p class="field-message" data-message-for="guardianName"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="guardianLoginId">아이디 <span>*</span></label>
+                <div class="inline-control">
+                    <input id="guardianLoginId" name="loginId" type="text" placeholder="예) abc1234" autocomplete="username">
+                    <button type="button" class="small-button" data-action="check-login-id" data-form="guardian">중복 확인</button>
+                </div>
+                <p class="field-message" data-message-for="guardianLoginId"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="guardianEmail">이메일 주소 <span>*</span></label>
+                <div class="inline-control">
+                    <input id="guardianEmail" name="email" type="email" placeholder="예) abc123@email.com" autocomplete="email">
+                    <button type="button" class="small-button" data-action="send-email-auth" data-form="guardian">인증하기</button>
+                </div>
+                <p class="field-message" data-message-for="guardianEmail"></p>
+            </div>
+
+            <div class="form-field auth-field hidden" data-auth-field="guardian">
+                <label for="guardianAuthCode">인증번호</label>
+                <div class="auth-control">
+                    <input id="guardianAuthCode" name="authCode" type="text" inputmode="numeric" maxlength="6" placeholder="6자리 입력">
+                    <span class="timer" data-timer-for="guardian">05:00</span>
+                    <button type="button" class="small-button" data-action="check-email-auth" data-form="guardian">확인</button>
+                </div>
+                <p class="field-message" data-message-for="guardianAuthCode"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="guardianPassword">비밀번호 <span>*</span></label>
+                <input id="guardianPassword" name="password" type="password" placeholder="8~16자 영문, 숫자, 특수문자" autocomplete="new-password">
+                <p class="field-message" data-message-for="guardianPassword"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="guardianPasswordConfirm">비밀번호 확인 <span>*</span></label>
+                <input id="guardianPasswordConfirm" name="passwordConfirm" type="password" placeholder="비밀번호 재입력" autocomplete="new-password">
+                <p class="field-message" data-message-for="guardianPasswordConfirm"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="guardianPhone">연락처 <span>*</span></label>
+                <input id="guardianPhone" name="phone" type="text" inputmode="numeric" placeholder="예) 01012345678" autocomplete="tel">
+                <p class="field-message" data-message-for="guardianPhone"></p>
+            </div>
+
+            <button type="button" class="submit-button" data-action="register-guardian">가입하기</button>
+        </form>
+    </section>
+
+    <section id="userCompleteSection" class="complete-panel hidden">
+        <div class="check-icon" aria-hidden="true"></div>
+        <h2>회원가입이 완료되었습니다</h2>
+        <p>보호자 회원가입을 위해 아래 코드를<br>보호자에게 알려주세요</p>
+        <div class="code-card">
+            <span>보호자 등록 코드</span>
+            <strong id="completeLinkCode"></strong>
+        </div>
+        <button type="button" class="submit-button login-button">로그인</button>
+    </section>
+
+    <section id="guardianCompleteSection" class="complete-panel hidden">
+        <div class="check-icon" aria-hidden="true"></div>
+        <h2>보호자 연결이 완료되었습니다</h2>
+        <p>이용자와 성공적으로 연결되었어요</p>
+        <button type="button" class="submit-button login-button">로그인</button>
+    </section>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/signup.js"></script>
+</body>
+</html>

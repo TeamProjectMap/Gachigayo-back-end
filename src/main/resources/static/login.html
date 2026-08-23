@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 로그인</title>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+<main class="login-page">
+    <section class="login-panel">
+        <div class="logo-area">
+            <h1>같이가요</h1>
+        </div>
+
+        <form id="loginForm" class="login-form" novalidate>
+            <div class="form-field">
+                <label for="loginId">아이디</label>
+                <input id="loginId" name="loginId" type="text" placeholder="아이디를 입력해주세요" autocomplete="username">
+                <p class="field-message" data-message-for="loginId"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="password">비밀번호</label>
+                <input id="password" name="password" type="password" placeholder="비밀번호를 입력해주세요" autocomplete="current-password">
+                <p class="field-message" data-message-for="password"></p>
+            </div>
+
+            <p id="loginMessage" class="field-message login-message"></p>
+
+            <button id="loginBtn" type="button" class="primary-button">로그인</button>
+            <button id="signupBtn" type="button" class="secondary-button">회원가입</button>
+
+        </form>
+    </section>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>
