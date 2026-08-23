@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.IPlaceMapper">
+
+    <resultMap id="PlaceResultMap" type="com.baegopa.onestep.dto.PlaceDTO">
+        <id property="recentPlaceId" column="recentPlaceId"/>
+        <id property="favoritePlaceId" column="favoritePlaceId"/>
+        <result property="userId" column="userId"/>
+        <result property="id" column="kakaoPlaceId"/>
+        <result property="kakaoPlaceId" column="kakaoPlaceId"/>
+        <result property="placeName" column="placeName"/>
+        <result property="category" column="category"/>
+        <result property="address" column="address"/>
+        <result property="addressName" column="address"/>
+        <result property="roadAddress" column="roadAddress"/>
+        <result property="roadAddressName" column="roadAddress"/>
+        <result property="latitude" column="lat"/>
+        <result property="longitude" column="lng"/>
+        <result property="searchedAt" column="searchedAt"/>
+        <result property="regDt" column="regDt"/>
+    </resultMap>
+
+    <insert id="upsertRecentPlace" parameterType="com.baegopa.onestep.dto.PlaceDTO">
+        INSERT INTO RECENT_PLACES (
+            userId,
+            kakaoPlaceId,
+            placeName,
+            address,
+            roadAddress,
+            lat,
+            lng,
+            searchedAt
+        ) VALUES (
+            #{userId},
+            #{kakaoPlaceId},
+            #{placeName},
+            #{addressName},
+            #{roadAddressName},
+            #{latitude},
+            #{longitude},
+            CURRENT_TIMESTAMP(6)
+        )
+        ON DUPLICATE KEY UPDATE
+            placeName = VALUES(placeName),
+            address = VALUES(address),
+            roadAddress = VALUES(roadAddress),
+            lat = VALUES(lat),
+            lng = VALUES(lng),
+            searchedAt = CURRENT_TIMESTAMP(6)
+    </insert>
+
+    <delete id="deleteOldRecentPlaces" parameterType="long">
+        DELETE FROM RECENT_PLACES
+        WHERE userId = #{userId}
+          AND recentPlaceId NOT IN (
+            SELECT recentPlaceId
+            FROM (
+                SELECT recentPlaceId
+                FROM RECENT_PLACES
+                WHERE userId = #{userId}
+                ORDER BY searchedAt DESC, recentPlaceId DESC
+                LIMIT 10
+            ) recentKeep
+          )
+    </delete>
+
+    <select id="getRecentPlaces" parameterType="long" resultMap="PlaceResultMap">
+        SELECT
+            recentPlaceId,
+            userId,
+            kakaoPlaceId,
+            placeName,
+            address,
+            roadAddress,
+            lat,
+            lng,
+            searchedAt
+        FROM RECENT_PLACES
+        WHERE userId = #{userId}
+        ORDER BY searchedAt DESC, recentPlaceId DESC
+        LIMIT 10
+    </select>
+
+    <delete id="deleteRecentPlace">
+        DELETE FROM RECENT_PLACES
+        WHERE userId = #{userId}
+          AND kakaoPlaceId = #{kakaoPlaceId}
+    </delete>
+
+    <select id="getFavoritePlaceCount" resultType="int">
+        SELECT COUNT(*)
+        FROM FAVORITE_PLACES
+        WHERE userId = #{userId}
+          AND kakaoPlaceId = #{kakaoPlaceId}
+    </select>
+
+    <insert id="insertFavoritePlace" parameterType="com.baegopa.onestep.dto.PlaceDTO">
+        INSERT INTO FAVORITE_PLACES (
+            userId,
+            kakaoPlaceId,
+            category,
+            placeName,
+            address,
+            roadAddress,
+            lat,
+            lng
+        ) VALUES (
+            #{userId},
+            #{kakaoPlaceId},
+            #{category},
+            #{placeName},
+            #{addressName},
+            #{roadAddressName},
+            #{latitude},
+            #{longitude}
+        )
+    </insert>
+
+    <select id="getFavoritePlaces" parameterType="long" resultMap="PlaceResultMap">
+        SELECT
+            favoritePlaceId,
+            userId,
+            kakaoPlaceId,
+            category,
+            placeName,
+            address,
+            roadAddress,
+            lat,
+            lng,
+            regDt
+        FROM FAVORITE_PLACES
+        WHERE userId = #{userId}
+          AND kakaoPlaceId IS NOT NULL
+        ORDER BY regDt DESC, favoritePlaceId DESC
+    </select>
+
+    <delete id="deleteFavoritePlace">
+        DELETE FROM FAVORITE_PLACES
+        WHERE userId = #{userId}
+          AND kakaoPlaceId = #{kakaoPlaceId}
+    </delete>
+
+</mapper>

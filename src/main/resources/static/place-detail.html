@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 장소 상세</title>
+    <link rel="stylesheet" href="/css/place-detail.css">
+</head>
+<body>
+<main class="place-detail-page hidden" id="placeDetailPage">
+    <header class="detail-header">
+        <button type="button" class="back-button" id="backButton" aria-label="검색 화면으로 돌아가기">&lt;</button>
+        <div class="selected-summary">
+            <span>선택한 목적지</span>
+            <strong id="headerPlaceName">목적지</strong>
+        </div>
+    </header>
+
+    <section class="map-preview" aria-label="지도 영역">
+        <span>지도 준비 중</span>
+    </section>
+
+    <section class="place-info">
+        <div class="place-title-row">
+            <strong id="placeName">장소명</strong>
+            <button type="button" class="favorite-button" id="favoriteButton" aria-pressed="false">☆ 즐겨찾기</button>
+        </div>
+        <p id="placeAddress">주소 정보 없음</p>
+        <span id="placeCategory" class="place-meta hidden"></span>
+        <span id="placePhone" class="place-meta hidden"></span>
+    </section>
+
+    <p id="detailMessage" class="detail-message" role="status"></p>
+
+    <button type="button" class="confirm-button" id="confirmDestinationButton">이곳으로 가기</button>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/place-detail.js"></script>
+</body>
+</html>
