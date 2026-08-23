@@ -24,6 +24,10 @@ public interface IUserMapper {
 
     int updatePassword(UserDTO userDTO);
 
+    String getGuardianNameByUserId(Long userId);
+
+    String getUserNameByGuardianId(Long guardianId);
+
     int insertUser(UserDTO userDTO);
 
     int insertGuardianLink(@Param("userId") Long userId, @Param("guardianId") Long guardianId);

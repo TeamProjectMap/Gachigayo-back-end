@@ -68,6 +68,27 @@ public class UserController {
     }
 
     @ResponseBody
+    @GetMapping("/home-info")
+    public Map<String, Object> getHomeInfo(HttpSession session) {
+        Long userId = (Long) session.getAttribute("SS_USER_ID");
+        String userName = (String) session.getAttribute("SS_USER_NAME");
+        String userRole = (String) session.getAttribute("SS_USER_ROLE");
+
+        if (userId == null || isBlank(userRole)) {
+            return createResponse(false, "로그인이 필요합니다.");
+        }
+
+        Map<String, Object> homeInfo = userService.getHomeInfo(userId, userRole);
+        Map<String, Object> response = createResponse(true, "홈 정보를 조회했습니다.");
+        response.put("userId", userId);
+        response.put("userName", userName);
+        response.put("userRole", userRole);
+        response.put("linkedName", homeInfo.get("linkedName"));
+
+        return response;
+    }
+
+    @ResponseBody
     @PostMapping("/logout")
     public Map<String, Object> logout(HttpSession session) {
         session.invalidate();

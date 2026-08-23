@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 GUARDIAN 홈</title>
+    <link rel="stylesheet" href="/css/guardian-home.css">
+</head>
+<body>
+<main class="guardian-page hidden" id="guardianHomePage">
+    <header class="guardian-header">
+        <h1>같이가요</h1>
+        <div class="header-actions">
+            <button type="button" class="notice-button action-card" data-ready-message="알림 기능은 다음 단계에서 연결 예정입니다.">알림</button>
+            <button type="button" class="logout-button">로그아웃</button>
+        </div>
+    </header>
+
+    <section class="status-grid">
+        <section class="user-status-card">
+            <strong id="linkedUserName">연결 사용자 확인 중</strong>
+            <span>이동 정보 없음</span>
+            <p>경로 정보 없음</p>
+        </section>
+
+        <section class="connection-card">
+            <strong>사용자와 연결되어 있어요</strong>
+            <p>이동을 시작하면 위치가 공유됩니다</p>
+        </section>
+    </section>
+
+    <section class="location-card">
+        <div>
+            <strong>현재 위치</strong>
+            <p>위치 정보 없음</p>
+            <span>실시간 위치는 이후 단계에서 연결합니다</span>
+        </div>
+        <div class="location-mark" aria-hidden="true">위치</div>
+    </section>
+
+    <section class="info-grid">
+        <section class="info-card">
+            <strong>다음 체크포인트</strong>
+            <p>정보 없음</p>
+            <span>경로 기능 연결 전입니다</span>
+        </section>
+        <section class="info-card">
+            <strong>예상 도착 시간</strong>
+            <p>정보 없음</p>
+            <span>이동 기록이 없습니다</span>
+        </section>
+    </section>
+
+    <section class="notification-card">
+        <div class="section-title">
+            <strong>최근 알림</strong>
+            <button type="button" class="action-card" data-ready-message="전체 알림은 다음 단계에서 연결 예정입니다.">전체 보기 &gt;</button>
+        </div>
+        <p>최근 알림이 없습니다.</p>
+    </section>
+
+    <p id="guardianMessage" class="home-message"></p>
+
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <button type="button" class="active">홈</button>
+        <button type="button" class="action-card" data-ready-message="경로 화면은 다음 단계에서 연결 예정입니다.">경로</button>
+        <button type="button" class="action-card" data-ready-message="설정 화면은 다음 단계에서 연결 예정입니다.">설정</button>
+    </nav>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/guardian-home.js"></script>
+    <title>GUARDIAN HOME</title>
+</head>
+<body>
+<main>
+    <h1>GUARDIAN HOME</h1>
+    <p>6단계에서 구현 예정</p>
+</main>
+</body>
+</html>
