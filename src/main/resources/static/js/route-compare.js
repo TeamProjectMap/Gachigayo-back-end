@@ -13,6 +13,7 @@
     var selectedPublicRouteIndex = null;
     var activeTab = null;
     var selectedRoute = null;
+    var busRealtimeCache = {};
 
     $(function () {
         checkSession();
@@ -354,6 +355,7 @@
             $card.append(createTransitDetails(route.steps || []));
 
             $list.append($card);
+            requestBusRealtimeForCard($card, route);
         });
     }
 
@@ -449,6 +451,7 @@
     function createTransitDetails(steps) {
         var $list = $("<ul>").addClass("route-detail-list");
         var detailCount = 0;
+        var firstTransitIndex = getFirstTransitStepIndex(steps);
 
         $.each(steps, function (stepIndex, step) {
             if (detailCount >= 3) {
@@ -458,6 +461,17 @@
             var text = createStepText(step);
             if (text) {
                 var $item = $("<li>").append($("<span>").addClass("step-main").text(text));
+
+                if (stepIndex === firstTransitIndex && isBusStep(step)) {
+                    var stopName = getBoardingStopName(step);
+                    var routeName = getBoardingRouteName(step);
+
+                    if (stopName && routeName) {
+                        $item.append($("<div>")
+                                .addClass("bus-arrival-slot hidden")
+                                .attr("data-realtime-key", createRealtimeCacheKey(stopName, routeName)));
+                    }
+                }
 
                 $list.append($item);
                 detailCount++;
@@ -539,6 +553,205 @@
         }
 
         return "";
+    }
+
+    function requestBusRealtimeForCard($card, route) {
+        var target = getFirstBoardingBusTarget(route);
+
+        if (!target) {
+            return;
+        }
+
+        var cacheKey = createRealtimeCacheKey(target.stopName, target.routeName);
+        console.info("[route-compare] /bus/realtime request", {
+            stopName: target.stopName,
+            routeName: target.routeName
+        });
+
+        if (busRealtimeCache[cacheKey]) {
+            busRealtimeCache[cacheKey].done(function (json) {
+                updateBusArrivalSlots(cacheKey, json);
+            }).fail(function () {
+                hideBusArrivalSlots(cacheKey);
+            });
+            return;
+        }
+
+        busRealtimeCache[cacheKey] = $.ajax({
+            url: "/bus/realtime",
+            method: "GET",
+            dataType: "JSON",
+            data: {
+                stopName: target.stopName,
+                routeName: target.routeName
+            }
+        });
+
+        busRealtimeCache[cacheKey].done(function (json) {
+            console.info("[route-compare] /bus/realtime response", {
+                stopName: target.stopName,
+                routeName: target.routeName,
+                success: json && json.success,
+                available: json && json.available,
+                status: json && json.status
+            });
+            updateBusArrivalSlots(cacheKey, json);
+        }).fail(function () {
+            console.info("[route-compare] /bus/realtime failed", {
+                stopName: target.stopName,
+                routeName: target.routeName
+            });
+            hideBusArrivalSlots(cacheKey);
+        });
+    }
+
+    function getFirstBoardingBusTarget(route) {
+        var firstTransitStep = getFirstTransitStep(route);
+
+        if (!firstTransitStep || !isBusStep(firstTransitStep)) {
+            return null;
+        }
+
+        var stopName = getBoardingStopName(firstTransitStep);
+        var routeName = getBoardingRouteName(firstTransitStep);
+
+        if (!stopName || !routeName) {
+            return null;
+        }
+
+        return {
+            stopName: stopName,
+            routeName: routeName
+        };
+    }
+
+    function getFirstTransitStep(route) {
+        var steps = getValidSteps(route);
+        var index = getFirstTransitStepIndex(steps);
+
+        return index >= 0 ? steps[index] : null;
+    }
+
+    function getFirstTransitStepIndex(steps) {
+        if (!Array.isArray(steps)) {
+            return -1;
+        }
+
+        for (var i = 0; i < steps.length; i++) {
+            var step = steps[i];
+
+            if (isWalkingStep(step)) {
+                continue;
+            }
+
+            if (isBusStep(step) || isSubwayStep(step)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    function getBoardingStopName(step) {
+        return Array.isArray(step.stops) && step.stops.length ? String(step.stops[0]) : "";
+    }
+
+    function getBoardingRouteName(step) {
+        if (!Array.isArray(step.vehicles)) {
+            return "";
+        }
+
+        var vehicle = step.vehicles.find(function (item) {
+            return item && item.name;
+        });
+
+        return vehicle && vehicle.name ? String(vehicle.name) : "";
+    }
+
+    function updateBusArrivalSlots(cacheKey, json) {
+        var $targets = $('.bus-arrival-slot[data-realtime-key="' + escapeSelectorValue(cacheKey) + '"]');
+
+        if (!json || !json.success || !json.available || json.status !== "OK") {
+            hideBusArrivalSlots(cacheKey);
+            return;
+        }
+
+        $targets.each(function () {
+            renderBusArrivalSlot($(this), json);
+        });
+    }
+
+    function hideBusArrivalSlots(cacheKey) {
+        $('.bus-arrival-slot[data-realtime-key="' + escapeSelectorValue(cacheKey) + '"]')
+                .empty()
+                .addClass("hidden");
+    }
+
+    function renderBusArrivalSlot($slot, realtime) {
+        var firstMessage = getArrivalMessage(realtime.firstArrival);
+        var secondMessage = getArrivalMessage(realtime.secondArrival);
+
+        if (!firstMessage && !secondMessage) {
+            $slot.empty().addClass("hidden");
+            return;
+        }
+
+        var $timeLine = $("<div>").addClass("bus-arrival-time");
+
+        if (firstMessage) {
+            $timeLine.append($("<strong>").text(firstMessage));
+        }
+
+        if (secondMessage) {
+            if (firstMessage) {
+                $timeLine.append(document.createTextNode(" · "));
+            }
+            $timeLine.append($("<span>").text("다음 버스 " + secondMessage));
+        }
+
+        var $tags = $("<div>").addClass("bus-arrival-tags");
+        appendArrivalTags($tags, realtime.firstArrival, "");
+        appendArrivalTags($tags, realtime.secondArrival, "다음 버스 ");
+
+        $slot.empty().removeClass("hidden").append($timeLine);
+
+        if ($tags.children().length) {
+            $slot.append($tags);
+        }
+    }
+
+    function getArrivalMessage(arrival) {
+        return arrival && arrival.message ? $.trim(String(arrival.message)) : "";
+    }
+
+    function appendArrivalTags($tags, arrival, prefix) {
+        if (!arrival) {
+            return;
+        }
+
+        if (arrival.lowFloor === true) {
+            $tags.append($("<em>").text(prefix + "저상버스"));
+        }
+
+        if (arrival.full === true) {
+            $tags.append($("<em>").addClass("full").text(prefix + "만차"));
+        }
+    }
+
+    function createRealtimeCacheKey(stopName, routeName) {
+        return normalizeRealtimeKey(stopName) + "|" + normalizeRealtimeKey(routeName);
+    }
+
+    function normalizeRealtimeKey(value) {
+        return $.trim(String(value || "")).replace(/\s+/g, " ");
+    }
+
+    function escapeSelectorValue(value) {
+        if ($.escapeSelector) {
+            return $.escapeSelector(value);
+        }
+
+        return String(value).replace(/(["\\])/g, "\\$1");
     }
 
     function getSegmentClass(step) {
