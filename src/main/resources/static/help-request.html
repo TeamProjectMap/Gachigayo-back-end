@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 도움요청</title>
+    <link rel="stylesheet" href="/css/help-request.css">
+</head>
+<body>
+<main class="help-page hidden" id="helpPage">
+    <header class="help-header">
+        <button type="button" class="back-button" id="backButton" aria-label="뒤로">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <h1>도움요청</h1>
+    </header>
+
+    <!-- 요청 전 -->
+    <section id="requestSection">
+        <p class="lead">지금 계신 위치가<br>보호자에게 전달됩니다</p>
+
+        <p class="field-label">어떤 상황인가요? <span class="optional">(선택)</span></p>
+
+        <div class="reason-list">
+            <button type="button" class="reason" data-message="길을 잃었어요">길을 잃었어요</button>
+            <button type="button" class="reason" data-message="버스를 못 탔어요">버스를 못 탔어요</button>
+            <button type="button" class="reason" data-message="몸이 불편해요">몸이 불편해요</button>
+            <button type="button" class="reason" data-message="무서워요">무서워요</button>
+        </div>
+
+        <button type="button" class="help-button" id="helpButton">도움 요청하기</button>
+        <button type="button" class="line-button help-card-link">주변 사람에게 보여주기</button>
+
+        <p class="page-message" id="helpMessage"></p>
+    </section>
+
+    <!-- 요청 후 -->
+    <section id="doneSection" class="hidden">
+        <div class="done-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12.5l5.5 5.5L20 7"/>
+            </svg>
+        </div>
+
+        <strong class="done-title" id="doneTitle">도움요청을 보냈어요</strong>
+        <p class="done-desc" id="doneDesc">보호자가 확인할 때까지 이 자리에서 기다려주세요</p>
+
+        <a class="call-button hidden" id="callButton" href="#">보호자에게 전화하기</a>
+        <button type="button" class="line-button help-card-link">주변 사람에게 보여주기</button>
+        <button type="button" class="line-button" id="homeButton">홈으로</button>
+    </section>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/help-request.js"></script>
+</body>
+</html>
