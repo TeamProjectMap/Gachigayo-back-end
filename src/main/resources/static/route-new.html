@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 새 경로 등록</title>
+    <link rel="stylesheet" href="/css/route-manage.css">
+</head>
+<body>
+<main class="route-page new-route hidden" id="newRoutePage">
+    <header class="route-header">
+        <button type="button" class="back-button" id="backButton" aria-label="뒤로">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <h1>새 경로 등록</h1>
+    </header>
+
+    <label class="field-label" for="routeName">경로 이름</label>
+    <input type="text" id="routeName" class="text-input" placeholder="예) 학교 가는 길" maxlength="100">
+
+    <p class="field-label">출발지</p>
+    <button type="button" class="place-button" id="startButton" data-target="start">
+        <span class="search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="M20 20l-3.5-3.5"/>
+            </svg>
+        </span>
+        <span class="place-text placeholder" id="startText">장소를 검색해주세요</span>
+    </button>
+
+    <p class="field-label">도착지</p>
+    <button type="button" class="place-button" id="endButton" data-target="end">
+        <span class="search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="M20 20l-3.5-3.5"/>
+            </svg>
+        </span>
+        <span class="place-text placeholder" id="endText">장소를 검색해주세요</span>
+    </button>
+
+    <section class="guide-box">
+        <strong id="guideTitle">함께 걸으며 기록해요</strong>
+        <p>이동 경로가 자동으로 기록되고,<br>중요한 지점마다 사진을 찍어 저장할 수 있어요</p>
+    </section>
+
+    <p class="page-message" id="newRouteMessage"></p>
+
+    <button type="button" class="main-button" id="saveButton">경로 보기</button>
+</main>
+
+<!-- 장소 검색 -->
+<div class="search-layer hidden" id="searchLayer">
+    <div class="search-panel">
+        <header class="route-header">
+            <button type="button" class="back-button" id="searchCloseButton" aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+            <h1 id="searchTitle">장소 검색</h1>
+        </header>
+
+        <input type="text" id="searchInput" class="text-input" placeholder="장소 이름을 입력하세요" autocomplete="off">
+        <button type="button" class="main-button" id="searchButton">검색</button>
+
+        <ul class="place-list" id="placeList"></ul>
+        <p class="page-message" id="searchMessage"></p>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/route-new.js"></script>
+</body>
+</html>
