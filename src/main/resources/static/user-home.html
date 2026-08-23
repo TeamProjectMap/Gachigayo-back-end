@@ -32,6 +32,18 @@
         </section>
     </section>
 
+    <section class="weather-card">
+        <span class="weather-icon" aria-hidden="true">
+            <img id="weatherIcon" alt="">
+        </span>
+        <strong id="temperature" class="weather-temperature"></strong>
+        <span class="weather-divider" aria-hidden="true"></span>
+        <span class="weather-copy">
+            <strong id="weatherMainText" class="weather-main-text"></strong>
+            <strong id="weatherSubText" class="weather-sub-text"></strong>
+        </span>
+    </section>
+
     <section class="feature-grid" aria-label="홈 기능">
         <button type="button" class="feature-card action-card" data-ready-message="도움요청 기능은 다음 단계에서 연결 예정입니다.">
             <strong>도움요청</strong>
@@ -66,5 +78,6 @@
 </main>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/js/user-home.js"></script>
+<script src="/js/weather.js"></script>
 </body>
 </html>

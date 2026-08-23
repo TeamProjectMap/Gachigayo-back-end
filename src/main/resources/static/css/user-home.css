@@ -118,6 +118,80 @@ button {
     text-align: left;
 }
 
+#userHomePage .weather-card {
+    margin-top: 18px;
+    height: 63px;
+    padding: 0 17px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 10px;
+    background: var(--soft-blue);
+}
+
+#userHomePage .weather-icon {
+    width: 26px;
+    height: 26px;
+    max-width: 26px;
+    flex: 0 0 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#userHomePage .weather-icon img,
+#userHomePage .weather-icon svg {
+    width: 100%;
+    height: 100%;
+    max-width: 26px;
+    max-height: 26px;
+    object-fit: contain;
+    display: block;
+}
+
+#userHomePage .weather-temperature {
+    margin-left: 18px;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+#userHomePage .weather-divider {
+    width: 1px;
+    height: 33px;
+    margin-left: 16px;
+    flex: 0 0 1px;
+    background: var(--line);
+}
+
+#userHomePage .weather-copy {
+    margin-left: 17px;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#userHomePage .weather-main-text,
+#userHomePage .weather-sub-text {
+    display: block;
+    color: var(--text);
+    line-height: 1.25;
+}
+
+#userHomePage .weather-main-text {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+#userHomePage .weather-sub-text {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
 .safety-card strong {
     display: block;
     font-size: 18px;
