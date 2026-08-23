@@ -120,6 +120,18 @@
         WHERE gl.guardianId = #{guardianId}
     </select>
 
+    <select id="getUserById" parameterType="long" resultMap="UserResultMap">
+        SELECT userId,
+               userName,
+               userRole,
+               loginId,
+               phone,
+               email,
+               linkCode
+        FROM USERS
+        WHERE userId = #{userId}
+    </select>
+
     <select id="getLinkCodeByUserId" parameterType="long" resultType="string">
         SELECT linkCode
         FROM USERS

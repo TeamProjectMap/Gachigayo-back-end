@@ -17,6 +17,9 @@ public interface IUserMapper {
 
     UserDTO getUserByLoginId(String loginId);
 
+    /** 설정 화면에서 내 이름·연락처를 보여주기 위한 조회 */
+    UserDTO getUserById(@Param("userId") Long userId);
+
     /*
      * 아이디 찾기, 비밀번호 찾기
      */

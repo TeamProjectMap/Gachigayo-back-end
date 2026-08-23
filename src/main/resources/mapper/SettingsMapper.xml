@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.ISettingsMapper">
+
+    <select id="getUserSettings" parameterType="long" resultType="com.baegopa.onestep.dto.UserSettingsDTO">
+        SELECT userId,
+               shareLocationYn,
+               deviationAlarmYn,
+               arrivalAlarmYn,
+               voiceGuideYn,
+               checkpointAlarmYn
+        FROM USER_SETTINGS
+        WHERE userId = #{userId}
+    </select>
+
+    <!--
+        화면의 "도착·체크포인트 알림" 토글 하나가 두 컬럼을 같이 바꾼다.
+        USER_SETTINGS 행이 없으면 만들고, 있으면 고친다.
+    -->
+    <insert id="upsertArrivalAlarm">
+        INSERT INTO USER_SETTINGS (
+            userId,
+            arrivalAlarmYn,
+            checkpointAlarmYn
+        ) VALUES (
+            #{userId},
+            #{alarmYn},
+            #{alarmYn}
+        )
+        ON DUPLICATE KEY UPDATE
+            arrivalAlarmYn    = #{alarmYn},
+            checkpointAlarmYn = #{alarmYn}
+    </insert>
+
+</mapper>
