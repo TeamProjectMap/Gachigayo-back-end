@@ -15,4 +15,8 @@ public interface IUserService {
     int registerUser(UserDTO userDTO);
 
     int registerGuardian(UserDTO userDTO, String linkCode);
+
+    UserDTO searchUserIdOrPassword(UserDTO userDTO);
+
+    int newPassword(UserDTO userDTO);
 }

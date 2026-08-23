@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 아이디 찾기</title>
+    <link rel="stylesheet" href="/css/find-account.css">
+</head>
+<body>
+<main class="find-page">
+    <section id="searchSection" class="find-panel">
+        <header class="page-header">
+            <h1>아이디 찾기</h1>
+            <p>가입할 때 등록한 이름과 이메일을 입력하고<br>이메일 인증을 완료해주세요.</p>
+        </header>
+
+        <form id="searchForm" class="find-form" novalidate>
+            <div class="form-field">
+                <label for="userName">이름 <span>*</span></label>
+                <input id="userName" name="userName" type="text" placeholder="김철수" autocomplete="name">
+                <p class="field-message" data-message-for="userName"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="email">이메일 주소 <span>*</span></label>
+                <div class="inline-control">
+                    <input id="email" name="email" type="email" placeholder="예) abc123@email.com" autocomplete="email">
+                    <button type="button" class="small-button" data-action="send-auth">인증하기</button>
+                </div>
+                <p class="field-message" data-message-for="email"></p>
+            </div>
+
+            <div class="form-field auth-field hidden" data-auth-field>
+                <label for="authCode">인증번호</label>
+                <div class="auth-control">
+                    <input id="authCode" name="authCode" type="text" inputmode="numeric" maxlength="6" placeholder="6자리 입력">
+                    <span class="timer" data-timer>05:00</span>
+                </div>
+                <p class="field-message" data-message-for="authCode"></p>
+            </div>
+
+            <p class="field-message form-message" data-message-for="form"></p>
+
+            <button type="button" class="submit-button" data-action="search-login-id">아이디 찾기</button>
+            <button type="button" class="ghost-button" data-action="go-login">로그인</button>
+
+            <div class="find-links">
+                <button type="button" class="text-button" data-action="go-find-password">비밀번호 찾기</button>
+                <span aria-hidden="true"></span>
+                <button type="button" class="text-button" data-action="go-signup">회원가입</button>
+            </div>
+        </form>
+    </section>
+
+    <section id="resultSection" class="find-panel hidden">
+        <div class="result-panel">
+            <div class="check-icon" aria-hidden="true"></div>
+            <h2>아이디를 찾았습니다</h2>
+            <p id="resultUserName"></p>
+            <div class="result-card">
+                <span>회원님의 아이디</span>
+                <strong id="resultLoginId"></strong>
+            </div>
+
+            <div class="result-actions">
+                <button type="button" class="submit-button" data-action="go-login">로그인</button>
+                <button type="button" class="ghost-button" data-action="go-find-password">비밀번호 찾기</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/find-id.js"></script>
+</body>
+</html>
