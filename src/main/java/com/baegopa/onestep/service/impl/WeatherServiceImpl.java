@@ -67,8 +67,6 @@ public class WeatherServiceImpl implements IWeatherService {
         rDTO.setLat(pDTO.getLat());
         rDTO.setLon(pDTO.getLon());
 
-        log.debug(root.toString());
-
         if (itemList.isArray()) {
             for (JsonNode item : itemList) {
                 String category = item.path("category").asText();
