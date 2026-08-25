@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 @Service
@@ -25,6 +26,8 @@ public class SubwayRealtimeService implements ISubwayRealtimeService {
 
     private static final String API_HOST = "swopenAPI.seoul.go.kr";
     private static final String SERVICE_NAME = "realtimeStationArrival";
+    private static final String ARRIVAL_LIST_NAME = "realtimeArrivalList";
+    private static final String RESULT_NAME = "errorMessage";
     private static final int STATION_START_INDEX = 0;
     private static final int STATION_END_INDEX = 20;
     private static final int TIMEOUT_MILLIS = 5000;
@@ -164,19 +167,16 @@ public class SubwayRealtimeService implements ISubwayRealtimeService {
 
         JsonNode rootNode = objectMapper.readTree(body);
         JsonNode serviceNode = rootNode.path(SERVICE_NAME);
-        JsonNode resultNode = serviceNode.isMissingNode() ? rootNode.path("RESULT") : serviceNode.path("RESULT");
+        JsonNode resultNode = firstExisting(rootNode.path(RESULT_NAME), rootNode.path("RESULT"), serviceNode.path("RESULT"));
 
-        String resultCode = text(resultNode, "CODE");
-        String resultMessage = text(resultNode, "MESSAGE");
-        if (isBlank(resultCode) && !serviceNode.isMissingNode()) {
-            resultCode = "INFO-000";
-        }
+        String resultCode = firstNotBlank(text(resultNode, "code"), text(resultNode, "CODE"));
+        String resultMessage = firstNotBlank(text(resultNode, "message"), text(resultNode, "MESSAGE"));
 
         if (!"INFO-000".equals(resultCode)) {
             return ApiResponse.error(endpointType, resultCode, resultMessage);
         }
 
-        JsonNode rowsNode = serviceNode.path("row");
+        JsonNode rowsNode = firstExisting(rootNode.path(ARRIVAL_LIST_NAME), serviceNode.path("row"));
         if (!rowsNode.isArray()) {
             return new ApiResponse(endpointType, true, resultCode, resultMessage, List.of());
         }
@@ -309,6 +309,60 @@ public class SubwayRealtimeService implements ISubwayRealtimeService {
     private String text(JsonNode node, String fieldName) {
         JsonNode valueNode = node == null ? null : node.get(fieldName);
         return valueNode == null || valueNode.isNull() ? null : valueNode.asText();
+    }
+
+    private JsonNode firstExisting(JsonNode first, JsonNode second) {
+        return firstExisting(first, second, null);
+    }
+
+    private JsonNode firstExisting(JsonNode first, JsonNode second, JsonNode third) {
+        if (exists(first)) {
+            return first;
+        }
+        if (exists(second)) {
+            return second;
+        }
+        if (exists(third)) {
+            return third;
+        }
+        return objectMapper.createObjectNode().missingNode();
+    }
+
+    private boolean exists(JsonNode node) {
+        return node != null && !node.isMissingNode() && !node.isNull();
+    }
+
+    private List<String> fieldNames(JsonNode node) {
+        if (node == null || !node.isObject()) {
+            return List.of();
+        }
+
+        return StreamSupport.stream(node.properties().spliterator(), false)
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
+    private String resultPath(JsonNode rootNode, JsonNode serviceNode) {
+        if (exists(rootNode.path(RESULT_NAME))) {
+            return RESULT_NAME;
+        }
+        if (exists(rootNode.path("RESULT"))) {
+            return "RESULT";
+        }
+        if (exists(serviceNode.path("RESULT"))) {
+            return SERVICE_NAME + ".RESULT";
+        }
+        return "";
+    }
+
+    private String resultCodeField(JsonNode resultNode) {
+        if (exists(resultNode.path("code"))) {
+            return "code";
+        }
+        if (exists(resultNode.path("CODE"))) {
+            return "CODE";
+        }
+        return "";
     }
 
     private Integer integer(String value) {

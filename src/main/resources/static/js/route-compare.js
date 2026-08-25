@@ -14,6 +14,7 @@
     var activeTab = null;
     var selectedRoute = null;
     var busRealtimeCache = {};
+    var subwayRealtimeCache = {};
 
     $(function () {
         checkSession();
@@ -356,6 +357,7 @@
 
             $list.append($card);
             requestBusRealtimeForCard($card, route);
+            requestSubwayRealtimeForCard($card, route);
         });
     }
 
@@ -473,6 +475,17 @@
                     }
                 }
 
+                if (stepIndex === firstTransitIndex && isSubwayStep(step)) {
+                    var subwayTarget = getBoardingSubwayTargetFromStep(step);
+
+                    if (subwayTarget) {
+                        $item.append($("<div>")
+                                .addClass("subway-arrival-slot hidden")
+                                .attr("data-realtime-key", createSubwayRealtimeCacheKey(subwayTarget.stationName, subwayTarget.lineName))
+                                .data("subway-target", subwayTarget));
+                    }
+                }
+
                 $list.append($item);
                 detailCount++;
             }
@@ -563,11 +576,6 @@
         }
 
         var cacheKey = createRealtimeCacheKey(target.stopName, target.routeName);
-        console.info("[route-compare] /bus/realtime request", {
-            stopName: target.stopName,
-            routeName: target.routeName
-        });
-
         if (busRealtimeCache[cacheKey]) {
             busRealtimeCache[cacheKey].done(function (json) {
                 updateBusArrivalSlots(cacheKey, json);
@@ -577,13 +585,21 @@
             return;
         }
 
+        console.info("[route-compare] /bus/realtime request", {
+            stopName: target.stopName,
+            routeName: target.routeName,
+            nextStopName: target.nextStopName
+        });
+
         busRealtimeCache[cacheKey] = $.ajax({
             url: "/bus/realtime",
             method: "GET",
             dataType: "JSON",
             data: {
                 stopName: target.stopName,
-                routeName: target.routeName
+                routeName: target.routeName,
+                nextStopName: target.nextStopName,
+                directionHint: target.directionHint
             }
         });
 
@@ -605,6 +621,57 @@
         });
     }
 
+    function requestSubwayRealtimeForCard($card, route) {
+        var target = getFirstBoardingSubwayTarget(route);
+
+        if (!target) {
+            return;
+        }
+
+        var cacheKey = createSubwayRealtimeCacheKey(target.stationName, target.lineName);
+        if (subwayRealtimeCache[cacheKey]) {
+            subwayRealtimeCache[cacheKey].done(function (json) {
+                updateSubwayArrivalSlots(cacheKey, json);
+            }).fail(function () {
+                hideSubwayArrivalSlots(cacheKey);
+            });
+            return;
+        }
+
+        console.info("[route-compare] /subway/realtime request", {
+            stationName: target.stationName,
+            lineName: target.lineName
+        });
+
+        subwayRealtimeCache[cacheKey] = $.ajax({
+            url: "/subway/realtime",
+            method: "GET",
+            dataType: "JSON",
+            data: {
+                stationName: target.stationName,
+                lineName: target.lineName
+            }
+        });
+
+        subwayRealtimeCache[cacheKey].done(function (json) {
+            console.info("[route-compare] /subway/realtime response", {
+                stationName: target.stationName,
+                lineName: target.lineName,
+                success: json && json.success,
+                available: json && json.available,
+                status: json && json.status,
+                subwayId: json && json.subwayId
+            });
+            updateSubwayArrivalSlots(cacheKey, json);
+        }).fail(function () {
+            console.info("[route-compare] /subway/realtime failed", {
+                stationName: target.stationName,
+                lineName: target.lineName
+            });
+            hideSubwayArrivalSlots(cacheKey);
+        });
+    }
+
     function getFirstBoardingBusTarget(route) {
         var firstTransitStep = getFirstTransitStep(route);
 
@@ -614,6 +681,7 @@
 
         var stopName = getBoardingStopName(firstTransitStep);
         var routeName = getBoardingRouteName(firstTransitStep);
+        var nextStopName = getNextStopName(firstTransitStep);
 
         if (!stopName || !routeName) {
             return null;
@@ -621,7 +689,42 @@
 
         return {
             stopName: stopName,
-            routeName: routeName
+            routeName: routeName,
+            nextStopName: nextStopName,
+            directionHint: firstTransitStep.guidance || ""
+        };
+    }
+
+    function getFirstBoardingSubwayTarget(route) {
+        var firstTransitStep = getFirstTransitStep(route);
+
+        if (!firstTransitStep || !isSubwayStep(firstTransitStep)) {
+            return null;
+        }
+
+        return getBoardingSubwayTargetFromStep(firstTransitStep);
+    }
+
+    function getBoardingSubwayTargetFromStep(step) {
+        var stationName = getBoardingStopName(step);
+        var lineName = normalizeSubwayLineName(getBoardingRouteName(step));
+
+        if (!stationName || !lineName) {
+            return null;
+        }
+
+        var stops = Array.isArray(step.stops) ? step.stops.map(function (stop) {
+            return String(stop || "");
+        }).filter(function (stop) {
+            return !!$.trim(stop);
+        }) : [];
+
+        return {
+            stationName: stationName,
+            lineName: lineName,
+            nextStationName: stops.length > 1 ? stops[1] : "",
+            destinationStationName: stops.length > 1 ? stops[stops.length - 1] : "",
+            guidance: step.guidance || ""
         };
     }
 
@@ -654,6 +757,10 @@
 
     function getBoardingStopName(step) {
         return Array.isArray(step.stops) && step.stops.length ? String(step.stops[0]) : "";
+    }
+
+    function getNextStopName(step) {
+        return Array.isArray(step.stops) && step.stops.length > 1 ? String(step.stops[1]) : "";
     }
 
     function getBoardingRouteName(step) {
@@ -721,7 +828,20 @@
     }
 
     function getArrivalMessage(arrival) {
-        return arrival && arrival.message ? $.trim(String(arrival.message)) : "";
+        if (!arrival) {
+            return "";
+        }
+
+        var seconds = Number(arrival.seconds);
+        if (Number.isFinite(seconds) && seconds >= 0) {
+            if (seconds < 60) {
+                return "곧 도착";
+            }
+
+            return Math.ceil(seconds / 60) + "분 뒤 도착";
+        }
+
+        return arrival.message ? $.trim(String(arrival.message)) : "";
     }
 
     function appendArrivalTags($tags, arrival, prefix) {
@@ -738,12 +858,202 @@
         }
     }
 
+    function updateSubwayArrivalSlots(cacheKey, json) {
+        var $targets = $('.subway-arrival-slot[data-realtime-key="' + escapeSelectorValue(cacheKey) + '"]');
+
+        if (!json || !json.success || !json.available || json.status !== "OK" || !Array.isArray(json.arrivals)) {
+            hideSubwayArrivalSlots(cacheKey);
+            return;
+        }
+
+        $targets.each(function () {
+            renderSubwayArrivalSlot($(this), json);
+        });
+    }
+
+    function hideSubwayArrivalSlots(cacheKey) {
+        $('.subway-arrival-slot[data-realtime-key="' + escapeSelectorValue(cacheKey) + '"]')
+                .empty()
+                .addClass("hidden");
+    }
+
+    function renderSubwayArrivalSlot($slot, realtime) {
+        var target = $slot.data("subway-target");
+        var matchedArrivals = findDirectionMatchedSubwayArrivals(realtime.arrivals, target);
+
+        if (!matchedArrivals.length) {
+            $slot.empty().addClass("hidden");
+            return;
+        }
+
+        var firstArrival = matchedArrivals[0];
+        var secondArrival = matchedArrivals.length > 1 ? matchedArrivals[1] : null;
+        var firstMessage = formatSubwayArrivalMessage(firstArrival);
+        var secondMessage = formatSubwayArrivalMessage(secondArrival);
+
+        if (!firstMessage && !secondMessage) {
+            $slot.empty().addClass("hidden");
+            return;
+        }
+
+        var $timeLine = $("<div>").addClass("subway-arrival-time");
+
+        if (firstMessage) {
+            $timeLine.append($("<strong>").text(firstMessage));
+        }
+
+        if (secondMessage) {
+            if (firstMessage) {
+                $timeLine.append(document.createTextNode(" · "));
+            }
+            $timeLine.append($("<span>").text("다음 열차 " + secondMessage));
+        }
+
+        var directionLabel = getSubwayDirectionLabel(firstArrival);
+        $slot.empty().removeClass("hidden").append($timeLine);
+
+        if (directionLabel) {
+            $slot.append($("<div>").addClass("subway-arrival-direction").text(directionLabel));
+        }
+    }
+
+    function findDirectionMatchedSubwayArrivals(arrivals, target) {
+        if (!Array.isArray(arrivals) || !target) {
+            return [];
+        }
+
+        return arrivals.filter(function (arrival) {
+            return isReliableSubwayDirectionMatch(arrival, target);
+        }).sort(function (a, b) {
+            return compareArrivalSeconds(a.arrivalSeconds, b.arrivalSeconds);
+        }).slice(0, 2);
+    }
+
+    function isReliableSubwayDirectionMatch(arrival, target) {
+        if (!arrival) {
+            return false;
+        }
+
+        var nextStationName = normalizeStationForCompare(target.nextStationName);
+        var destinationStationName = normalizeStationForCompare(target.destinationStationName);
+        var guidanceStations = extractStationNamesFromText(target.guidance);
+        var trainLineName = normalizeStationForCompare(arrival.trainLineName);
+        var terminalStationName = normalizeStationForCompare(arrival.destinationStationName);
+
+        if (nextStationName && containsStationName(trainLineName, nextStationName)) {
+            return true;
+        }
+
+        if (destinationStationName && containsStationName(trainLineName, destinationStationName)) {
+            return true;
+        }
+
+        for (var i = 0; i < guidanceStations.length; i++) {
+            if (containsStationName(trainLineName, guidanceStations[i])
+                    || terminalStationName === guidanceStations[i]) {
+                return true;
+            }
+        }
+
+        return destinationStationName && terminalStationName === destinationStationName;
+    }
+
+    function formatSubwayArrivalMessage(arrival) {
+        if (!arrival) {
+            return "";
+        }
+
+        var message = $.trim(String(arrival.arrivalMessage || ""));
+        if (message && !/^\d+\s*분/.test(message)) {
+            return message;
+        }
+
+        var seconds = Number(arrival.arrivalSeconds);
+        if (Number.isFinite(seconds) && seconds >= 0) {
+            if (seconds < 60) {
+                return "곧 도착";
+            }
+
+            return Math.ceil(seconds / 60) + "분 뒤 도착";
+        }
+
+        return message;
+    }
+
+    function getSubwayDirectionLabel(arrival) {
+        if (!arrival) {
+            return "";
+        }
+
+        var destination = $.trim(String(arrival.destinationStationName || ""));
+
+        if (destination) {
+            return destination + "행";
+        }
+
+        return $.trim(String(arrival.direction || ""));
+    }
+
+    function compareArrivalSeconds(first, second) {
+        var a = Number(first);
+        var b = Number(second);
+        var safeA = Number.isFinite(a) ? a : Number.MAX_SAFE_INTEGER;
+        var safeB = Number.isFinite(b) ? b : Number.MAX_SAFE_INTEGER;
+
+        return safeA - safeB;
+    }
+
     function createRealtimeCacheKey(stopName, routeName) {
-        return normalizeRealtimeKey(stopName) + "|" + normalizeRealtimeKey(routeName);
+        return "BUS|" + normalizeRealtimeKey(stopName) + "|" + normalizeRealtimeKey(routeName);
+    }
+
+    function createSubwayRealtimeCacheKey(stationName, lineName) {
+        return "SUBWAY|" + normalizeRealtimeKey(stationName) + "|" + normalizeRealtimeKey(lineName);
     }
 
     function normalizeRealtimeKey(value) {
         return $.trim(String(value || "")).replace(/\s+/g, " ");
+    }
+
+    function normalizeSubwayLineName(value) {
+        var text = $.trim(String(value || ""));
+        var numberedLine = text.match(/(\d+)\s*호선/);
+
+        if (numberedLine) {
+            return numberedLine[1] + "호선";
+        }
+
+        return text;
+    }
+
+    function normalizeStationForCompare(value) {
+        var text = $.trim(String(value || "")).replace(/\s+/g, "");
+
+        if (text.length > 1 && text.charAt(text.length - 1) === "역") {
+            return text.substring(0, text.length - 1);
+        }
+
+        return text;
+    }
+
+    function containsStationName(text, stationName) {
+        return !!text && !!stationName && text.indexOf(stationName) >= 0;
+    }
+
+    function extractStationNamesFromText(value) {
+        var text = String(value || "");
+        var matches = text.match(/[가-힣A-Za-z0-9()]+역?/g) || [];
+        var stationNames = [];
+
+        matches.forEach(function (match) {
+            var stationName = normalizeStationForCompare(match);
+
+            if (stationName && stationNames.indexOf(stationName) < 0) {
+                stationNames.push(stationName);
+            }
+        });
+
+        return stationNames;
     }
 
     function escapeSelectorValue(value) {
