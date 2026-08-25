@@ -273,8 +273,6 @@ public class KakaoMapService implements IKakaoMapService {
             stepDTO.setTime(integer(propertiesNode, "time"));
 
             JsonNode stopsNode = propertiesNode.path("stops");
-            log.info("{}", stopsNode);
-            log.info("{}", stepNode.path("path").path("points"));
             if (stopsNode.isArray()) {
                 for (JsonNode stopNode : stopsNode) {
                     String stopName = text(stopNode, "name");
