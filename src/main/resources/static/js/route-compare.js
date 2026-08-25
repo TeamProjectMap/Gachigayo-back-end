@@ -1,9 +1,11 @@
 (function ($) {
     var GACHIGAYO_SCORE = {
-        TRANSFER_PENALTY: 20,
-        WALKING_5_MIN_PENALTY: 8,
-        TOTAL_5_MIN_PENALTY: 3,
-        STEP_PENALTY: 2
+        TRANSFER_WEIGHT: 0.35,
+        COMPLEXITY_WEIGHT: 0.25,
+        WALKING_WEIGHT: 0.15,
+        FAMILIARITY_WEIGHT: 0.15,
+        TOTAL_TIME_WEIGHT: 0.10,
+        NEUTRAL_FAMILIARITY_SCORE: 50
     };
 
     var selectedDestination = null;
@@ -15,6 +17,7 @@
     var selectedRoute = null;
     var busRealtimeCache = {};
     var subwayRealtimeCache = {};
+    var currentScoreContext = null;
 
     $(function () {
         checkSession();
@@ -117,7 +120,8 @@
 
     function selectRepresentativeRoutes(routes) {
         var candidates = [];
-        var recommended = findGachigayoRecommendedRoute(routes);
+        currentScoreContext = buildScoreContext(routes);
+        var recommended = findGachigayoRecommendedRoute(routes, currentScoreContext);
         var fastestRoutes = sortByTotalTime(routes);
         var fewestTransferRoutes = sortByTransfers(routes);
         var leastWalkingRoutes = sortByWalkingTime(routes);
@@ -153,14 +157,14 @@
             label: label,
             selectionLabel: selectionLabel,
             reason: reasonFactory(route),
-            gachigayoScore: calculateGachigayoScore(route),
+            gachigayoScore: calculateGachigayoScore(route, currentScoreContext),
             route: route
         });
     }
 
-    function findGachigayoRecommendedRoute(routes) {
+    function findGachigayoRecommendedRoute(routes, scoreContext) {
         return routes.slice().sort(function (a, b) {
-            var scoreDiff = calculateGachigayoScore(b) - calculateGachigayoScore(a);
+            var scoreDiff = calculateGachigayoScore(b, scoreContext) - calculateGachigayoScore(a, scoreContext);
 
             if (scoreDiff !== 0) {
                 return scoreDiff;
@@ -224,18 +228,83 @@
         });
     }
 
-    function calculateGachigayoScore(route) {
-        var transfers = safeNumber(route.transfers);
-        var walkingMinutes = secondsToMinutes(calculateWalkingTime(route));
-        var totalMinutes = secondsToMinutes(route.totalTime);
-        var stepCount = getValidSteps(route).length;
-        var score = 100
-                - transfers * GACHIGAYO_SCORE.TRANSFER_PENALTY
-                - Math.ceil(walkingMinutes / 5) * GACHIGAYO_SCORE.WALKING_5_MIN_PENALTY
-                - Math.ceil(totalMinutes / 5) * GACHIGAYO_SCORE.TOTAL_5_MIN_PENALTY
-                - stepCount * GACHIGAYO_SCORE.STEP_PENALTY;
+    function buildScoreContext(routes) {
+        var metrics = (routes || []).map(function (route) {
+            return {
+                route: route,
+                transfers: safeNumber(route && route.transfers),
+                complexity: calculateMeaningfulStepCount(route),
+                walkingTime: calculateWalkingTime(route),
+                totalTime: safeNumber(route && route.totalTime)
+            };
+        });
 
-        return clamp(score, 0, 100);
+        return {
+            metrics: metrics,
+            transfers: buildRange(metrics, "transfers"),
+            complexity: buildRange(metrics, "complexity"),
+            walkingTime: buildRange(metrics, "walkingTime"),
+            totalTime: buildRange(metrics, "totalTime")
+        };
+    }
+
+    function buildRange(metrics, key) {
+        return metrics.reduce(function (range, metric) {
+            var value = safeNumber(metric[key]);
+            return {
+                min: Math.min(range.min, value),
+                max: Math.max(range.max, value)
+            };
+        }, {
+            min: Number.POSITIVE_INFINITY,
+            max: Number.NEGATIVE_INFINITY
+        });
+    }
+
+    function calculateGachigayoScore(route, scoreContext) {
+        var context = scoreContext || buildScoreContext([route]);
+        var metric = findScoreMetric(route, context);
+        var score = normalizeLowerIsBetter(metric.transfers, context.transfers) * GACHIGAYO_SCORE.TRANSFER_WEIGHT
+                + normalizeLowerIsBetter(metric.complexity, context.complexity) * GACHIGAYO_SCORE.COMPLEXITY_WEIGHT
+                + normalizeLowerIsBetter(metric.walkingTime, context.walkingTime) * GACHIGAYO_SCORE.WALKING_WEIGHT
+                + getFamiliarityScore(route) * GACHIGAYO_SCORE.FAMILIARITY_WEIGHT
+                + normalizeLowerIsBetter(metric.totalTime, context.totalTime) * GACHIGAYO_SCORE.TOTAL_TIME_WEIGHT;
+
+        return Math.round(clamp(score, 0, 100));
+    }
+
+    function findScoreMetric(route, scoreContext) {
+        var metrics = scoreContext && scoreContext.metrics ? scoreContext.metrics : [];
+        var metric = metrics.find(function (nextMetric) {
+            return nextMetric.route === route;
+        });
+
+        return metric || {
+            transfers: safeNumber(route && route.transfers),
+            complexity: calculateMeaningfulStepCount(route),
+            walkingTime: calculateWalkingTime(route),
+            totalTime: safeNumber(route && route.totalTime)
+        };
+    }
+
+    function normalizeLowerIsBetter(value, range) {
+        if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max) || range.min === range.max) {
+            return 100;
+        }
+
+        return clamp(((range.max - safeNumber(value)) / (range.max - range.min)) * 100, 0, 100);
+    }
+
+    function getFamiliarityScore() {
+        return GACHIGAYO_SCORE.NEUTRAL_FAMILIARITY_SCORE;
+    }
+
+    function calculateMeaningfulStepCount(route) {
+        return getValidSteps(route).filter(function (step) {
+            return !!(step.type || safeNumber(step.time) || safeNumber(step.distance)
+                    || step.vehicles && step.vehicles.length
+                    || step.stops && step.stops.length);
+        }).length;
     }
 
     function calculateWalkingTime(route) {
