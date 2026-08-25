@@ -283,17 +283,37 @@ button {
     line-height: 1.45;
 }
 
+.subway-arrival-slot {
+    margin-top: 3px;
+    color: #555555;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
 .bus-arrival-time,
 .bus-arrival-time strong,
-.bus-arrival-time span {
+.bus-arrival-time span,
+.subway-arrival-time,
+.subway-arrival-time strong,
+.subway-arrival-time span,
+.subway-arrival-direction {
     min-width: 0;
     overflow-wrap: break-word;
     word-break: keep-all;
 }
 
-.bus-arrival-time strong {
+.bus-arrival-time strong,
+.subway-arrival-time strong {
     color: var(--text);
     font-weight: 900;
+}
+
+.subway-arrival-direction {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
 }
 
 .bus-arrival-tags {

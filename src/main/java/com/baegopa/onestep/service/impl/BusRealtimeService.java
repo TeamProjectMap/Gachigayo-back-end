@@ -6,10 +6,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriBuilder;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -17,11 +20,21 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayInputStream;
+import java.io.StringReader;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import org.xml.sax.InputSource;
 
 @Slf4j
 @Service
@@ -34,9 +47,16 @@ public class BusRealtimeService implements IBusRealtimeService {
     private static final int ROUTE_SEARCH_PAGE_SIZE = 1000;
     private static final int ROUTE_SEARCH_MAX_INDEX = 50000;
     private static final int TIMEOUT_MILLIS = 5000;
+    private static final Charset LEGACY_BUS_CHARSET = Charset.forName("MS949");
+    private static final Duration ROUTE_CACHE_TTL = Duration.ofMinutes(10);
+    private static final Duration STOP_CACHE_TTL = Duration.ofMinutes(2);
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final Object routeCacheLock = new Object();
+    private final Object stopCacheLock = new Object();
+    private final Map<String, StopCacheEntry> stopCandidateCache = new ConcurrentHashMap<>();
+    private volatile RouteCacheEntry routeCacheEntry = RouteCacheEntry.empty();
 
     @Value("${public-data.api-key:}")
     private String publicDataApiKey;
@@ -58,7 +78,7 @@ public class BusRealtimeService implements IBusRealtimeService {
     }
 
     @Override
-    public BusRealtimeDTO getRealtimeArrival(String stopName, String routeName) {
+    public BusRealtimeDTO getRealtimeArrival(String stopName, String routeName, String nextStopName, String directionHint) {
         if (isBlank(seoulBusStopApiKey)) {
             return BusRealtimeDTO.unavailable("CONFIG_ERROR", "서울시 버스정류소 API 설정이 필요합니다.", stopName, routeName);
         }
@@ -72,12 +92,18 @@ public class BusRealtimeService implements IBusRealtimeService {
         }
 
         try {
+            log.debug("Bus realtime pipeline started. requestedStopName={}, requestedRouteName={}, nextStopName={}, directionHint={}",
+                    stopName, routeName, nextStopName, directionHint);
             List<StopCandidate> stopCandidates = searchStopCandidates(stopName);
+            log.debug("Bus realtime stop candidates found. requestedStopName={}, requestedRouteName={}, candidateCount={}",
+                    stopName, routeName, stopCandidates.size());
             if (stopCandidates.isEmpty()) {
                 return BusRealtimeDTO.unavailable("STOP_NOT_FOUND", "정류소를 찾지 못했습니다.", stopName, routeName);
             }
 
-            List<RouteStopMatch> matches = findRouteStopMatches(stopCandidates, routeName);
+            List<RouteStopMatch> matches = findRouteStopMatches(stopCandidates, routeName, nextStopName, directionHint);
+            log.debug("Bus realtime route-stop matches found. requestedStopName={}, requestedRouteName={}, matchCount={}",
+                    stopName, routeName, matches.size());
 
             if (matches.isEmpty()) {
                 return BusRealtimeDTO.unavailable("ROUTE_NOT_FOUND", "해당 정류소에서 노선을 찾지 못했습니다.",
@@ -92,6 +118,13 @@ public class BusRealtimeService implements IBusRealtimeService {
             RouteStopMatch match = matches.get(0);
             ArrivalItem arrival = getRouteArrival(match);
             BusRealtimeDTO result = toResult(stopName, routeName, match, arrival);
+            log.debug("Bus realtime result built. requestedStopName={}, requestedRouteName={}, availableCandidate={}, status={}, firstMessage={}, secondMessage={}",
+                    stopName,
+                    routeName,
+                    !isBlank(result.getFirstArrival().getMessage()) || !isBlank(result.getSecondArrival().getMessage()),
+                    result.getStatus(),
+                    result.getFirstArrival().getMessage(),
+                    result.getSecondArrival().getMessage());
             if (isBlank(result.getFirstArrival().getMessage()) && isBlank(result.getSecondArrival().getMessage())) {
                 return BusRealtimeDTO.unavailable("NO_ARRIVAL_INFO", "현재 도착 정보가 없습니다.", stopName, routeName);
             }
@@ -112,9 +145,29 @@ public class BusRealtimeService implements IBusRealtimeService {
         }
     }
 
-    private List<StopCandidate> searchStopCandidates(String stopName) {
-        JsonNode rootNode = restClient.get()
-                .uri(uriBuilder -> uriBuilder
+    private List<StopCandidate> searchStopCandidates(String stopName) throws Exception {
+        String cacheKey = normalizeStopName(stopName);
+        long now = System.currentTimeMillis();
+        StopCacheEntry cached = stopCandidateCache.get(cacheKey);
+        if (cached != null && cached.isFresh(now)) {
+            return cached.candidates();
+        }
+
+        synchronized (stopCacheLock) {
+            now = System.currentTimeMillis();
+            cached = stopCandidateCache.get(cacheKey);
+            if (cached != null && cached.isFresh(now)) {
+                return cached.candidates();
+            }
+
+            List<StopCandidate> candidates = List.copyOf(loadStopCandidates(stopName));
+            stopCandidateCache.put(cacheKey, new StopCacheEntry(candidates, now + STOP_CACHE_TTL.toMillis()));
+            return candidates;
+        }
+    }
+
+    private List<StopCandidate> loadStopCandidates(String stopName) throws Exception {
+        JsonNode rootNode = requestLegacyBusJson("stopSearch", uriBuilder -> uriBuilder
                         .scheme("http")
                         .host("openapi.seoul.go.kr")
                         .port(8088)
@@ -122,9 +175,7 @@ public class BusRealtimeService implements IBusRealtimeService {
                                 String.valueOf(STOP_SEARCH_START_INDEX),
                                 String.valueOf(STOP_SEARCH_END_INDEX),
                                 stopName)
-                        .build())
-                .retrieve()
-                .body(JsonNode.class);
+                        .build());
 
         JsonNode responseNode = rootNode == null ? null : rootNode.get("busStopLocationXyInfo");
         if (responseNode == null || responseNode.isMissingNode()) {
@@ -172,9 +223,146 @@ public class BusRealtimeService implements IBusRealtimeService {
         return candidates;
     }
 
-    private List<RouteStopMatch> findRouteStopMatches(List<StopCandidate> stopCandidates, String routeName) {
+    private List<RouteStopMatch> findRouteStopMatches(List<StopCandidate> stopCandidates,
+                                                      String routeName,
+                                                      String nextStopName,
+                                                      String directionHint) throws Exception {
         String normalizedRequestedRoute = normalizeRouteName(routeName);
         List<RouteStopMatch> matches = new ArrayList<>();
+
+        for (RouteInfo routeInfo : getCachedRouteInfos()) {
+            if (!normalizedRequestedRoute.equals(normalizeRouteName(routeInfo.routeName()))) {
+                continue;
+            }
+
+            for (StopCandidate stopCandidate : stopCandidates) {
+                boolean arsMatches = !isBlank(stopCandidate.arsId()) && stopCandidate.arsId().equals(routeInfo.arsId());
+                boolean nodeMatches = !isBlank(stopCandidate.stationId()) && stopCandidate.stationId().equals(routeInfo.nodeId());
+                if (!arsMatches && !nodeMatches) {
+                    continue;
+                }
+
+                matches.add(new RouteStopMatch(
+                        stopCandidate,
+                        routeInfo.routeId(),
+                        routeInfo.routeName(),
+                        routeInfo.stationOrder(),
+                        routeInfo.nodeId(),
+                        routeInfo.arsId(),
+                        routeInfo.stationName(),
+                        routeInfo.x(),
+                        routeInfo.y()
+                ));
+            }
+        }
+
+        return selectDirectionMatchedRouteStopMatches(matches, nextStopName, directionHint);
+    }
+
+    private List<RouteStopMatch> selectDirectionMatchedRouteStopMatches(List<RouteStopMatch> matches,
+                                                                        String nextStopName,
+                                                                        String directionHint) throws Exception {
+        if (matches.size() <= 1) {
+            return matches;
+        }
+
+        List<RouteStopMatch> nextStopMatches = filterByNextStop(matches, nextStopName);
+        if (!nextStopMatches.isEmpty()) {
+            log.debug("Bus realtime route-stop matches filtered by next stop. nextStopName={}, beforeCount={}, afterCount={}",
+                    nextStopName, matches.size(), nextStopMatches.size());
+            return nextStopMatches;
+        }
+
+        List<RouteStopMatch> directionHintMatches = filterByDirectionHint(matches, directionHint);
+        if (!directionHintMatches.isEmpty()) {
+            log.debug("Bus realtime route-stop matches filtered by direction hint. directionHint={}, beforeCount={}, afterCount={}",
+                    directionHint, matches.size(), directionHintMatches.size());
+            return directionHintMatches;
+        }
+
+        log.debug("Bus realtime route-stop match remains ambiguous. nextStopName={}, directionHint={}, matchCount={}",
+                nextStopName, directionHint, matches.size());
+        return matches;
+    }
+
+    private List<RouteStopMatch> filterByNextStop(List<RouteStopMatch> matches, String nextStopName) throws Exception {
+        if (isBlank(nextStopName)) {
+            return List.of();
+        }
+
+        String normalizedNextStopName = normalizeStopName(nextStopName);
+        List<RouteInfo> routeInfos = getCachedRouteInfos();
+        List<RouteStopMatch> filtered = new ArrayList<>();
+
+        for (RouteStopMatch match : matches) {
+            RouteInfo nextRouteInfo = findRouteInfoByOrder(routeInfos, match.routeId(), match.stationOrder() + 1);
+            if (nextRouteInfo == null) {
+                continue;
+            }
+
+            String normalizedRouteNextStop = normalizeStopName(nextRouteInfo.stationName());
+            if (!isBlank(normalizedRouteNextStop)
+                    && (normalizedRouteNextStop.equals(normalizedNextStopName)
+                    || normalizedRouteNextStop.contains(normalizedNextStopName)
+                    || normalizedNextStopName.contains(normalizedRouteNextStop))) {
+                filtered.add(match);
+            }
+        }
+
+        return filtered;
+    }
+
+    private List<RouteStopMatch> filterByDirectionHint(List<RouteStopMatch> matches, String directionHint) {
+        if (isBlank(directionHint)) {
+            return List.of();
+        }
+
+        String normalizedDirectionHint = normalizeStopName(directionHint);
+        List<RouteStopMatch> filtered = new ArrayList<>();
+
+        for (RouteStopMatch match : matches) {
+            String normalizedDirection = normalizeStopName(match.stationName());
+            if (!isBlank(normalizedDirection) && normalizedDirectionHint.contains(normalizedDirection)) {
+                filtered.add(match);
+            }
+        }
+
+        return filtered;
+    }
+
+    private RouteInfo findRouteInfoByOrder(List<RouteInfo> routeInfos, String routeId, int stationOrder) {
+        for (RouteInfo routeInfo : routeInfos) {
+            if (routeId.equals(routeInfo.routeId()) && routeInfo.stationOrder() == stationOrder) {
+                return routeInfo;
+            }
+        }
+
+        return null;
+    }
+
+    private List<RouteInfo> getCachedRouteInfos() throws Exception {
+        long now = System.currentTimeMillis();
+        RouteCacheEntry cached = routeCacheEntry;
+        if (cached.isFresh(now)) {
+            return cached.routes();
+        }
+
+        synchronized (routeCacheLock) {
+            now = System.currentTimeMillis();
+            cached = routeCacheEntry;
+            if (cached.isFresh(now)) {
+                return cached.routes();
+            }
+
+            List<RouteInfo> routes = List.copyOf(loadRouteInfos());
+            routeCacheEntry = new RouteCacheEntry(routes, now + ROUTE_CACHE_TTL.toMillis());
+            log.info("Seoul bus route cache loaded. routeCount={}", routes.size());
+            return routes;
+        }
+    }
+
+    private List<RouteInfo> loadRouteInfos() throws Exception {
+        List<RouteInfo> routes = new ArrayList<>();
         Integer totalCount = null;
 
         for (int startIndex = ROUTE_SEARCH_START_INDEX;
@@ -183,27 +371,24 @@ public class BusRealtimeService implements IBusRealtimeService {
             int endIndex = startIndex + ROUTE_SEARCH_PAGE_SIZE - 1;
             int currentStartIndex = startIndex;
             int currentEndIndex = endIndex;
-            JsonNode rootNode = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
+            JsonNode rootNode = requestLegacyBusJson("routeSearch", uriBuilder -> uriBuilder
                             .scheme("http")
                             .host("openapi.seoul.go.kr")
                             .port(8088)
                             .pathSegment(seoulBusRouteApiKey, "json", "busRteInfo",
                                     String.valueOf(currentStartIndex),
                                     String.valueOf(currentEndIndex))
-                            .build())
-                    .retrieve()
-                    .body(JsonNode.class);
+                            .build());
 
             JsonNode responseNode = rootNode == null ? null : rootNode.get("busRteInfo");
             if (responseNode == null || responseNode.isMissingNode()) {
-                return matches;
+                return routes;
             }
 
             String resultCode = text(responseNode.path("RESULT"), "CODE");
             if (!isBlank(resultCode) && !"INFO-000".equals(resultCode)) {
                 log.warn("Seoul bus route search returned non-ok result. status={}", resultCode);
-                return matches;
+                return routes;
             }
 
             if (totalCount == null) {
@@ -212,7 +397,7 @@ public class BusRealtimeService implements IBusRealtimeService {
 
             JsonNode rowsNode = responseNode.get("row");
             if (rowsNode == null || !rowsNode.isArray()) {
-                return matches;
+                return routes;
             }
 
             for (JsonNode rowNode : rowsNode) {
@@ -227,38 +412,32 @@ public class BusRealtimeService implements IBusRealtimeService {
                     continue;
                 }
 
-                if (!normalizedRequestedRoute.equals(normalizeRouteName(routeNameValue))) {
-                    continue;
-                }
-
-                for (StopCandidate stopCandidate : stopCandidates) {
-                    boolean arsMatches = !isBlank(stopCandidate.arsId()) && stopCandidate.arsId().equals(routeStopArsId);
-                    boolean nodeMatches = !isBlank(stopCandidate.stationId()) && stopCandidate.stationId().equals(routeStopNodeId);
-                    if (!arsMatches && !nodeMatches) {
-                        continue;
-                    }
-
-                    matches.add(new RouteStopMatch(
-                            stopCandidate,
-                            routeId,
-                            routeNameValue,
-                            parsedStationOrder,
-                            routeStopNodeId,
-                            routeStopArsId,
-                            text(rowNode, "STATION_NM"),
-                            text(rowNode, "XCRD"),
-                            text(rowNode, "YCRD")
-                    ));
-                }
+                routes.add(new RouteInfo(
+                        routeId,
+                        routeNameValue,
+                        parsedStationOrder,
+                        routeStopNodeId,
+                        routeStopArsId,
+                        text(rowNode, "STATION_NM"),
+                        text(rowNode, "XCRD"),
+                        text(rowNode, "YCRD")
+                ));
             }
         }
 
-        return matches;
+        return routes;
     }
 
     private ArrivalItem getRouteArrival(RouteStopMatch match) throws Exception {
-        String body = restClient.get()
-                .uri(uriBuilder -> uriBuilder
+        log.debug("Bus realtime getArrInfoByRoute request ready. requestedStopName={}, requestedRouteName={}, selectedStationName={}, stId={}, arsId={}, busRouteId={}, ord={}",
+                match.stop().name(),
+                match.routeName(),
+                firstNotBlank(match.stationName(), match.stop().name()),
+                match.nodeId(),
+                match.arsId(),
+                match.routeId(),
+                match.stationOrder());
+        String body = requestLegacyBusBody("arrivalByRoute", uriBuilder -> uriBuilder
                         .scheme("http")
                         .host("ws.bus.go.kr")
                         .path("/api/rest/arrive/getArrInfoByRoute")
@@ -267,9 +446,7 @@ public class BusRealtimeService implements IBusRealtimeService {
                         .queryParam("busRouteId", match.routeId())
                         .queryParam("ord", match.stationOrder())
                         .queryParam("resultType", "json")
-                        .build())
-                .retrieve()
-                .body(String.class);
+                        .build());
 
         if (isBlank(body)) {
             return ArrivalItem.empty(match);
@@ -283,14 +460,60 @@ public class BusRealtimeService implements IBusRealtimeService {
         return parseXmlRouteArrival(trimmedBody, match);
     }
 
+    private JsonNode requestLegacyBusJson(String requestName, Function<UriBuilder, URI> uriFunction) throws Exception {
+        return objectMapper.readTree(requestLegacyBusBody(requestName, uriFunction));
+    }
+
+    private String requestLegacyBusBody(String requestName, Function<UriBuilder, URI> uriFunction) throws Exception {
+        ResponseEntity<byte[]> response = restClient.get()
+                .uri(uriFunction)
+                .retrieve()
+                .toEntity(byte[].class);
+
+        byte[] bodyBytes = response.getBody() == null ? new byte[0] : response.getBody();
+        MediaType contentType = response.getHeaders().getContentType();
+        Charset declaredCharset = contentType == null ? null : contentType.getCharset();
+        DecodedBody decodedBody = decodeLegacyBusBody(bodyBytes, declaredCharset);
+
+        return decodedBody.body();
+    }
+
+    private DecodedBody decodeLegacyBusBody(byte[] bodyBytes, Charset declaredCharset) throws CharacterCodingException {
+        if (declaredCharset != null) {
+            return new DecodedBody(decodeStrict(bodyBytes, declaredCharset), declaredCharset);
+        }
+
+        if (canDecode(bodyBytes, StandardCharsets.UTF_8)) {
+            return new DecodedBody(new String(bodyBytes, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        }
+
+        return new DecodedBody(decodeStrict(bodyBytes, LEGACY_BUS_CHARSET), LEGACY_BUS_CHARSET);
+    }
+
+    private String decodeStrict(byte[] bodyBytes, Charset charset) throws CharacterCodingException {
+        CharsetDecoder decoder = charset.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+        return decoder.decode(ByteBuffer.wrap(bodyBytes)).toString();
+    }
+
+    private boolean canDecode(byte[] bodyBytes, Charset charset) {
+        try {
+            decodeStrict(bodyBytes, charset);
+            return true;
+        } catch (CharacterCodingException e) {
+            return false;
+        }
+    }
+
     private ArrivalItem parseXmlRouteArrival(String xml, RouteStopMatch match) throws Exception {
-        org.w3c.dom.Document document = createSecureDocumentBuilder().parse(
-                new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+        InputSource inputSource = new InputSource(new StringReader(xml));
+        org.w3c.dom.Document document = createSecureDocumentBuilder().parse(inputSource);
         org.w3c.dom.Element root = document.getDocumentElement();
 
         String headerCode = firstText(root, "headerCd");
+        String headerMessage = firstNotBlank(firstText(root, "headerMsg"), firstText(root, "returnAuthMsg"));
         if (!isBlank(headerCode) && !"0".equals(headerCode)) {
-            String headerMessage = firstNotBlank(firstText(root, "headerMsg"), firstText(root, "returnAuthMsg"));
             log.warn("Seoul bus arrival returned non-ok header. status={}", headerCode);
             if (isRealtimeKeyScopeError(headerCode, headerMessage)) {
                 throw new BusRealtimeKeyScopeException("BUS_REALTIME_KEY_SCOPE_ERROR");
@@ -300,8 +523,18 @@ public class BusRealtimeService implements IBusRealtimeService {
 
         org.w3c.dom.NodeList itemNodes = root.getElementsByTagName("itemList");
         if (itemNodes.getLength() == 0 || !(itemNodes.item(0) instanceof org.w3c.dom.Element itemElement)) {
+            log.debug("Seoul bus arrival response parsed. headerCd={}, headerMsg={}, arrmsg1={}, arrmsg2={}, busType1={}, busType2={}",
+                    headerCode, headerMessage, null, null, null, null);
             return ArrivalItem.empty(match);
         }
+
+        log.debug("Seoul bus arrival response parsed. headerCd={}, headerMsg={}, arrmsg1={}, arrmsg2={}, busType1={}, busType2={}",
+                headerCode,
+                headerMessage,
+                firstText(itemElement, "arrmsg1"),
+                firstText(itemElement, "arrmsg2"),
+                firstText(itemElement, "busType1"),
+                firstText(itemElement, "busType2"));
 
         return new ArrivalItem(
                 firstNotBlank(firstText(itemElement, "stId"), match.nodeId()),
@@ -328,8 +561,8 @@ public class BusRealtimeService implements IBusRealtimeService {
         JsonNode rootNode = objectMapper.readTree(json);
         JsonNode headerNode = firstExisting(rootNode, "msgHeader", "comMsgHeader");
         String headerCode = text(headerNode, "headerCd");
+        String headerMessage = firstNotBlank(text(headerNode, "headerMsg"), text(headerNode, "returnAuthMsg"));
         if (!isBlank(headerCode) && !"0".equals(headerCode)) {
-            String headerMessage = firstNotBlank(text(headerNode, "headerMsg"), text(headerNode, "returnAuthMsg"));
             log.warn("Seoul bus arrival returned non-ok header. status={}", headerCode);
             if (isRealtimeKeyScopeError(headerCode, headerMessage)) {
                 throw new BusRealtimeKeyScopeException("BUS_REALTIME_KEY_SCOPE_ERROR");
@@ -339,8 +572,18 @@ public class BusRealtimeService implements IBusRealtimeService {
 
         JsonNode itemNode = firstItemList(rootNode);
         if (itemNode == null || itemNode.isMissingNode() || itemNode.isNull()) {
+            log.debug("Seoul bus arrival response parsed. headerCd={}, headerMsg={}, arrmsg1={}, arrmsg2={}, busType1={}, busType2={}",
+                    headerCode, headerMessage, null, null, null, null);
             return ArrivalItem.empty(match);
         }
+
+        log.debug("Seoul bus arrival response parsed. headerCd={}, headerMsg={}, arrmsg1={}, arrmsg2={}, busType1={}, busType2={}",
+                headerCode,
+                headerMessage,
+                text(itemNode, "arrmsg1"),
+                text(itemNode, "arrmsg2"),
+                text(itemNode, "busType1"),
+                text(itemNode, "busType2"));
 
         return new ArrivalItem(
                 firstNotBlank(text(itemNode, "stId"), match.nodeId()),
@@ -565,6 +808,37 @@ public class BusRealtimeService implements IBusRealtimeService {
             String x,
             String y
     ) {
+    }
+
+    private record RouteInfo(
+            String routeId,
+            String routeName,
+            Integer stationOrder,
+            String nodeId,
+            String arsId,
+            String stationName,
+            String x,
+            String y
+    ) {
+    }
+
+    private record RouteCacheEntry(List<RouteInfo> routes, long expiresAtMillis) {
+        private static RouteCacheEntry empty() {
+            return new RouteCacheEntry(List.of(), 0);
+        }
+
+        private boolean isFresh(long nowMillis) {
+            return expiresAtMillis > nowMillis;
+        }
+    }
+
+    private record StopCacheEntry(List<StopCandidate> candidates, long expiresAtMillis) {
+        private boolean isFresh(long nowMillis) {
+            return expiresAtMillis > nowMillis;
+        }
+    }
+
+    private record DecodedBody(String body, Charset charset) {
     }
 
     @Getter
