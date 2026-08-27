@@ -18,6 +18,7 @@
     var busRealtimeCache = {};
     var subwayRealtimeCache = {};
     var currentScoreContext = null;
+    var isSavingSelectedRoute = false;
 
     $(function () {
         checkSession();
@@ -31,10 +32,18 @@
         });
 
         $("#guideButton").on("click", function () {
+            if (isSavingSelectedRoute) {
+                return;
+            }
+
             saveSelectedRoute();
         });
 
         $("#routeList").on("click", ".route-card", function () {
+            if (isSavingSelectedRoute) {
+                return;
+            }
+
             var mode = $(this).data("mode");
 
             if (mode === "PUBLIC_TRANSIT") {
@@ -387,7 +396,7 @@
 
         if (!routeSearchResult.publicTransit || !routeSearchResult.publicTransit.available || !publicTransitCandidates.length) {
             selectedRoute = null;
-            $("#guideButton").prop("disabled", true);
+            updateGuideButton(false);
             $list.append($("<div>").addClass("empty-card").text("이 목적지까지 이용 가능한 대중교통 경로를 찾지 못했습니다."));
             return;
         }
@@ -401,7 +410,7 @@
             route: publicTransitCandidates[selectedPublicRouteIndex].route,
             selectionLabel: publicTransitCandidates[selectedPublicRouteIndex].selectionLabel
         };
-        $("#guideButton").prop("disabled", false);
+        updateGuideButton(true);
 
         $.each(publicTransitCandidates, function (index, candidate) {
             var route = candidate.route;
@@ -436,7 +445,7 @@
 
         if (!routeSearchResult.walking || !routeSearchResult.walking.available) {
             selectedRoute = null;
-            $("#guideButton").prop("disabled", true);
+            updateGuideButton(false);
             $list.append($("<div>").addClass("empty-card").text("이 목적지까지 이용 가능한 도보 경로를 찾지 못했습니다."));
             return;
         }
@@ -445,7 +454,7 @@
             mode: "WALKING",
             route: routeSearchResult.walking
         };
-        $("#guideButton").prop("disabled", false);
+        updateGuideButton(true);
 
         var walking = routeSearchResult.walking;
         var $card = $("<button>")
@@ -1166,13 +1175,127 @@
             return;
         }
 
-        sessionStorage.setItem("selectedRoute", JSON.stringify({
-            mode: selectedRoute.mode,
-            selectedAt: Date.now(),
-            route: selectedRoute.route,
-            selectionLabel: selectedRoute.selectionLabel
-        }));
+        isSavingSelectedRoute = true;
+        updateGuideButton(false);
+
+        var finalizedRoute = buildFinalSelectedRoute(selectedRoute);
+
+        try {
+            sessionStorage.setItem("selectedRoute", JSON.stringify(finalizedRoute));
+
+            if (!isSelectedRouteSaved(finalizedRoute)) {
+                throw new Error("selectedRoute save verification failed");
+            }
+        } catch (e) {
+            isSavingSelectedRoute = false;
+            updateGuideButton(true);
+            setMessage("?좏깮??寃쎈줈瑜 ??ν븯吏 紐삵뻽?듬땲??");
+            return;
+        }
         setMessage("경로를 선택했습니다.");
+        showSelectedRouteFeedback();
+    }
+
+    function showSelectedRouteFeedback() {
+        markSelectedRouteCard();
+        updateGuideButton(true);
+        setMessage("경로가 선택되었습니다.");
+    }
+
+    function markSelectedRouteCard() {
+        var $cards = $("#routeList .route-card");
+
+        if (selectedRoute.mode === "PUBLIC_TRANSIT") {
+            $cards.removeClass("selected");
+            $cards.filter(function () {
+                return $(this).data("mode") === "PUBLIC_TRANSIT"
+                        && Number($(this).data("route-index")) === selectedPublicRouteIndex;
+            }).addClass("selected");
+            return;
+        }
+
+        if (selectedRoute.mode === "WALKING") {
+            $cards.removeClass("selected");
+            $cards.filter(function () {
+                return $(this).data("mode") === "WALKING";
+            }).addClass("selected");
+        }
+    }
+
+    function updateGuideButton(isRouteAvailable) {
+        $("#guideButton")
+                .prop("disabled", !isRouteAvailable || isSavingSelectedRoute)
+                .text(isSavingSelectedRoute ? "선택 완료" : "안내하기");
+    }
+
+    function buildFinalSelectedRoute(selection) {
+        var route = selection.route || {};
+        var routeType = route.type || selection.mode;
+
+        return {
+            mode: selection.mode,
+            type: routeType,
+            selectedAt: Date.now(),
+            selectionLabel: selection.selectionLabel || "",
+            navigationReady: true,
+            nextPath: "/navigation.html",
+            origin: normalizeOrigin(currentOrigin),
+            destination: normalizeSelectedDestination(selectedDestination),
+            route: normalizeRouteForNavigation(route, routeType)
+        };
+    }
+
+    function normalizeRouteForNavigation(route, routeType) {
+        return {
+            type: routeType,
+            totalTime: safeNumber(route.totalTime),
+            totalDistance: safeNumber(route.totalDistance),
+            transfers: safeNumber(route.transfers),
+            fare: safeNumber(route.fare),
+            steps: getValidSteps(route).map(function (step) {
+                return {
+                    type: step.type || routeType || "WALKING",
+                    guidance: step.guidance || "",
+                    distance: safeNumber(step.distance),
+                    time: safeNumber(step.time),
+                    stops: Array.isArray(step.stops) ? step.stops.slice() : [],
+                    vehicles: Array.isArray(step.vehicles) ? step.vehicles.slice() : []
+                };
+            })
+        };
+    }
+
+    function normalizeOrigin(origin) {
+        return {
+            latitude: origin && origin.latitude != null ? origin.latitude : null,
+            longitude: origin && origin.longitude != null ? origin.longitude : null,
+            accuracy: origin && origin.accuracy != null ? origin.accuracy : null,
+            capturedAt: origin && origin.capturedAt != null ? origin.capturedAt : null
+        };
+    }
+
+    function normalizeSelectedDestination(destination) {
+        return {
+            id: destination && destination.id || "",
+            placeName: destination && destination.placeName || "",
+            categoryName: destination && destination.categoryName || "",
+            addressName: destination && destination.addressName || "",
+            roadAddressName: destination && destination.roadAddressName || "",
+            longitude: destination && destination.longitude || "",
+            latitude: destination && destination.latitude || "",
+            phone: destination && destination.phone || "",
+            placeUrl: destination && destination.placeUrl || ""
+        };
+    }
+
+    function isSelectedRouteSaved(expectedRoute) {
+        var savedRoute = readJson("selectedRoute");
+
+        return !!savedRoute
+                && savedRoute.selectedAt === expectedRoute.selectedAt
+                && savedRoute.type === expectedRoute.type
+                && !!savedRoute.route
+                && Array.isArray(savedRoute.route.steps);
     }
 
     function readJson(key) {
