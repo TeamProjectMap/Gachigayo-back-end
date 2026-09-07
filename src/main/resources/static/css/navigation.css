@@ -1,0 +1,391 @@
+:root {
+    --main: #018B38;
+    --text: #363636;
+    --secondary-text: #8D8D8D;
+    --border: #E5E5E5;
+    --gray: #C8C8C8;
+    --map-gray: #D9D9D9;
+    --danger: #FF3737;
+    --blue: #0463F5;
+    --bus: #3E950A;
+    --subway: #794698;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: #F5F5F5;
+    color: var(--text);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+button {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.navigation-page {
+    position: relative;
+    width: 100%;
+    max-width: 402px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    overflow: hidden;
+    background: #FFFFFF;
+}
+
+.navigation-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 119px;
+    padding: 44px 29px 18px;
+    background: #FFFFFF;
+}
+
+.back-button {
+    display: inline-flex;
+    width: 16px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: #111111;
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.navigation-header h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0;
+}
+
+.route-card {
+    position: relative;
+    z-index: 2;
+    width: calc(100% - 38px);
+    min-height: 113px;
+    margin: 0 19px -11px;
+    padding: 16px 20px 20px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: #FFFFFF;
+}
+
+.point-row {
+    display: grid;
+    grid-template-columns: 33px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.point-row + .point-row {
+    margin-top: 13px;
+}
+
+.point-row span {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.origin-label {
+    color: var(--main);
+}
+
+.destination-label {
+    color: var(--blue);
+}
+
+.point-row strong {
+    min-width: 0;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progress-track {
+    width: 100%;
+    height: 6px;
+    margin-top: 17px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--map-gray);
+}
+
+.progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 10px;
+    background: var(--main);
+    transition: width 160ms ease;
+}
+
+.navigation-map {
+    position: relative;
+    width: 100%;
+    height: 421px;
+    min-height: 300px;
+    overflow: hidden;
+    background: var(--map-gray);
+}
+
+.navigation-map-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.map-fallback {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--map-gray);
+    color: var(--secondary-text);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.navigation-map.map-ready .map-fallback {
+    display: none;
+}
+
+.my-location-button {
+    position: absolute;
+    z-index: 4;
+    right: 14px;
+    bottom: 44px;
+    display: none;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(54, 54, 54, 0.16);
+    border-radius: 50%;
+    background: #FFFFFF;
+    color: var(--main);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.my-location-button.is-following {
+    border-color: var(--main);
+    background: var(--main);
+    color: #FFFFFF;
+}
+
+.navigation-map.map-ready .my-location-button {
+    display: inline-flex;
+}
+
+.guide-card {
+    position: relative;
+    z-index: 3;
+    width: calc(100% - 26px);
+    min-height: 170px;
+    margin: -21px 13px 0;
+    padding: 37px 2px 11px;
+    border-radius: 15px;
+    background: #FFFFFF;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.guide-main {
+    display: grid;
+    grid-template-columns: 126px minmax(0, 1fr);
+    align-items: center;
+    min-height: 72px;
+}
+
+.transport-visual {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    color: var(--main);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.transport-visual.bus {
+    color: var(--bus);
+}
+
+.transport-visual.subway {
+    color: var(--subway);
+}
+
+.transport-visual.walking {
+    color: var(--secondary-text);
+}
+
+.transport-visual.arrival {
+    color: var(--main);
+}
+
+.transport-visual span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.guide-copy {
+    min-width: 0;
+    padding-right: 14px;
+}
+
+.guide-copy h2 {
+    margin: 0;
+    color: #000000;
+    font-size: 23px;
+    font-weight: 500;
+    line-height: 1.22;
+    letter-spacing: 0;
+    overflow-wrap: break-word;
+    word-break: keep-all;
+}
+
+.guide-copy p {
+    margin: 7px 0 0;
+    color: var(--secondary-text);
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+    word-break: keep-all;
+}
+
+.guide-copy p strong {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.step-fallback {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(1, 139, 56, 0.18);
+    border-radius: 8px;
+    background: rgba(1, 139, 56, 0.06);
+}
+
+.step-fallback span {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.step-fallback button {
+    width: fit-content;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    background: var(--main);
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.guide-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 157px) minmax(0, 1fr);
+    gap: 7px;
+    margin-top: 26px;
+}
+
+.guide-actions button {
+    min-width: 0;
+    height: 45px;
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.help-button {
+    background: var(--danger);
+    color: #FFFFFF;
+}
+
+.replay-button {
+    border: 1px solid var(--gray);
+    background: #FFFFFF;
+    color: var(--text);
+}
+
+.empty-panel {
+    position: absolute;
+    z-index: 4;
+    left: 19px;
+    right: 19px;
+    top: 119px;
+    padding: 28px 20px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: #FFFFFF;
+    text-align: center;
+}
+
+.empty-panel h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.empty-panel button {
+    width: 100%;
+    height: 45px;
+    margin-top: 22px;
+    border-radius: 30px;
+    background: var(--main);
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+@media (max-height: 760px) {
+    .navigation-map {
+        height: 340px;
+    }
+}
+
+@media (max-width: 402px) {
+    body {
+        background: #FFFFFF;
+    }
+}

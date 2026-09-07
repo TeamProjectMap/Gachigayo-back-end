@@ -151,7 +151,6 @@ button {
 }
 
 .route-card.recommended {
-    border-color: var(--green);
     background: #FFFFFF;
 }
 
@@ -304,8 +303,10 @@ button {
 }
 
 .bus-arrival-time strong,
-.subway-arrival-time strong {
-    color: var(--text);
+.bus-arrival-time span,
+.subway-arrival-time strong,
+.subway-arrival-time span {
+    color: #FF3737;
     font-weight: 900;
 }
 
