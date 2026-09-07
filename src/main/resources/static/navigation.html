@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 길안내</title>
+    <link rel="stylesheet" href="/css/navigation.css">
+</head>
+<body>
+<main class="navigation-page hidden" id="navigationPage">
+    <header class="navigation-header">
+        <button type="button" class="back-button" id="backButton" aria-label="경로 비교로 돌아가기">&lt;</button>
+        <h1>길안내</h1>
+    </header>
+
+    <section class="route-card" id="routeSummaryCard" aria-label="출발지와 도착지">
+        <div class="point-row">
+            <span class="origin-label">출발</span>
+            <strong id="originName">현재 위치</strong>
+        </div>
+        <div class="point-row">
+            <span class="destination-label">도착</span>
+            <strong id="destinationName">목적지</strong>
+        </div>
+        <div class="progress-track" aria-label="길안내 진행률">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </section>
+
+    <section class="navigation-map" id="navigationMap" aria-label="지도">
+        <div class="map-fallback">지도를 불러오는 중입니다.</div>
+    </section>
+
+    <section class="guide-card" id="guideCard" aria-label="현재 안내">
+        <div class="guide-main">
+            <div class="transport-visual" id="transportVisual" aria-hidden="true">
+                <span id="transportText">-</span>
+            </div>
+            <div class="guide-copy">
+                <h2 id="guideTitle">안내를 불러오는 중입니다.</h2>
+                <p id="guideSubtitle"></p>
+                <div class="step-fallback hidden" id="stepFallback">
+                    <span>위치를 정확히 확인하기 어려워요.</span>
+                    <button type="button" id="nextStepFallbackButton">다음 안내로 이동</button>
+                </div>
+            </div>
+        </div>
+        <div class="guide-actions">
+            <button type="button" class="help-button" id="helpButton">도움이 필요해요</button>
+            <button type="button" class="replay-button" id="replayButton">안내 다시 듣기</button>
+        </div>
+    </section>
+
+    <section class="empty-panel hidden" id="emptyPanel" aria-label="선택한 경로 없음">
+        <h2>선택한 경로가 없습니다.</h2>
+        <button type="button" id="compareButton">경로 다시 선택하기</button>
+    </section>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/navigation.js"></script>
+</body>
+</html>

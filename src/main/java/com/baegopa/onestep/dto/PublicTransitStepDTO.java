@@ -14,6 +14,15 @@ public class PublicTransitStepDTO {
     private String guidance;
     private Integer distance;
     private Integer time;
+    private List<PathPointDTO> pathPoints = new ArrayList<>();
     private List<String> stops = new ArrayList<>();
     private List<TransitVehicleDTO> vehicles = new ArrayList<>();
+
+    @Getter
+    @Setter
+    public static class PathPointDTO {
+
+        private Double longitude;
+        private Double latitude;
+    }
 }

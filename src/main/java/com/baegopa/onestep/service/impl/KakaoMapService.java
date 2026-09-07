@@ -197,6 +197,7 @@ public class KakaoMapService implements IKakaoMapService {
             stepDTO.setType(getPublicTransitStepType(propertiesNode));
             stepDTO.setDistance(integer(propertiesNode, "distance"));
             stepDTO.setTime(integer(propertiesNode, "time"));
+            stepDTO.setPathPoints(toPublicTransitPathPoints(stepNode.path("path").path("points")));
 
             JsonNode stopsNode = propertiesNode.path("stops");
             if (stopsNode.isArray()) {
@@ -271,9 +272,70 @@ public class KakaoMapService implements IKakaoMapService {
                     stepDTO.setTime(integer(propertiesNode, "time"));
                     stepDTO.setLongitude(decimal(propertiesNode, "x"));
                     stepDTO.setLatitude(decimal(propertiesNode, "y"));
+                    stepDTO.setPathPoints(toWalkingPathPoints(stepNode.path("path").path("points")));
 
                     return stepDTO;
                 }).toList();
+    }
+
+    private List<PublicTransitStepDTO.PathPointDTO> toPublicTransitPathPoints(JsonNode pointsNode) {
+        if (!pointsNode.isArray()) {
+            return Collections.emptyList();
+        }
+
+        return toStream(pointsNode)
+                .map(this::toPublicTransitPathPoint)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private PublicTransitStepDTO.PathPointDTO toPublicTransitPathPoint(JsonNode pointNode) {
+        if (!isValidPathPointNode(pointNode)) {
+            return null;
+        }
+
+        PublicTransitStepDTO.PathPointDTO pointDTO = new PublicTransitStepDTO.PathPointDTO();
+        pointDTO.setLongitude(pointNode.get(0).asDouble());
+        pointDTO.setLatitude(pointNode.get(1).asDouble());
+
+        return pointDTO;
+    }
+
+    private List<WalkingStepDTO.PathPointDTO> toWalkingPathPoints(JsonNode pointsNode) {
+        if (!pointsNode.isArray()) {
+            return Collections.emptyList();
+        }
+
+        return toStream(pointsNode)
+                .map(this::toWalkingPathPoint)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private WalkingStepDTO.PathPointDTO toWalkingPathPoint(JsonNode pointNode) {
+        if (!isValidPathPointNode(pointNode)) {
+            return null;
+        }
+
+        WalkingStepDTO.PathPointDTO pointDTO = new WalkingStepDTO.PathPointDTO();
+        pointDTO.setLongitude(pointNode.get(0).asDouble());
+        pointDTO.setLatitude(pointNode.get(1).asDouble());
+
+        return pointDTO;
+    }
+
+    private boolean isValidPathPointNode(JsonNode pointNode) {
+        if (pointNode == null || !pointNode.isArray() || pointNode.size() < 2
+                || !pointNode.get(0).isNumber() || !pointNode.get(1).isNumber()) {
+            return false;
+        }
+
+        double longitude = pointNode.get(0).asDouble();
+        double latitude = pointNode.get(1).asDouble();
+
+        return Double.isFinite(longitude) && Double.isFinite(latitude)
+                && longitude >= -180 && longitude <= 180
+                && latitude >= -90 && latitude <= 90;
     }
 
     private String getPublicTransitMessage(String status) {

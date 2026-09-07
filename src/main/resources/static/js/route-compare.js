@@ -7,6 +7,7 @@
         TOTAL_TIME_WEIGHT: 0.10,
         NEUTRAL_FAMILIARITY_SCORE: 50
     };
+    var NAVIGATION_PROGRESS_KEY = "navigationProgress";
 
     var selectedDestination = null;
     var currentOrigin = null;
@@ -45,6 +46,7 @@
             }
 
             var mode = $(this).data("mode");
+            setMessage("");
 
             if (mode === "PUBLIC_TRANSIT") {
                 selectedPublicRouteIndex = Number($(this).data("route-index"));
@@ -53,16 +55,17 @@
                     route: publicTransitCandidates[selectedPublicRouteIndex].route,
                     selectionLabel: publicTransitCandidates[selectedPublicRouteIndex].selectionLabel
                 };
-                renderPublicTransit();
+                markSelectedRouteCard();
                 return;
             }
 
             if (mode === "WALKING") {
+                selectedPublicRouteIndex = null;
                 selectedRoute = {
                     mode: "WALKING",
                     route: routeSearchResult.walking
                 };
-                renderWalking();
+                markSelectedRouteCard();
             }
         });
     });
@@ -368,7 +371,7 @@
             getValidSteps(route).map(function (step) {
                 return [
                     step.type || "",
-                    getVehicleName(step),
+                    getRouteSignatureVehicleName(step),
                     getStopsText(step.stops || []),
                     safeNumber(step.time)
                 ].join(":");
@@ -377,6 +380,11 @@
     }
 
     function selectTab(tabName) {
+        if (activeTab !== tabName) {
+            selectedRoute = null;
+            selectedPublicRouteIndex = null;
+        }
+
         activeTab = tabName;
         $(".route-tab").removeClass("active").attr("aria-selected", "false");
         $('.route-tab[data-tab="' + tabName + '"]').addClass("active").attr("aria-selected", "true");
@@ -401,15 +409,6 @@
             return;
         }
 
-        if (selectedPublicRouteIndex === null || !publicTransitCandidates[selectedPublicRouteIndex]) {
-            selectedPublicRouteIndex = 0;
-        }
-
-        selectedRoute = {
-            mode: "PUBLIC_TRANSIT",
-            route: publicTransitCandidates[selectedPublicRouteIndex].route,
-            selectionLabel: publicTransitCandidates[selectedPublicRouteIndex].selectionLabel
-        };
         updateGuideButton(true);
 
         $.each(publicTransitCandidates, function (index, candidate) {
@@ -419,7 +418,8 @@
                     .attr("type", "button")
                     .addClass("route-card")
                     .toggleClass("recommended", isRecommended)
-                    .toggleClass("selected", index === selectedPublicRouteIndex)
+                    .toggleClass("selected", selectedRoute && selectedRoute.mode === "PUBLIC_TRANSIT"
+                            && index === selectedPublicRouteIndex)
                     .data("mode", "PUBLIC_TRANSIT")
                     .data("route-index", index);
 
@@ -450,16 +450,13 @@
             return;
         }
 
-        selectedRoute = {
-            mode: "WALKING",
-            route: routeSearchResult.walking
-        };
         updateGuideButton(true);
 
         var walking = routeSearchResult.walking;
         var $card = $("<button>")
                 .attr("type", "button")
-                .addClass("route-card selected")
+                .addClass("route-card")
+                .toggleClass("selected", selectedRoute && selectedRoute.mode === "WALKING")
                 .data("mode", "WALKING");
 
         $card.append($("<span>").addClass("route-card-label").text("걸어서 이동해요"));
@@ -531,18 +528,21 @@
     function createTransitDetails(steps) {
         var $list = $("<ul>").addClass("route-detail-list");
         var detailCount = 0;
-        var firstTransitIndex = getFirstTransitStepIndex(steps);
 
-        $.each(steps, function (stepIndex, step) {
+        $.each(steps, function (_, step) {
             if (detailCount >= 3) {
                 return false;
+            }
+
+            if (isWalkingStep(step)) {
+                return;
             }
 
             var text = createStepText(step);
             if (text) {
                 var $item = $("<li>").append($("<span>").addClass("step-main").text(text));
 
-                if (stepIndex === firstTransitIndex && isBusStep(step)) {
+                if (isBusStep(step)) {
                     var stopName = getBoardingStopName(step);
                     var routeName = getBoardingRouteName(step);
 
@@ -553,7 +553,7 @@
                     }
                 }
 
-                if (stepIndex === firstTransitIndex && isSubwayStep(step)) {
+                if (isSubwayStep(step)) {
                     var subwayTarget = getBoardingSubwayTargetFromStep(step);
 
                     if (subwayTarget) {
@@ -568,6 +568,10 @@
                 detailCount++;
             }
         });
+
+        if (!detailCount) {
+            $list.append($("<li>").text("도보 이동 포함"));
+        }
 
         return $list;
     }
@@ -621,15 +625,31 @@
             }
         }
 
-        return step.guidance || "";
+        return "";
+    }
+
+    function getRouteSignatureVehicleName(step) {
+        return getVehicleName(step) || step.guidance || "";
     }
 
     function getStopsText(stops) {
-        if (!Array.isArray(stops) || stops.length < 2) {
+        var normalizedStops = getNormalizedStops(stops);
+
+        if (normalizedStops.length < 2) {
             return "";
         }
 
-        return String(stops[0]) + " -> " + String(stops[stops.length - 1]);
+        return normalizedStops[0] + " -> " + normalizedStops[normalizedStops.length - 1];
+    }
+
+    function getNormalizedStops(stops) {
+        return Array.isArray(stops)
+                ? stops.map(function (stop) {
+                    return $.trim(String(stop || ""));
+                }).filter(function (stop) {
+                    return !!stop;
+                })
+                : [];
     }
 
     function getTransitTypeName(type) {
@@ -663,12 +683,6 @@
             return;
         }
 
-        console.info("[route-compare] /bus/realtime request", {
-            stopName: target.stopName,
-            routeName: target.routeName,
-            nextStopName: target.nextStopName
-        });
-
         busRealtimeCache[cacheKey] = $.ajax({
             url: "/bus/realtime",
             method: "GET",
@@ -682,19 +696,8 @@
         });
 
         busRealtimeCache[cacheKey].done(function (json) {
-            console.info("[route-compare] /bus/realtime response", {
-                stopName: target.stopName,
-                routeName: target.routeName,
-                success: json && json.success,
-                available: json && json.available,
-                status: json && json.status
-            });
             updateBusArrivalSlots(cacheKey, json);
         }).fail(function () {
-            console.info("[route-compare] /bus/realtime failed", {
-                stopName: target.stopName,
-                routeName: target.routeName
-            });
             hideBusArrivalSlots(cacheKey);
         });
     }
@@ -716,11 +719,6 @@
             return;
         }
 
-        console.info("[route-compare] /subway/realtime request", {
-            stationName: target.stationName,
-            lineName: target.lineName
-        });
-
         subwayRealtimeCache[cacheKey] = $.ajax({
             url: "/subway/realtime",
             method: "GET",
@@ -732,26 +730,14 @@
         });
 
         subwayRealtimeCache[cacheKey].done(function (json) {
-            console.info("[route-compare] /subway/realtime response", {
-                stationName: target.stationName,
-                lineName: target.lineName,
-                success: json && json.success,
-                available: json && json.available,
-                status: json && json.status,
-                subwayId: json && json.subwayId
-            });
             updateSubwayArrivalSlots(cacheKey, json);
         }).fail(function () {
-            console.info("[route-compare] /subway/realtime failed", {
-                stationName: target.stationName,
-                lineName: target.lineName
-            });
             hideSubwayArrivalSlots(cacheKey);
         });
     }
 
     function getFirstBoardingBusTarget(route) {
-        var firstTransitStep = getFirstTransitStep(route);
+        var firstTransitStep = getFirstBusStep(route);
 
         if (!firstTransitStep || !isBusStep(firstTransitStep)) {
             return null;
@@ -774,7 +760,7 @@
     }
 
     function getFirstBoardingSubwayTarget(route) {
-        var firstTransitStep = getFirstTransitStep(route);
+        var firstTransitStep = getFirstSubwayStep(route);
 
         if (!firstTransitStep || !isSubwayStep(firstTransitStep)) {
             return null;
@@ -813,6 +799,18 @@
         return index >= 0 ? steps[index] : null;
     }
 
+    function getFirstBusStep(route) {
+        return getValidSteps(route).find(function (step) {
+            return isBusStep(step);
+        }) || null;
+    }
+
+    function getFirstSubwayStep(route) {
+        return getValidSteps(route).find(function (step) {
+            return isSubwayStep(step);
+        }) || null;
+    }
+
     function getFirstTransitStepIndex(steps) {
         if (!Array.isArray(steps)) {
             return -1;
@@ -834,11 +832,15 @@
     }
 
     function getBoardingStopName(step) {
-        return Array.isArray(step.stops) && step.stops.length ? String(step.stops[0]) : "";
+        var stops = getNormalizedStops(step && step.stops);
+
+        return stops.length ? stops[0] : "";
     }
 
     function getNextStopName(step) {
-        return Array.isArray(step.stops) && step.stops.length > 1 ? String(step.stops[1]) : "";
+        var stops = getNormalizedStops(step && step.stops);
+
+        return stops.length > 1 ? stops[1] : "";
     }
 
     function getBoardingRouteName(step) {
@@ -1171,7 +1173,7 @@
 
     function saveSelectedRoute() {
         if (!selectedRoute) {
-            setMessage("선택한 경로가 없습니다.");
+            setMessage("경로를 선택해주세요.");
             return;
         }
 
@@ -1182,6 +1184,7 @@
 
         try {
             sessionStorage.setItem("selectedRoute", JSON.stringify(finalizedRoute));
+            resetNavigationProgress(finalizedRoute);
 
             if (!isSelectedRouteSaved(finalizedRoute)) {
                 throw new Error("selectedRoute save verification failed");
@@ -1189,17 +1192,16 @@
         } catch (e) {
             isSavingSelectedRoute = false;
             updateGuideButton(true);
-            setMessage("?좏깮??寃쎈줈瑜 ??ν븯吏 紐삵뻽?듬땲??");
+            setMessage("선택한 경로를 저장하지 못했습니다.");
             return;
         }
-        setMessage("경로를 선택했습니다.");
-        showSelectedRouteFeedback();
+        window.location.href = finalizedRoute.nextPath || "/navigation.html";
     }
 
     function showSelectedRouteFeedback() {
         markSelectedRouteCard();
         updateGuideButton(true);
-        setMessage("경로가 선택되었습니다.");
+        setMessage("");
     }
 
     function markSelectedRouteCard() {
@@ -1225,7 +1227,7 @@
     function updateGuideButton(isRouteAvailable) {
         $("#guideButton")
                 .prop("disabled", !isRouteAvailable || isSavingSelectedRoute)
-                .text(isSavingSelectedRoute ? "선택 완료" : "안내하기");
+                .text("안내하기");
     }
 
     function buildFinalSelectedRoute(selection) {
@@ -1252,12 +1254,17 @@
             totalDistance: safeNumber(route.totalDistance),
             transfers: safeNumber(route.transfers),
             fare: safeNumber(route.fare),
+            geometry: normalizeGeometry(route.geometry || route.coordinates || route.vertexes),
             steps: getValidSteps(route).map(function (step) {
                 return {
                     type: step.type || routeType || "WALKING",
                     guidance: step.guidance || "",
                     distance: safeNumber(step.distance),
                     time: safeNumber(step.time),
+                    longitude: step.longitude != null ? step.longitude : null,
+                    latitude: step.latitude != null ? step.latitude : null,
+                    pathPoints: normalizePathPoints(step.pathPoints || step.path && step.path.points),
+                    geometry: normalizeGeometry(step.geometry || step.coordinates || step.vertexes),
                     stops: Array.isArray(step.stops) ? step.stops.slice() : [],
                     vehicles: Array.isArray(step.vehicles) ? step.vehicles.slice() : []
                 };
@@ -1265,8 +1272,64 @@
         };
     }
 
+    function normalizePathPoints(source) {
+        return normalizeGeometry(source);
+    }
+
+    function normalizeGeometry(source) {
+        if (!Array.isArray(source)) {
+            return [];
+        }
+
+        return source.reduce(function (result, item) {
+            var coordinate = normalizeGeometryCoordinate(item);
+            if (coordinate) {
+                result.push(coordinate);
+                return result;
+            }
+
+            return result.concat(normalizeGeometry(item));
+        }, []);
+    }
+
+    function normalizeGeometryCoordinate(item) {
+        if (Array.isArray(item) && item.length >= 2) {
+            return normalizeCoordinatePair(item[1], item[0]);
+        }
+
+        if (item && typeof item === "object") {
+            return normalizeCoordinatePair(
+                    item.latitude != null ? item.latitude : item.lat,
+                    item.longitude != null ? item.longitude : item.lng
+            );
+        }
+
+        return null;
+    }
+
+    function normalizeCoordinatePair(latitudeSource, longitudeSource) {
+        var latitude = Number(latitudeSource);
+        var longitude = Number(longitudeSource);
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            return null;
+        }
+
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            return null;
+        }
+
+        return {
+            latitude: latitude,
+            longitude: longitude
+        };
+    }
+
     function normalizeOrigin(origin) {
         return {
+            placeName: origin && origin.placeName || origin && origin.name || "",
+            addressName: origin && origin.addressName || "",
+            roadAddressName: origin && origin.roadAddressName || "",
             latitude: origin && origin.latitude != null ? origin.latitude : null,
             longitude: origin && origin.longitude != null ? origin.longitude : null,
             accuracy: origin && origin.accuracy != null ? origin.accuracy : null,
@@ -1296,6 +1359,37 @@
                 && savedRoute.type === expectedRoute.type
                 && !!savedRoute.route
                 && Array.isArray(savedRoute.route.steps);
+    }
+
+    function resetNavigationProgress(route) {
+        var routeKey = getNavigationProgressRouteKey(route);
+
+        try {
+            sessionStorage.setItem(NAVIGATION_PROGRESS_KEY, JSON.stringify({
+                routeKey: routeKey,
+                selectedRouteId: routeKey,
+                currentStepIndex: 0,
+                completed: false,
+                updatedAt: Date.now()
+            }));
+        } catch (e) {
+            sessionStorage.removeItem(NAVIGATION_PROGRESS_KEY);
+        }
+    }
+
+    function getNavigationProgressRouteKey(route) {
+        if (route && route.selectedAt != null) {
+            return "selectedAt:" + String(route.selectedAt);
+        }
+
+        return [
+            route && (route.type || route.mode) || "",
+            route && route.destination && route.destination.placeName || "",
+            route && route.destination && route.destination.latitude,
+            route && route.destination && route.destination.longitude,
+            route && route.route && route.route.totalTime,
+            route && route.route && Array.isArray(route.route.steps) ? route.route.steps.length : 0
+        ].join("|");
     }
 
     function readJson(key) {
