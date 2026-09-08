@@ -118,6 +118,22 @@ button {
     text-align: left;
 }
 
+.small-card strong,
+.small-card p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.small-card strong {
+    white-space: nowrap;
+}
+
+.small-card p {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
 #userHomePage .weather-card {
     margin-top: 18px;
     height: 63px;

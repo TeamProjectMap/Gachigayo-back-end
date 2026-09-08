@@ -9,6 +9,7 @@
     var autocompleteDelay = 300;
     var autocompleteMinLength = 2;
     var autocompleteMaxResults = 5;
+    var favoriteListMode = new URLSearchParams(window.location.search).get("view") === "favorites";
 
     $(function () {
         checkSession();
@@ -42,6 +43,14 @@
         $("#backToTabsButton").on("click", function () {
             showDefaultPanel();
             loadActiveTabPlaces();
+        });
+
+        $("#favoriteListBackButton").on("click", function () {
+            window.location.href = "/user-home.html";
+        });
+
+        $("#defaultEmptyText").on("click", "#emptySearchButton", function () {
+            window.location.href = "/route-search.html";
         });
 
         $("#homeButton").on("click", function () {
@@ -99,6 +108,7 @@
                 }
 
                 $("#routeSearchPage").removeClass("hidden");
+                applyFavoriteListMode();
                 selectTab("favorite");
             },
             error: function () {
@@ -295,7 +305,7 @@
     }
 
     function selectTab(tabName) {
-        activeTab = tabName === "recent" ? "recent" : "favorite";
+        activeTab = !favoriteListMode && tabName === "recent" ? "recent" : "favorite";
         setEditMode(false);
         $(".tab-button").removeClass("active").attr("aria-selected", "false");
         $('.tab-button[data-tab="' + activeTab + '"]').addClass("active").attr("aria-selected", "true");
@@ -309,7 +319,7 @@
 
         savedPlaces = [];
         $("#defaultPlaceList").empty();
-        $("#savedListTitle").text(isRecent ? "최근 검색" : "자주 가는 곳");
+        $("#savedListTitle").text(isRecent ? "최근 검색" : "자주 가는 장소");
         $("#editSavedListButton").addClass("hidden").prop("disabled", true).text("편집");
         $("#defaultEmptyText").removeClass("hidden").text("목록을 불러오는 중입니다.");
 
@@ -374,7 +384,21 @@
         $("#defaultPlaceList").empty();
         setEditMode(false);
         $("#editSavedListButton").addClass("hidden").prop("disabled", true).text("편집");
-        $("#defaultEmptyText").removeClass("hidden").text(message);
+
+        var $emptyText = $("#defaultEmptyText").removeClass("hidden").empty();
+        if (favoriteListMode && activeTab === "favorite") {
+            $emptyText
+                    .append($("<p>").text("자주 가는 장소가 아직 없어요."))
+                    .append($("<p>").text("장소를 검색하고 즐겨찾기에 추가해보세요."))
+                    .append($("<button>")
+                            .attr("type", "button")
+                            .attr("id", "emptySearchButton")
+                            .addClass("empty-search-button")
+                            .text("장소 검색하기"));
+            return;
+        }
+
+        $emptyText.text(message);
     }
 
     function showDefaultPanel() {
@@ -424,7 +448,17 @@
     }
 
     function getEmptyMessage() {
-        return activeTab === "recent" ? "최근 검색한 장소가 없습니다." : "아직 저장한 장소가 없습니다.";
+        return activeTab === "recent" ? "최근 검색한 장소가 없습니다." : "자주 가는 장소가 아직 없어요.";
+    }
+
+    function applyFavoriteListMode() {
+        if (!favoriteListMode) {
+            return;
+        }
+
+        $("#routeSearchPage").addClass("favorite-list-mode");
+        $("#favoriteListBackButton").removeClass("hidden");
+        $("#routePageTitle").text("자주 가는 장소");
     }
 
     function normalizePlace(place) {

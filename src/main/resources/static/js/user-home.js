@@ -14,6 +14,18 @@
             setMessage($(this).data("ready-message") || "다음 단계에서 연결 예정입니다.");
         });
 
+        $(".favorite-places-link").on("click", function () {
+            window.location.href = "/route-search.html?view=favorites";
+        });
+
+        $("#homeNavButton").on("click", function () {
+            window.location.href = "/user-home.html";
+        });
+
+        $("#settingNavButton").on("click", function () {
+            setMessage("USER 설정 화면을 찾을 수 없습니다.");
+        });
+
         $(".logout-button").on("click", function () {
             logout();
         });
@@ -37,6 +49,7 @@
 
                 $("#userHomePage").removeClass("hidden");
                 loadHomeInfo();
+                renderNotificationSummary();
             },
             error: function () {
                 window.location.replace("/login.html");
@@ -56,7 +69,7 @@
                 }
 
                 if (json.linkedName) {
-                    $("#linkedGuardianText").text(json.linkedName + "님과 연결되어 있어요");
+                    $("#linkedGuardianText").text("연결된 보호자가 있어요");
                 } else {
                     $("#linkedGuardianText").text("연결된 보호자가 없습니다");
                 }
@@ -65,6 +78,10 @@
                 $("#linkedGuardianText").text("연결 상태를 확인할 수 없습니다");
             }
         });
+    }
+
+    function renderNotificationSummary() {
+        $("#notificationSummaryText").text("새로운 알림이 없어요");
     }
 
     function logout() {
