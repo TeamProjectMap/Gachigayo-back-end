@@ -6,7 +6,6 @@
     <title>같이가요 USER 홈</title>
     <link rel="stylesheet" href="/css/user-home.css">
 </head>
-</body>
 <body>
 <main class="home-page hidden" id="userHomePage">
     <header class="home-header">
@@ -21,8 +20,8 @@
             <p>목적지까지<br>안전하게 안내해요</p>
         </button>
 
-        <button type="button" class="small-card action-card" data-ready-message="자주 가는 곳 기능은 다음 단계에서 연결 예정입니다.">
-            <strong>자주 가는 곳 &gt;</strong>
+        <button type="button" class="small-card favorite-places-link" id="favoritePlaceCard">
+            <strong>자주 가는 장소 &gt;</strong>
             <p>자주 가는 장소로 이동해요</p>
         </button>
 
@@ -53,9 +52,9 @@
             <strong>체크포인트</strong>
             <span>정보 없음</span>
         </button>
-        <button type="button" class="feature-card action-card" data-ready-message="알림 기능은 다음 단계에서 연결 예정입니다.">
+        <button type="button" class="feature-card action-card" data-ready-message="알림 목록 화면은 아직 준비 중입니다.">
             <strong>알림</strong>
-            <span>정보 없음</span>
+            <span id="notificationSummaryText">새로운 알림이 없어요</span>
         </button>
         <button type="button" class="feature-card action-card" data-ready-message="위치 공유 기능은 다음 단계에서 연결 예정입니다.">
             <strong>위치공유</strong>
@@ -71,9 +70,9 @@
     <p id="homeMessage" class="home-message"></p>
 
     <nav class="bottom-nav" aria-label="하단 메뉴">
-        <button type="button" class="active">홈</button>
+        <button type="button" class="active" id="homeNavButton">홈</button>
         <button type="button" class="action-card route-search-link" data-ready-message="길안내 기능은 다음 단계에서 연결 예정입니다.">길안내</button>
-        <button type="button" class="action-card" data-ready-message="설정 화면은 다음 단계에서 연결 예정입니다.">설정</button>
+        <button type="button" id="settingNavButton">설정</button>
     </nav>
 </main>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
