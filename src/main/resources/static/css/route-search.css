@@ -44,16 +44,37 @@ button {
 }
 
 .route-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 24px;
 }
 
 .route-header h1 {
+    min-width: 0;
     margin: 0;
     color: var(--text);
     font-size: 28px;
     font-weight: 800;
     line-height: 1.25;
     letter-spacing: 0;
+}
+
+.header-back-button {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--soft-green);
+    color: var(--green);
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.route-page.favorite-list-mode .search-panel,
+.route-page.favorite-list-mode .tab-buttons {
+    display: none;
 }
 
 .search-panel {
@@ -226,6 +247,8 @@ button {
 
 .empty-state {
     display: flex;
+    flex-direction: column;
+    gap: 12px;
     min-height: 240px;
     align-items: center;
     justify-content: center;
@@ -239,6 +262,19 @@ button {
     text-align: center;
     word-break: keep-all;
     overflow-wrap: break-word;
+}
+
+.empty-state p {
+    margin: 0;
+}
+
+.empty-search-button {
+    padding: 11px 16px;
+    border-radius: 999px;
+    background: var(--green);
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 800;
 }
 
 .result-heading {
