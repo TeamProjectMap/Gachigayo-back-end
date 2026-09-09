@@ -28,6 +28,10 @@ public interface IUserService {
 
     Map<String, Object> getHomeInfo(Long userId, String userRole);
 
+    String getHelpRequestMessage(Long userId);
+
+    int saveHelpRequestMessage(Long userId, String helpRequestMessage);
+
     int registerUser(UserDTO userDTO);
 
     int registerGuardian(UserDTO userDTO, String linkCode);

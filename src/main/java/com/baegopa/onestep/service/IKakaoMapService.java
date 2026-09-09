@@ -9,6 +9,8 @@ public interface IKakaoMapService {
 
     List<KakaoPlaceDTO> searchPlaces(String query);
 
+    KakaoPlaceDTO searchNearbySafetyCenter(String longitude, String latitude);
+
     KakaoRouteSearchResultDTO searchRoutes(String startLongitude,
                                            String startLatitude,
                                            String endLongitude,

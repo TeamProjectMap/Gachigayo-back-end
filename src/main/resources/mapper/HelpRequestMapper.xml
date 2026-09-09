@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.IHelpRequestMapper">
+
+    <resultMap id="HelpRequestResultMap" type="com.baegopa.onestep.dto.HelpRequestDTO">
+        <id property="helpRequestId" column="helpRequestId"/>
+        <result property="userId" column="userId"/>
+        <result property="guardianId" column="guardianId"/>
+        <result property="helpMessage" column="helpMessage"/>
+        <result property="destinationName" column="destinationName"/>
+        <result property="destinationLatitude" column="destinationLatitude"/>
+        <result property="destinationLongitude" column="destinationLongitude"/>
+        <result property="currentLatitude" column="currentLatitude"/>
+        <result property="currentLongitude" column="currentLongitude"/>
+        <result property="accuracy" column="accuracy"/>
+        <result property="status" column="status"/>
+        <result property="clientRequestKey" column="clientRequestKey"/>
+        <result property="regDt" column="regDt"/>
+        <result property="updDt" column="updDt"/>
+    </resultMap>
+
+    <resultMap id="GuardianContactResultMap" type="com.baegopa.onestep.dto.UserDTO">
+        <id property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="userRole" column="userRole"/>
+        <result property="phone" column="phone"/>
+    </resultMap>
+
+    <select id="getHelpRequestByClientRequestKey" parameterType="string" resultMap="HelpRequestResultMap">
+        SELECT
+            helpRequestId,
+            userId,
+            guardianId,
+            helpMessage,
+            destinationName,
+            destinationLatitude,
+            destinationLongitude,
+            currentLatitude,
+            currentLongitude,
+            accuracy,
+            status,
+            clientRequestKey,
+            regDt,
+            updDt
+        FROM HELP_REQUEST
+        WHERE clientRequestKey = #{clientRequestKey}
+    </select>
+
+    <select id="getGuardianByUserId" parameterType="long" resultMap="GuardianContactResultMap">
+        SELECT
+            guardianUser.userId,
+            guardianUser.userName,
+            guardianUser.userRole,
+            guardianUser.phone
+        FROM GUARDIAN_LINKS gl
+                 INNER JOIN USERS guardianUser
+                            ON gl.guardianId = guardianUser.userId
+        WHERE gl.userId = #{userId}
+          AND guardianUser.userRole = 'GUARDIAN'
+    </select>
+
+    <insert id="insertHelpRequest" parameterType="com.baegopa.onestep.dto.HelpRequestDTO"
+            useGeneratedKeys="true" keyProperty="helpRequestId">
+        INSERT INTO HELP_REQUEST (
+            userId,
+            guardianId,
+            helpMessage,
+            destinationName,
+            destinationLatitude,
+            destinationLongitude,
+            currentLatitude,
+            currentLongitude,
+            accuracy,
+            status,
+            clientRequestKey
+        ) VALUES (
+            #{userId},
+            #{guardianId},
+            #{helpMessage},
+            #{destinationName},
+            #{destinationLatitude},
+            #{destinationLongitude},
+            #{currentLatitude},
+            #{currentLongitude},
+            #{accuracy},
+            #{status},
+            #{clientRequestKey}
+        )
+    </insert>
+
+</mapper>

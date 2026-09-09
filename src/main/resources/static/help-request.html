@@ -7,53 +7,68 @@
     <link rel="stylesheet" href="/css/help-request.css">
 </head>
 <body>
-<main class="help-page hidden" id="helpPage">
+<main class="help-page hidden" id="helpRequestPage">
     <header class="help-header">
-        <button type="button" class="back-button" id="backButton" aria-label="뒤로">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M15 18l-6-6 6-6"/>
-            </svg>
-        </button>
-        <h1>도움요청</h1>
+        <button type="button" class="back-button" id="backButton" aria-label="뒤로가기">&lt;</button>
+        <a class="edit-link" href="/help-card-edit.html">카드 편집</a>
     </header>
 
-    <!-- 요청 전 -->
-    <section id="requestSection">
-        <p class="lead">지금 계신 위치가<br>보호자에게 전달됩니다</p>
+    <section class="help-hero" aria-label="도움요청">
+        <div class="alert-icon" aria-hidden="true">!</div>
+        <h1>도움이 필요해요</h1>
 
-        <p class="field-label">어떤 상황인가요? <span class="optional">(선택)</span></p>
+        <article class="request-card">
+            <p id="helpMessage">저는 발달장애가 있으며<br>혼자 이동하다 헤매고 있습니다<br>아래 목적지까지 갈 수 있도록 도와주세요</p>
+            <div class="destination-box" id="destinationBox">
+                <span>현재 목적지</span>
+                <strong id="destinationName">현재 설정된 목적지가 없어요</strong>
+            </div>
+        </article>
 
-        <div class="reason-list">
-            <button type="button" class="reason" data-message="길을 잃었어요">길을 잃었어요</button>
-            <button type="button" class="reason" data-message="버스를 못 탔어요">버스를 못 탔어요</button>
-            <button type="button" class="reason" data-message="몸이 불편해요">몸이 불편해요</button>
-            <button type="button" class="reason" data-message="무서워요">무서워요</button>
-        </div>
-
-        <button type="button" class="help-button" id="helpButton">도움 요청하기</button>
-        <button type="button" class="line-button help-card-link">주변 사람에게 보여주기</button>
-
-        <p class="page-message" id="helpMessage"></p>
+        <p class="show-guide">도움 요청시 이 화면을 다른 사람에게 보여주세요</p>
     </section>
 
-    <!-- 요청 후 -->
-    <section id="doneSection" class="hidden">
-        <div class="done-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12.5l5.5 5.5L20 7"/>
-            </svg>
-        </div>
+    <section class="status-card" aria-live="polite">
+        <strong id="statusTitle">도움 요청을 준비하고 있어요</strong>
+        <span id="statusDetail">현재 위치를 확인하는 중이에요</span>
+    </section>
 
-        <strong class="done-title" id="doneTitle">도움요청을 보냈어요</strong>
-        <p class="done-desc" id="doneDesc">보호자가 확인할 때까지 이 자리에서 기다려주세요</p>
+    <button type="button" class="primary-call-button" id="guardianCallButton" disabled>보호자에게 전화</button>
+    <p class="contact-message" id="guardianContactMessage">보호자 연락처를 확인하는 중이에요</p>
 
-        <a class="call-button hidden" id="callButton" href="#">보호자에게 전화하기</a>
-        <button type="button" class="line-button help-card-link">주변 사람에게 보여주기</button>
-        <button type="button" class="line-button" id="homeButton">홈으로</button>
+    <div class="divider" aria-hidden="true"></div>
+
+    <section class="safety-section">
+        <p>보호자와 연락이 안 닿나요?</p>
+        <button type="button" class="secondary-call-button" id="safetyCenterButton" disabled>안전센터 연결</button>
+        <p class="contact-message" id="safetyCenterMessage">현재 위치 확인 후 안전센터를 찾을 수 있어요</p>
     </section>
 </main>
+
+<div class="modal-backdrop hidden" id="guardianCallModal" role="dialog" aria-modal="true" aria-labelledby="guardianModalTitle">
+    <section class="call-modal">
+        <div class="modal-icon" aria-hidden="true">☎</div>
+        <h2 id="guardianModalTitle">보호자에게 연결할까요?</h2>
+        <strong id="guardianModalPhone"></strong>
+        <div class="modal-actions">
+            <button type="button" class="modal-call-button" id="confirmGuardianCallButton">전화 걸기</button>
+            <button type="button" class="modal-cancel-button" data-close-modal>취소</button>
+        </div>
+    </section>
+</div>
+
+<div class="modal-backdrop hidden" id="safetyCenterModal" role="dialog" aria-modal="true" aria-labelledby="safetyModalTitle">
+    <section class="call-modal">
+        <div class="modal-icon safety" aria-hidden="true">☎</div>
+        <h2 id="safetyModalTitle">가까운 안전센터로 연결할까요?</h2>
+        <strong id="safetyCenterName"></strong>
+        <span id="safetyCenterDistance"></span>
+        <div class="modal-actions">
+            <button type="button" class="modal-call-button" id="confirmSafetyCenterCallButton">전화 걸기</button>
+            <button type="button" class="modal-cancel-button" data-close-modal>취소</button>
+        </div>
+    </section>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/js/help-request.js"></script>

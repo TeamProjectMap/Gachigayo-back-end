@@ -1,0 +1,164 @@
+:root {
+    --green: #018B38;
+    --text: #292929;
+    --muted: #777777;
+    --line: #E8E8E8;
+    --bg: #FFFFFF;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: #f5f5f5;
+    color: var(--text);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+button,
+textarea {
+    font: inherit;
+}
+
+button {
+    border: 0;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.edit-page {
+    width: 100%;
+    max-width: 402px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 22px 22px 34px;
+    background: var(--bg);
+}
+
+.edit-header {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+}
+
+.back-button {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #F5F5F5;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.edit-header h1 {
+    margin: 0 0 0 10px;
+    font-size: 21px;
+    font-weight: 900;
+}
+
+.edit-section {
+    margin-top: 28px;
+}
+
+.edit-section h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.preset-list {
+    display: grid;
+    gap: 12px;
+}
+
+.preset-card {
+    width: 100%;
+    min-height: 76px;
+    padding: 17px 16px;
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    background: #FFFFFF;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 850;
+    line-height: 1.42;
+    text-align: left;
+    word-break: keep-all;
+}
+
+.preset-card.selected {
+    border-color: var(--green);
+    background: #F2FBF5;
+}
+
+.custom-box {
+    display: block;
+    margin-top: 16px;
+}
+
+.custom-box span {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.custom-box textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 14px;
+    resize: vertical;
+    border: 2px solid var(--green);
+    border-radius: 14px;
+    outline: none;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.edit-message {
+    min-height: 22px;
+    margin: 18px 0 12px;
+    color: var(--green);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.save-button {
+    width: 100%;
+    min-height: 58px;
+    border-radius: 14px;
+    background: var(--green);
+    color: #FFFFFF;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.save-button:disabled {
+    background: #DADADA;
+    color: #888888;
+    cursor: default;
+}
+
+@media (max-width: 402px) {
+    body {
+        background: #FFFFFF;
+    }
+
+    .edit-page {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+}

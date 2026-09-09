@@ -19,6 +19,18 @@
         <result property="updDt" column="updDt"/>
     </resultMap>
 
+    <resultMap id="UserSettingsResultMap" type="com.baegopa.onestep.dto.UserSettingsDTO">
+        <id property="userId" column="userId"/>
+        <result property="shareLocationYn" column="shareLocationYn"/>
+        <result property="deviationAlarmYn" column="deviationAlarmYn"/>
+        <result property="arrivalAlarmYn" column="arrivalAlarmYn"/>
+        <result property="voiceGuideYn" column="voiceGuideYn"/>
+        <result property="checkpointAlarmYn" column="checkpointAlarmYn"/>
+        <result property="helpRequestMessage" column="helpRequestMessage"/>
+        <result property="regDt" column="regDt"/>
+        <result property="updDt" column="updDt"/>
+    </resultMap>
+
     <select id="getLoginIdCount" parameterType="string" resultType="int">
         SELECT COUNT(*)
         FROM USERS
@@ -144,6 +156,33 @@
         WHERE userId = #{userId}
           AND userRole = 'USER'
     </update>
+
+    <select id="getUserSettings" parameterType="long" resultMap="UserSettingsResultMap">
+        SELECT
+            userId,
+            shareLocationYn,
+            deviationAlarmYn,
+            arrivalAlarmYn,
+            voiceGuideYn,
+            checkpointAlarmYn,
+            helpRequestMessage,
+            regDt,
+            updDt
+        FROM USER_SETTINGS
+        WHERE userId = #{userId}
+    </select>
+
+    <insert id="upsertUserSettings" parameterType="com.baegopa.onestep.dto.UserSettingsDTO">
+        INSERT INTO USER_SETTINGS (
+            userId,
+            helpRequestMessage
+        ) VALUES (
+            #{userId},
+            #{helpRequestMessage}
+        )
+        ON DUPLICATE KEY UPDATE
+            helpRequestMessage = VALUES(helpRequestMessage)
+    </insert>
 
     <insert id="insertUser" parameterType="com.baegopa.onestep.dto.UserDTO"
             useGeneratedKeys="true" keyProperty="userId">

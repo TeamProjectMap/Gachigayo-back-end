@@ -18,6 +18,15 @@
             window.location.href = "/route-search.html?view=favorites";
         });
 
+        $(".help-request-link").on("click", function () {
+            try {
+                sessionStorage.removeItem("helpRequestEntryFromNavigation");
+                sessionStorage.removeItem("currentHelpRequestState");
+            } catch (e) {
+            }
+            window.location.href = "/help-request.html";
+        });
+
         $("#homeNavButton").on("click", function () {
             window.location.href = "/user-home.html";
         });

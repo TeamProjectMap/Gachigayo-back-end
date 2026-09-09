@@ -35,10 +35,38 @@ CREATE TABLE USER_SETTINGS (
     arrivalAlarmYn    CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '도착 알림 여부',
     voiceGuideYn      CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '음성 안내 사용 여부',
     checkpointAlarmYn CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '체크포인트 알림 여부',
+    helpRequestMessage TEXT    NULL     COMMENT 'Help request card message',
+    regDt              DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT 'Created datetime',
+    updDt              DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT 'Updated datetime',
     PRIMARY KEY (userId),
     CONSTRAINT FK_USER_SETTINGS_user
         FOREIGN KEY (userId) REFERENCES USERS (userId) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='사용자 설정';
+
+CREATE TABLE HELP_REQUEST (
+    helpRequestId        BIGINT       NOT NULL AUTO_INCREMENT COMMENT 'Help request ID',
+    userId               BIGINT       NOT NULL                COMMENT 'User ID',
+    guardianId           BIGINT       NULL                    COMMENT 'Linked guardian ID',
+    helpMessage          TEXT         NULL                    COMMENT 'Help request display message',
+    destinationName      VARCHAR(200) NULL                    COMMENT 'Current destination name',
+    destinationLatitude  VARCHAR(30)  NULL                    COMMENT 'Destination latitude',
+    destinationLongitude VARCHAR(30)  NULL                    COMMENT 'Destination longitude',
+    currentLatitude      VARCHAR(30)  NULL                    COMMENT 'Current latitude at request time',
+    currentLongitude     VARCHAR(30)  NULL                    COMMENT 'Current longitude at request time',
+    accuracy             VARCHAR(30)  NULL                    COMMENT 'GPS accuracy meters',
+    status               VARCHAR(30)  NOT NULL DEFAULT 'REQUESTED' COMMENT 'Help request status',
+    clientRequestKey     VARCHAR(100) NULL                    COMMENT 'Client duplicate prevention key',
+    regDt                DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT 'Created datetime',
+    updDt                DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT 'Updated datetime',
+    PRIMARY KEY (helpRequestId),
+    UNIQUE KEY UK_HELP_REQUEST_clientRequestKey (clientRequestKey),
+    KEY IX_HELP_REQUEST_userId_regDt (userId, regDt),
+    KEY IX_HELP_REQUEST_guardianId_regDt (guardianId, regDt),
+    CONSTRAINT FK_HELP_REQUEST_user
+        FOREIGN KEY (userId) REFERENCES USERS (userId) ON DELETE CASCADE,
+    CONSTRAINT FK_HELP_REQUEST_guardian
+        FOREIGN KEY (guardianId) REFERENCES USERS (userId) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Help request';
 
 CREATE TABLE ROUTES (
     routeId       BIGINT       NOT NULL AUTO_INCREMENT COMMENT '경로 고유 번호',

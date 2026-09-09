@@ -30,6 +30,8 @@ public class KakaoPlaceDocumentDTO {
 
     private String phone;
 
+    private String distance;
+
     @JsonProperty("place_url")
     private String placeUrl;
 
@@ -43,6 +45,7 @@ public class KakaoPlaceDocumentDTO {
         placeDTO.setLongitude(longitude);
         placeDTO.setLatitude(latitude);
         placeDTO.setPhone(phone);
+        placeDTO.setDistance(distance);
         placeDTO.setPlaceUrl(placeUrl);
 
         return placeDTO;

@@ -89,6 +89,41 @@ public class UserController {
     }
 
     @ResponseBody
+    @GetMapping("/help-card")
+    public Map<String, Object> getHelpCard(HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        Map<String, Object> response = createResponse(true, "도움요청 문구를 조회했습니다.");
+        response.put("helpRequestMessage", userService.getHelpRequestMessage(sessionUser.userId()));
+
+        return response;
+    }
+
+    @ResponseBody
+    @PostMapping("/help-card")
+    public Map<String, Object> saveHelpCard(HttpServletRequest request, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            String helpRequestMessage = getParameter(request, "helpRequestMessage");
+            userService.saveHelpRequestMessage(sessionUser.userId(), helpRequestMessage);
+
+            return createResponse(true, "도움요청 문구를 저장했습니다.");
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("Help card save failed. userId={}", sessionUser.userId(), e);
+            return createResponse(false, "도움요청 문구 저장 중 오류가 발생했습니다.");
+        }
+    }
+
+    @ResponseBody
     @PostMapping("/logout")
     public Map<String, Object> logout(HttpSession session) {
         session.invalidate();
@@ -592,5 +627,23 @@ public class UserController {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private SessionUser getSessionUser(HttpSession session) {
+        Long userId = (Long) session.getAttribute("SS_USER_ID");
+        String userRole = (String) session.getAttribute("SS_USER_ROLE");
+
+        if (userId == null || isBlank(userRole)) {
+            return new SessionUser(null, false, createResponse(false, "로그인이 필요합니다."));
+        }
+
+        if (!"USER".equals(userRole)) {
+            return new SessionUser(null, false, createResponse(false, "사용자만 사용할 수 있는 기능입니다."));
+        }
+
+        return new SessionUser(userId, true, null);
+    }
+
+    private record SessionUser(Long userId, boolean valid, Map<String, Object> response) {
     }
 }

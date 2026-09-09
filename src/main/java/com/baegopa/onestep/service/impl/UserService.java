@@ -1,6 +1,7 @@
 package com.baegopa.onestep.service.impl;
 
 import com.baegopa.onestep.dto.UserDTO;
+import com.baegopa.onestep.dto.UserSettingsDTO;
 import com.baegopa.onestep.mapper.ILinkMapper;
 import com.baegopa.onestep.mapper.IUserMapper;
 import com.baegopa.onestep.service.IUserService;
@@ -24,6 +25,7 @@ public class UserService implements IUserService {
     private static final String LINK_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int LINK_CODE_RETRY_LIMIT = 20;
     private static final String PASSWORD_PATTERN = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,16}$";
+    private static final int HELP_REQUEST_MESSAGE_MAX_LENGTH = 500;
 
     private final IUserMapper userMapper;
     private final ILinkMapper linkMapper;
@@ -121,6 +123,39 @@ public class UserService implements IUserService {
         }
 
         return result;
+    }
+
+    @Override
+    public String getHelpRequestMessage(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+
+        UserSettingsDTO settingsDTO = userMapper.getUserSettings(userId);
+        return settingsDTO == null ? null : settingsDTO.getHelpRequestMessage();
+    }
+
+    @Override
+    @Transactional
+    public int saveHelpRequestMessage(Long userId, String helpRequestMessage) {
+        if (userId == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        String message = helpRequestMessage == null ? "" : helpRequestMessage.trim();
+        if (isBlank(message)) {
+            throw new IllegalArgumentException("도움요청 문구를 입력해주세요.");
+        }
+
+        if (message.length() > HELP_REQUEST_MESSAGE_MAX_LENGTH) {
+            throw new IllegalArgumentException("도움요청 문구는 500자 이하로 입력해주세요.");
+        }
+
+        UserSettingsDTO settingsDTO = new UserSettingsDTO();
+        settingsDTO.setUserId(userId);
+        settingsDTO.setHelpRequestMessage(message);
+
+        return userMapper.upsertUserSettings(settingsDTO);
     }
 
     @Override

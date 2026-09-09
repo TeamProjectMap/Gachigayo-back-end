@@ -1,6 +1,7 @@
 package com.baegopa.onestep.mapper;
 
 import com.baegopa.onestep.dto.UserDTO;
+import com.baegopa.onestep.dto.UserSettingsDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -36,6 +37,10 @@ public interface IUserMapper {
 
     /** 연결코드 다시 받기 */
     int updateLinkCode(@Param("userId") Long userId, @Param("linkCode") String linkCode);
+
+    UserSettingsDTO getUserSettings(@Param("userId") Long userId);
+
+    int upsertUserSettings(UserSettingsDTO userSettingsDTO);
 
     int insertUser(UserDTO userDTO);
 

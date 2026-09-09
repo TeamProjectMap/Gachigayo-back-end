@@ -2,6 +2,7 @@ package com.baegopa.onestep.service.impl;
 
 import com.baegopa.onestep.dto.KakaoKeywordSearchResponseDTO;
 import com.baegopa.onestep.dto.KakaoPlaceDTO;
+import com.baegopa.onestep.dto.KakaoPlaceDocumentDTO;
 import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
 import com.baegopa.onestep.dto.PublicTransitRouteDTO;
 import com.baegopa.onestep.dto.PublicTransitRouteResultDTO;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +33,9 @@ public class KakaoMapService implements IKakaoMapService {
     private static final String KAKAO_WALKING_URL = "https://dapi.kakao.com/v2/routing/walk";
     private static final String KAKAO_COORD_TO_ADDRESS_URL = "https://dapi.kakao.com/v2/local/geo/coord2address.json";
     private static final int SEARCH_SIZE = 10;
+    private static final int SAFETY_CENTER_SEARCH_SIZE = 15;
+    private static final int SAFETY_CENTER_RADIUS_METERS = 20000;
+    private static final String PUBLIC_OFFICE_CATEGORY_GROUP_CODE = "PO3";
     private static final String ROUTE_MODE_ACCESSIBLE = "ACCESSIBLE";
     private static final int ADDRESS_CACHE_LIMIT = 500;
 
@@ -76,6 +81,35 @@ public class KakaoMapService implements IKakaoMapService {
     }
 
     @Override
+    public KakaoPlaceDTO searchNearbySafetyCenter(String longitude, String latitude) {
+        if (isBlank(kakaoRestApiKey)) {
+            log.error("Kakao REST API key is not configured. Check KAKAO_REST_API_KEY and Kakao Map API settings.");
+            throw new IllegalStateException("Kakao REST API key is not configured.");
+        }
+
+        Map<String, KakaoPlaceDTO> candidates = new LinkedHashMap<>();
+        for (String query : List.of("지구대", "파출소", "경찰서")) {
+            for (KakaoPlaceDTO place : searchSafetyCenterPlaces(query, longitude, latitude)) {
+                if (isSafetyCenter(place)) {
+                    candidates.putIfAbsent(place.getId(), place);
+                }
+            }
+        }
+
+        return candidates.values().stream()
+                .sorted((left, right) -> {
+                    boolean leftHasPhone = !isBlank(left.getPhone());
+                    boolean rightHasPhone = !isBlank(right.getPhone());
+                    if (leftHasPhone != rightHasPhone) {
+                        return leftHasPhone ? -1 : 1;
+                    }
+                    return Integer.compare(parseDistance(left.getDistance()), parseDistance(right.getDistance()));
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
     public KakaoRouteSearchResultDTO searchRoutes(String startLongitude,
                                                   String startLatitude,
                                                   String endLongitude,
@@ -93,6 +127,63 @@ public class KakaoMapService implements IKakaoMapService {
                 startLongitude, startLatitude, endLongitude, endLatitude, destinationName));
 
         return resultDTO;
+    }
+
+    private List<KakaoPlaceDTO> searchSafetyCenterPlaces(String query, String longitude, String latitude) {
+        try {
+            KakaoKeywordSearchResponseDTO responseDTO = restClient
+                    .get()
+                    .uri(KAKAO_KEYWORD_SEARCH_URL, uriBuilder -> uriBuilder
+                            .queryParam("query", query)
+                            .queryParam("category_group_code", PUBLIC_OFFICE_CATEGORY_GROUP_CODE)
+                            .queryParam("x", longitude)
+                            .queryParam("y", latitude)
+                            .queryParam("radius", SAFETY_CENTER_RADIUS_METERS)
+                            .queryParam("sort", "distance")
+                            .queryParam("size", SAFETY_CENTER_SEARCH_SIZE)
+                            .build())
+                    .header("Authorization", "KakaoAK " + kakaoRestApiKey)
+                    .retrieve()
+                    .body(KakaoKeywordSearchResponseDTO.class);
+
+            if (responseDTO == null || responseDTO.getDocuments() == null) {
+                return Collections.emptyList();
+            }
+
+            return responseDTO.getDocuments().stream()
+                    .map(KakaoPlaceDocumentDTO::toPlaceDTO)
+                    .toList();
+        } catch (RestClientResponseException e) {
+            log.error("Kakao safety center search failed. status={}.", e.getStatusCode());
+            throw e;
+        } catch (Exception e) {
+            log.error("Kakao safety center search failed.", e);
+            throw e;
+        }
+    }
+
+    private boolean isSafetyCenter(KakaoPlaceDTO place) {
+        if (place == null) {
+            return false;
+        }
+
+        String placeName = place.getPlaceName() == null ? "" : place.getPlaceName();
+        String categoryName = place.getCategoryName() == null ? "" : place.getCategoryName();
+        String value = placeName + " " + categoryName;
+
+        return value.contains("지구대") || value.contains("파출소") || value.contains("경찰서") || value.contains("경찰");
+    }
+
+    private int parseDistance(String distance) {
+        if (isBlank(distance)) {
+            return Integer.MAX_VALUE;
+        }
+
+        try {
+            return Integer.parseInt(distance.trim());
+        } catch (NumberFormatException e) {
+            return Integer.MAX_VALUE;
+        }
     }
 
     private PublicTransitRouteResultDTO searchPublicTransitRoutes(String startLongitude,

@@ -1,11 +1,13 @@
 :root {
     --green: #018B38;
-    --text: #363636;
-    --muted: #8D8D8D;
-    --line: #C8C8C8;
-    --soft-green: #EEF5EB;
+    --green-dark: #00742F;
+    --text: #292929;
+    --muted: #777777;
+    --line: #E7E7E7;
+    --danger: #E53935;
+    --danger-soft: #FFF1F1;
+    --success-soft: #EEF8F1;
     --bg: #FFFFFF;
-    --danger: #E5484D;
 }
 
 * {
@@ -21,9 +23,13 @@ body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+button,
+a {
+    font: inherit;
+}
+
 button {
     border: 0;
-    font: inherit;
     cursor: pointer;
 }
 
@@ -36,166 +42,300 @@ button {
     max-width: 402px;
     min-height: 100vh;
     margin: 0 auto;
-    padding: 26px 24px 40px;
+    padding: 22px 22px 34px;
     background: var(--bg);
 }
 
 .help-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 24px;
-}
-
-.help-header h1 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 800;
+    justify-content: space-between;
+    min-height: 42px;
 }
 
 .back-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    background: transparent;
-    color: var(--text);
-}
-
-.back-button svg {
-    width: 22px;
-    height: 22px;
-}
-
-/* 이용자가 급할 때 보는 화면이라 글씨를 크게 둔다 */
-.lead {
-    margin: 0 0 28px;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1.45;
-}
-
-.field-label {
-    margin: 0 0 10px;
-    font-size: 15px;
-    font-weight: 700;
-}
-
-.optional {
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.reason-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 30px;
-}
-
-.reason {
-    padding: 16px 10px;
-    border: 1px solid #ECECEC;
-    border-radius: 14px;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 600;
-}
-
-.reason.selected {
-    border-color: var(--green);
-    background: var(--soft-green);
-    color: var(--green);
-    font-weight: 800;
-}
-
-.help-button {
-    display: block;
-    width: 100%;
-    padding: 22px 0;
-    border-radius: 16px;
-    background: var(--danger);
-    color: #FFFFFF;
-    font-size: 20px;
-    font-weight: 800;
-}
-
-.help-button:disabled {
-    opacity: 0.6;
-}
-
-.page-message {
-    min-height: 20px;
-    margin: 16px 0 0;
-    color: var(--danger);
-    font-size: 14px;
-    text-align: center;
-}
-
-/* ---------------------------- 보낸 뒤 ---------------------------- */
-
-.done-mark {
-    width: 76px;
-    height: 76px;
-    margin: 40px auto 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: var(--soft-green);
-    color: var(--green);
-}
-
-.done-mark svg {
-    width: 38px;
-    height: 38px;
-}
-
-.done-title {
-    display: block;
-    font-size: 22px;
-    font-weight: 800;
-    text-align: center;
-}
-
-.done-desc {
-    margin: 12px 0 34px;
-    color: var(--muted);
-    font-size: 15px;
-    line-height: 1.5;
-    text-align: center;
-}
-
-.call-button,
-.line-button {
-    display: block;
-    width: 100%;
-    margin-top: 10px;
-    padding: 18px 0;
-    border-radius: 14px;
-    font-size: 16px;
+    background: #F5F5F5;
+    color: var(--text);
+    font-size: 24px;
     font-weight: 700;
-    text-align: center;
+}
+
+.edit-link {
+    color: var(--green);
+    font-size: 14px;
+    font-weight: 800;
     text-decoration: none;
 }
 
-.call-button {
+.help-hero {
+    padding-top: 24px;
+    text-align: center;
+}
+
+.alert-icon {
+    display: inline-flex;
+    width: 78px;
+    height: 78px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #FFFFFF;
+    font-size: 50px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.help-hero h1 {
+    margin: 18px 0 22px;
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.request-card {
+    padding: 24px 18px 18px;
+    border: 2px solid #F06464;
+    border-radius: 20px;
+    background: var(--danger-soft);
+    text-align: center;
+}
+
+.request-card p {
+    margin: 0;
+    color: #292929;
+    font-size: 20px;
+    font-weight: 850;
+    line-height: 1.48;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.destination-box {
+    margin-top: 20px;
+    padding: 14px 12px;
+    border-radius: 12px;
+    background: #FFFFFF;
+}
+
+.destination-box span {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.destination-box strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 850;
+    line-height: 1.35;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.show-guide {
+    margin: 16px 0 0;
+    color: var(--danger);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.45;
+}
+
+.status-card {
+    margin-top: 24px;
+    padding: 17px 18px;
+    border-radius: 14px;
+    background: var(--success-soft);
+}
+
+.status-card strong,
+.status-card span {
+    display: block;
+}
+
+.status-card strong {
+    color: var(--green);
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+.status-card span {
+    margin-top: 5px;
+    color: #59645D;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.primary-call-button,
+.secondary-call-button,
+.modal-call-button,
+.modal-cancel-button,
+.save-button {
+    width: 100%;
+    min-height: 58px;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.primary-call-button {
+    margin-top: 18px;
     background: var(--green);
     color: #FFFFFF;
 }
 
-.line-button {
-    border: 1px solid var(--line);
-    background: var(--bg);
+.primary-call-button:disabled,
+.secondary-call-button:disabled {
+    background: #DADADA;
+    color: #888888;
+    cursor: default;
+}
+
+.contact-message {
+    min-height: 20px;
+    margin: 10px 0 0;
     color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.divider {
+    height: 1px;
+    margin: 24px 0 22px;
+    background: var(--line);
+}
+
+.safety-section {
+    text-align: center;
+}
+
+.safety-section p:first-child {
+    margin: 0 0 14px;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.secondary-call-button {
+    border: 2px solid var(--green);
+    background: #FFFFFF;
+    color: var(--green);
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(0, 0, 0, 0.42);
+    z-index: 20;
+}
+
+.call-modal {
+    width: 100%;
+    max-width: 330px;
+    padding: 28px 22px 20px;
+    border-radius: 22px;
+    background: #FFFFFF;
+    text-align: center;
+}
+
+.modal-icon {
+    display: inline-flex;
+    width: 64px;
+    height: 64px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--green);
+    font-size: 30px;
+    font-weight: 900;
+}
+
+.modal-icon.safety {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.call-modal h2 {
+    margin: 18px 0 10px;
+    color: var(--text);
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 1.35;
+    word-break: keep-all;
+}
+
+.call-modal strong {
+    display: block;
+    color: var(--green);
+    font-size: 19px;
+    font-weight: 900;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.call-modal span {
+    display: block;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.modal-call-button {
+    min-height: 52px;
+    background: var(--green);
+    color: #FFFFFF;
+}
+
+.modal-cancel-button {
+    min-height: 52px;
+    background: #F1F1F1;
+    color: #555555;
 }
 
 @media (max-width: 402px) {
     body {
         background: #FFFFFF;
+    }
+
+    .help-page {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+}
+
+@media (max-width: 360px) {
+    .request-card p {
+        font-size: 18px;
+    }
+
+    .help-hero h1 {
+        font-size: 26px;
+    }
+
+    .modal-actions {
+        gap: 8px;
     }
 }
