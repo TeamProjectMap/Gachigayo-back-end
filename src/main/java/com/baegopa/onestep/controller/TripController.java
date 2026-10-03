@@ -1,6 +1,7 @@
 package com.baegopa.onestep.controller;
 
-import com.baegopa.onestep.service.INotificationService;
+import com.baegopa.onestep.dto.RouteDTO;
+import com.baegopa.onestep.service.ITripService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +28,67 @@ public class TripController {
 
     private static final String ROLE_USER = "USER";
 
-    private final INotificationService notificationService;
+    private final ITripService tripService;
 
-    /** 목적지 도착 */
+    /**
+     * 이동 시작
+     * <p>
+     * 길안내를 시작할 때 한 번 부른다. 돌려주는 tripId를 위치 기록과 도착에 함께 보낸다.
+     */
+    @ResponseBody
+    @PostMapping("/start")
+    public Map<String, Object> start(HttpServletRequest request, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        RouteDTO routeDTO = new RouteDTO();
+        routeDTO.setStartName(getParameter(request, "startName"));
+        routeDTO.setEndName(getParameter(request, "endName"));
+        routeDTO.setTotalDistance(toInteger(getParameter(request, "totalDistance")));
+        routeDTO.setTotalDuration(toInteger(getParameter(request, "totalDuration")));
+
+        try {
+            Long tripId = tripService.startTrip(sessionUser.userId(), routeDTO);
+
+            Map<String, Object> response = createResponse(true, "이동을 시작했습니다.");
+            response.put("tripId", tripId);
+
+            return response;
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("이동 시작 처리 실패 userId={}", sessionUser.userId(), e);
+            return createResponse(false, "이동 시작 처리 중 오류가 발생했습니다.");
+        }
+    }
+
+    /** 이동 중 위치 기록 */
+    @ResponseBody
+    @PostMapping("/location")
+    public Map<String, Object> location(HttpServletRequest request, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            tripService.recordLocation(sessionUser.userId(),
+                    toLong(getParameter(request, "tripId")),
+                    getParameter(request, "latitude"),
+                    getParameter(request, "longitude"));
+
+            return createResponse(true, "위치를 기록했습니다.");
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("위치 기록 실패 userId={}", sessionUser.userId(), e);
+            return createResponse(false, "위치 기록 중 오류가 발생했습니다.");
+        }
+    }
+
+    /** 목적지 도착 (이동 종료 + 보호자 알림) */
     @ResponseBody
     @PostMapping("/arrived")
     public Map<String, Object> arrived(HttpServletRequest request, HttpSession session) {
@@ -39,8 +98,9 @@ public class TripController {
         }
 
         try {
-            boolean notified = notificationService.createArrivedNotification(
-                    sessionUser.userId(), getParameter(request, "destinationName"));
+            boolean notified = tripService.arrive(sessionUser.userId(),
+                    toLong(getParameter(request, "tripId")),
+                    getParameter(request, "destinationName"));
 
             Map<String, Object> response = createResponse(true, notified
                     ? "보호자에게 도착을 알렸습니다."
@@ -48,10 +108,28 @@ public class TripController {
             response.put("notified", notified);
 
             return response;
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
         } catch (Exception e) {
             // 길안내 화면을 막으면 안 되므로 실패해도 오류로 끝내지 않는다
-            log.error("도착 알림 처리 실패 userId={}", sessionUser.userId(), e);
-            return createResponse(false, "도착 알림 처리 중 오류가 발생했습니다.");
+            log.error("도착 처리 실패 userId={}", sessionUser.userId(), e);
+            return createResponse(false, "도착 처리 중 오류가 발생했습니다.");
+        }
+    }
+
+    private Long toLong(String value) {
+        try {
+            return isBlank(value) ? null : Long.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Integer toInteger(String value) {
+        try {
+            return isBlank(value) ? null : Integer.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
