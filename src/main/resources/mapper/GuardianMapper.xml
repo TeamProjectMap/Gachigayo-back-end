@@ -100,7 +100,24 @@
                COALESCE(e.lat, CAST(h.currentLatitude AS DECIMAL(10, 7)))  AS lat,
                COALESCE(e.lng, CAST(h.currentLongitude AS DECIMAL(10, 7))) AS lng,
                COALESCE(e.eventDt, h.regDt)                                AS eventDt,
-               COALESCE(r.endName, h.destinationName)                      AS destination
+               <!--
+                   목적지는 세 군데에서 찾는다.
+                   길안내 이벤트 -> 도움요청에 담겨온 목적지 -> 그 시각에 진행 중이던 이동.
+                   도움요청은 홈에서 바로 누르면 목적지가 비어 오기 때문에,
+                   서버에 남은 이동 기록으로 보완한다.
+               -->
+               COALESCE(
+                       NULLIF(r.endName, ''),
+                       NULLIF(h.destinationName, ''),
+                       (SELECT r2.endName
+                        FROM TRIPS t2
+                                 INNER JOIN ROUTES r2 ON r2.routeId = t2.routeId
+                        WHERE r2.userId = h.userId
+                          AND t2.startDt &lt;= h.regDt
+                          AND (t2.endDt IS NULL OR t2.endDt &gt;= h.regDt)
+                        ORDER BY t2.startDt DESC
+                        LIMIT 1)
+               )                                                           AS destination
         FROM NOTIFICATIONS n
                  LEFT JOIN TRIP_EVENTS e
                            ON e.tripEventId = n.tripEventId
