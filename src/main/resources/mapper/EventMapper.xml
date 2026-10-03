@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.IEventMapper">
+
+    <insert id="insertTripEvent" parameterType="com.baegopa.onestep.dto.TripEventDTO"
+            useGeneratedKeys="true" keyProperty="tripEventId">
+        INSERT INTO TRIP_EVENTS (
+            userId,
+            tripId,
+            routeStepId,
+            eventType,
+            eventMessage,
+            lat,
+            lng,
+            autoSentYn
+        ) VALUES (
+            #{userId},
+            #{tripId},
+            #{routeStepId},
+            #{eventType},
+            #{eventMessage},
+            #{lat},
+            #{lng},
+            #{autoSentYn}
+        )
+    </insert>
+
+    <insert id="insertNotification">
+        INSERT INTO NOTIFICATIONS (
+            receiverId,
+            tripEventId,
+            notifyType,
+            content
+        ) VALUES (
+            #{receiverId},
+            #{tripEventId},
+            #{notifyType},
+            #{content}
+        )
+    </insert>
+
+    <!-- TRIPS에는 userId가 없어서 ROUTES를 거쳐 이용자를 찾는다 -->
+    <select id="getOngoingTripId" parameterType="long" resultType="java.lang.Long">
+        SELECT t.tripId
+        FROM TRIPS t
+                 INNER JOIN ROUTES r
+                            ON r.routeId = t.routeId
+        WHERE r.userId = #{userId}
+          AND t.tripStatus = 'MOVING'
+        ORDER BY t.startDt DESC
+        LIMIT 1
+    </select>
+
+</mapper>

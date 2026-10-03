@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.ILinkMapper">
+
+    <!-- 이용자에게 연결된 보호자 (연락처까지 필요해서 phone 포함) -->
+    <select id="getGuardianByUserId" parameterType="long" resultType="com.baegopa.onestep.dto.UserDTO">
+        SELECT g.userId,
+               g.userName,
+               g.userRole,
+               g.phone
+        FROM GUARDIAN_LINKS gl
+                 INNER JOIN USERS g
+                            ON g.userId = gl.guardianId
+        WHERE gl.userId = #{userId}
+    </select>
+
+    <!-- 보호자에게 연결된 이용자 -->
+    <select id="getUserByGuardianId" parameterType="long" resultType="com.baegopa.onestep.dto.UserDTO">
+        SELECT u.userId,
+               u.userName,
+               u.userRole,
+               u.phone
+        FROM GUARDIAN_LINKS gl
+                 INNER JOIN USERS u
+                            ON u.userId = gl.userId
+        WHERE gl.guardianId = #{guardianId}
+    </select>
+
+    <select id="getLinkCountByUserId" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM GUARDIAN_LINKS
+        WHERE userId = #{userId}
+    </select>
+
+    <select id="getLinkCountByGuardianId" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM GUARDIAN_LINKS
+        WHERE guardianId = #{guardianId}
+    </select>
+
+    <select id="getRelationByGuardianId" parameterType="long" resultType="string">
+        SELECT relation
+        FROM GUARDIAN_LINKS
+        WHERE guardianId = #{guardianId}
+    </select>
+
+    <update id="updateRelationByGuardianId">
+        UPDATE GUARDIAN_LINKS
+        SET relation = #{relation}
+        WHERE guardianId = #{guardianId}
+    </update>
+
+    <delete id="deleteLinkByUserId" parameterType="long">
+        DELETE
+        FROM GUARDIAN_LINKS
+        WHERE userId = #{userId}
+    </delete>
+
+    <delete id="deleteLinkByGuardianId" parameterType="long">
+        DELETE
+        FROM GUARDIAN_LINKS
+        WHERE guardianId = #{guardianId}
+    </delete>
+
+</mapper>

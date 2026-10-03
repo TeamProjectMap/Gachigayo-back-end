@@ -67,7 +67,12 @@
         });
 
         $("#helpButton").on("click", function () {
-            alert("도움 요청 기능은 준비 중입니다.");
+            try {
+                sessionStorage.setItem("helpRequestEntryFromNavigation", "true");
+                sessionStorage.removeItem("currentHelpRequestState");
+            } catch (e) {
+            }
+            window.location.href = "/help-request.html";
         });
 
         $("#replayButton").on("click", function () {

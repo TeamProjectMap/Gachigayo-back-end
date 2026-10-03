@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 도움카드</title>
+    <link rel="stylesheet" href="/css/help-card.css">
+</head>
+<body>
+<main class="card-page hidden" id="cardPage">
+    <button type="button" class="back-button" id="backButton" aria-label="뒤로">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6"/>
+        </svg>
+    </button>
+
+    <h1 class="headline">도와주세요</h1>
+    <p class="subhead">혼자서 가기가 어려워요</p>
+
+    <section class="info-card">
+        <span class="info-label">저는</span>
+        <strong class="info-value" id="userName">-</strong>
+    </section>
+
+    <section class="info-card hidden" id="destinationCard">
+        <span class="info-label">지금 가는 곳</span>
+        <strong class="info-value" id="destination">-</strong>
+    </section>
+
+    <section class="info-card guardian-card" id="guardianCard">
+        <span class="info-label">연락할 보호자</span>
+        <strong class="info-value" id="guardianName">-</strong>
+        <p class="phone" id="guardianPhone"></p>
+
+        <a class="call-button hidden" id="callButton" href="#">전화 걸기</a>
+        <p class="no-guardian hidden" id="noGuardian">연결된 보호자가 없습니다</p>
+    </section>
+
+    <p class="foot-note">이 화면을 도와주시는 분께 보여주세요</p>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/help-card.js"></script>
+</body>
+</html>

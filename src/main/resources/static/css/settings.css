@@ -1,0 +1,323 @@
+:root {
+    --green: #018B38;
+    --text: #363636;
+    --muted: #8D8D8D;
+    --line: #C8C8C8;
+    --card-line: #E5E5E5;
+    --soft-green: #EEF5EB;
+    --bg: #FFFFFF;
+    --danger: #EC493C;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: #f5f5f5;
+    color: var(--text);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+button {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.settings-page {
+    width: 100%;
+    max-width: 402px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 69px 19px 120px;
+    background: var(--bg);
+}
+
+.page-title {
+    margin: 0 0 20px 10px;
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 30px;
+}
+
+.section-title {
+    margin: 25px 0 7px 1px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+/* 카드 좌우 여백은 13px. 행이 안쪽으로 7px 더 들어가서
+   글자는 20px, 구분선은 13px 자리에 놓인다 (피그마와 같음) */
+.card {
+    padding: 0 13px;
+    border: 1px solid var(--card-line);
+    border-radius: 20px;
+    background: var(--bg);
+}
+
+.card.profile {
+    padding: 14px 13px;
+}
+
+.profile-name {
+    display: block;
+    margin: 0 0 4px 10px;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24px;
+}
+
+/* 라벨은 왼쪽, 값은 오른쪽에 붙는 한 줄 */
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 50px;
+    padding: 0 10px 0 7px;
+}
+
+/* 프로필 카드는 이름 아래로 줄만 이어지는 형태라 훨씬 촘촘하다 */
+.profile .row {
+    min-height: 0;
+    padding: 5px 10px 5px 11px;
+}
+
+.row + .row {
+    border-top: 1px solid var(--card-line);
+}
+
+.row-label {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.profile .row-label {
+    color: var(--muted);
+}
+
+.row-label.strong {
+    color: var(--green);
+}
+
+.row-value {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* ---------------------------- 토글 ---------------------------- */
+
+.toggle {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.toggle input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.toggle-track {
+    display: block;
+    width: 36px;
+    height: 20px;
+    border-radius: 999px;
+    background: #D9D9D9;
+    transition: background 0.15s;
+}
+
+.toggle-track::after {
+    content: "";
+    display: block;
+    width: 17px;
+    height: 17px;
+    margin: 1.5px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    transition: transform 0.15s;
+}
+
+.toggle input:checked + .toggle-track {
+    background: var(--green);
+}
+
+.toggle input:checked + .toggle-track::after {
+    transform: translateX(16px);
+}
+
+.toggle input:disabled {
+    cursor: default;
+}
+
+/* ---------------------------- 버튼 ---------------------------- */
+
+.text-button {
+    padding: 0;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.text-button.danger {
+    color: var(--danger);
+}
+
+.main-button,
+.line-button {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px 0;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.main-button {
+    background: var(--green);
+    color: #FFFFFF;
+}
+
+.line-button {
+    border: 1px solid var(--card-line);
+    background: var(--bg);
+    color: var(--muted);
+}
+
+.connect-box {
+    margin: 12px 0 14px;
+}
+
+.link-input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--card-line);
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    text-transform: uppercase;
+}
+
+.link-input:focus {
+    outline: 0;
+    border-color: var(--green);
+}
+
+.page-message {
+    min-height: 20px;
+    margin: 14px 0 0;
+    color: var(--green);
+    font-size: 13px;
+    text-align: center;
+}
+
+.page-message.error {
+    color: var(--danger);
+}
+
+/* ---------------------------- 하단 메뉴 ---------------------------- */
+
+.bottom-nav {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    width: 100%;
+    max-width: 402px;
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+    padding: 16px 12px 20px;
+    border-top: 0.5px solid var(--line);
+    background: #FFFFFF;
+}
+
+.bottom-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--line);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 아이콘마다 원래 크기가 달라서 각각 지정한다 */
+.bottom-nav button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.bottom-nav #routeButton svg {
+    width: 22px;
+    height: 20px;
+}
+
+.bottom-nav button.active svg {
+    width: 26px;
+    height: 26px;
+}
+
+.bottom-nav button.active {
+    color: var(--green);
+}
+
+@media (max-width: 402px) {
+    body {
+        background: #FFFFFF;
+    }
+}
+
+/* 카드는 줄만 들어갈 때를 기준으로 위아래 여백이 0이라
+   카드 안에 버튼이 들어오는 경우에만 아래 여백을 따로 준다 */
+.card > .line-button {
+    margin-bottom: 14px;
+}
+
+/* 관계는 보호자가 직접 적는다.
+   피그마에는 그냥 텍스트로 보이는 자리라 평소에는 테두리 없이 두고,
+   커서를 올렸을 때만 적는 칸이라는 걸 알 수 있게 밑줄을 보여준다 */
+.row-input {
+    width: 130px;
+    padding: 0;
+    line-height: 18px;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: right;
+}
+
+.row-input::placeholder {
+    color: var(--line);
+    font-weight: 500;
+}
+
+.row-input:hover {
+    border-bottom-color: var(--line);
+}
+
+.row-input:focus {
+    outline: 0;
+    border-bottom-color: var(--green);
+}

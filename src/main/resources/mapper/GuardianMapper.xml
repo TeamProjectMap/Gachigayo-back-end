@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.IGuardianMapper">
+
+    <!-- 보호자와 연결된 이용자 1명 -->
+    <select id="getLinkedUser" parameterType="long" resultType="com.baegopa.onestep.dto.UserDTO">
+        SELECT u.userId,
+               u.userName,
+               u.userRole,
+               u.phone
+        FROM GUARDIAN_LINKS gl
+                 INNER JOIN USERS u
+                            ON u.userId = gl.userId
+        WHERE gl.guardianId = #{guardianId}
+    </select>
+    <select id="getOngoingTrip" parameterType="long" resultType="com.baegopa.onestep.dto.GuardianTripDTO">
+        SELECT t.tripId,
+               t.tripStatus,
+               t.startDt,
+               r.startName,
+               r.endName,
+               r.totalDuration,
+               (SELECT s.checkpointName
+                FROM ROUTE_STEPS s
+                WHERE s.routeId = t.routeId
+                  AND s.checkpointName IS NOT NULL
+                  AND s.stepOrder >= COALESCE((SELECT cur.stepOrder
+                                               FROM ROUTE_STEPS cur
+                                               WHERE cur.routeStepId = t.currentStepId), 0)
+                ORDER BY s.stepOrder
+                LIMIT 1) AS nextCheckpointName,
+               (SELECT s.distance
+                FROM ROUTE_STEPS s
+                WHERE s.routeId = t.routeId
+                  AND s.checkpointName IS NOT NULL
+                  AND s.stepOrder >= COALESCE((SELECT cur.stepOrder
+                                               FROM ROUTE_STEPS cur
+                                               WHERE cur.routeStepId = t.currentStepId), 0)
+                ORDER BY s.stepOrder
+                LIMIT 1) AS nextCheckpointDistance
+        FROM TRIPS t
+                 INNER JOIN ROUTES r
+                            ON r.routeId = t.routeId
+        WHERE r.userId = #{userId}
+          AND t.tripStatus = 'MOVING'
+        ORDER BY t.startDt DESC
+        LIMIT 1
+    </select>
+
+    <!-- 해당 이동에서 마지막으로 기록된 위치 1건 -->
+    <select id="getLatestTripLocation" parameterType="long" resultType="com.baegopa.onestep.dto.TripLocationDTO">
+        SELECT tripLocationId,
+               tripId,
+               lat,
+               lng,
+               regDt
+        FROM TRIP_LOCATIONS
+        WHERE tripId = #{tripId}
+        ORDER BY regDt DESC, tripLocationId DESC
+        LIMIT 1
+    </select>
+
+    <!-- 최근 알림 목록 -->
+    <select id="getRecentNotifications" resultType="com.baegopa.onestep.dto.NotificationDTO">
+        SELECT notificationId,
+               receiverId,
+               tripEventId,
+               notifyType,
+               content,
+               readYn,
+               regDt
+        FROM NOTIFICATIONS
+        WHERE receiverId = #{receiverId}
+        ORDER BY regDt DESC, notificationId DESC
+        LIMIT #{listSize}
+    </select>
+
+    <!-- 안 읽은 알림 개수 -->
+    <select id="getUnreadNotificationCount" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM NOTIFICATIONS
+        WHERE receiverId = #{receiverId}
+          AND readYn = 'N'
+    </select>
+
+    <!--
+        알림 상세.
+        알림 -> 이벤트 -> 이동 -> 경로 순으로 이어 붙여 목적지까지 가져온다.
+        이벤트가 없는 알림도 있어서 LEFT JOIN 이다.
+    -->
+    <select id="getNotificationDetail" resultType="com.baegopa.onestep.dto.NotificationDetailDTO">
+        SELECT n.notificationId,
+               n.notifyType,
+               n.content,
+               n.readYn,
+               n.regDt,
+               e.lat,
+               e.lng,
+               e.eventDt,
+               r.endName AS destination
+        FROM NOTIFICATIONS n
+                 LEFT JOIN TRIP_EVENTS e
+                           ON e.tripEventId = n.tripEventId
+                 LEFT JOIN TRIPS t
+                           ON t.tripId = e.tripId
+                 LEFT JOIN ROUTES r
+                           ON r.routeId = t.routeId
+        WHERE n.notificationId = #{notificationId}
+          AND n.receiverId = #{receiverId}
+    </select>
+
+    <update id="updateNotificationRead">
+        UPDATE NOTIFICATIONS
+        SET readYn = 'Y'
+        WHERE notificationId = #{notificationId}
+          AND receiverId = #{receiverId}
+    </update>
+
+    <!-- 알림을 확인했을 때 모두 읽음으로 바꾼다 -->
+    <update id="updateNotificationsRead" parameterType="long">
+        UPDATE NOTIFICATIONS
+        SET readYn = 'Y'
+        WHERE receiverId = #{receiverId}
+          AND readYn = 'N'
+    </update>
+
+</mapper>

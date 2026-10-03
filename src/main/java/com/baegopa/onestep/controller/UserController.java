@@ -31,7 +31,7 @@ public class UserController {
     private static final String SESSION_EMAIL_AUTH_EXPIRE_TIME = "emailAuthExpireTime";
     private static final String SESSION_NEW_PASSWORD_LOGIN_ID = "newPasswordLoginId";
 
-    // 아이디/비밀번호 찾기 전용 이메일 인증 세션 (회원가입 인증과 섞이지 않도록 키를 분리함)
+    // 아이디/비밀번호 찾기 전용 이메일 인증 세션
     private static final String SESSION_FIND_AUTH_CODE = "findAuthCode";
     private static final String SESSION_FIND_AUTH_EMAIL = "findAuthEmail";
     private static final String SESSION_FIND_AUTH_EXPIRE_TIME = "findAuthExpireTime";
@@ -86,6 +86,41 @@ public class UserController {
         response.put("linkedName", homeInfo.get("linkedName"));
 
         return response;
+    }
+
+    @ResponseBody
+    @GetMapping("/help-card")
+    public Map<String, Object> getHelpCard(HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        Map<String, Object> response = createResponse(true, "도움요청 문구를 조회했습니다.");
+        response.put("helpRequestMessage", userService.getHelpRequestMessage(sessionUser.userId()));
+
+        return response;
+    }
+
+    @ResponseBody
+    @PostMapping("/help-card")
+    public Map<String, Object> saveHelpCard(HttpServletRequest request, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            String helpRequestMessage = getParameter(request, "helpRequestMessage");
+            userService.saveHelpRequestMessage(sessionUser.userId(), helpRequestMessage);
+
+            return createResponse(true, "도움요청 문구를 저장했습니다.");
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("Help card save failed. userId={}", sessionUser.userId(), e);
+            return createResponse(false, "도움요청 문구 저장 중 오류가 발생했습니다.");
+        }
     }
 
     @ResponseBody
@@ -219,13 +254,14 @@ public class UserController {
         String linkCode = getParameter(request, "linkCode");
         log.info("linkCode : {}", linkCode);
 
-        if (isBlank(linkCode)) {
-            return createResponse(false, "연결코드를 입력해주세요.");
+        try {
+            // 코드가 있는지 + 그 이용자가 아직 연결 전인지 확인
+            userService.validateLinkCode(linkCode);
+
+            return createResponse(true, "연결코드가 확인되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
         }
-
-        boolean valid = userService.isValidLinkCode(linkCode);
-
-        return createResponse(valid, valid ? "연결코드가 확인되었습니다." : "유효하지 않은 코드입니다.");
     }
 
     @ResponseBody
@@ -305,8 +341,6 @@ public class UserController {
 
     /**
      * 아이디 찾기 1단계 : 이름 + 이메일이 DB 정보와 일치하면 그 이메일로 인증번호를 발송함
-     * <p>
-     * 본인 이메일임을 확인해야 아이디를 알려주기 위해 인증 단계를 둠
      */
     @ResponseBody
     @PostMapping("/sendFindIdAuth")
@@ -362,7 +396,7 @@ public class UserController {
     }
 
     /**
-     * 비밀번호 찾기 1단계 : 아이디 + 이름 + 이메일이 DB 정보와 일치하면 그 이메일로 인증번호를 발송함
+     * 비밀번호 찾기 1단계 : 아이디 + 이름 + 이메일이 DB 정보와 일치하면 그 이메일로 인증번호를 발송
      */
     @ResponseBody
     @PostMapping("/sendFindPasswordAuth")
@@ -466,7 +500,7 @@ public class UserController {
     }
 
     /**
-     * 아이디/비밀번호 찾기 공용 : 회원 조회 후 일치하면 인증번호를 발송하고 세션에 인증정보를 저장함
+     * 아이디/비밀번호 찾기 공용 : 회원 조회 후 일치하면 인증번호를 발송하고 세션에 인증정보를 저장
      */
     private Map<String, Object> sendFindAuth(HttpSession session, UserDTO pDTO, String purpose, String notFoundMessage) {
         UserDTO rDTO;
@@ -593,5 +627,23 @@ public class UserController {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private SessionUser getSessionUser(HttpSession session) {
+        Long userId = (Long) session.getAttribute("SS_USER_ID");
+        String userRole = (String) session.getAttribute("SS_USER_ROLE");
+
+        if (userId == null || isBlank(userRole)) {
+            return new SessionUser(null, false, createResponse(false, "로그인이 필요합니다."));
+        }
+
+        if (!"USER".equals(userRole)) {
+            return new SessionUser(null, false, createResponse(false, "사용자만 사용할 수 있는 기능입니다."));
+        }
+
+        return new SessionUser(userId, true, null);
+    }
+
+    private record SessionUser(Long userId, boolean valid, Map<String, Object> response) {
     }
 }

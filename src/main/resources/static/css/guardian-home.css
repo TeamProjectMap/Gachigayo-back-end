@@ -26,6 +26,12 @@ button {
     cursor: pointer;
 }
 
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
 .hidden {
     display: none !important;
 }
@@ -35,15 +41,17 @@ button {
     max-width: 402px;
     min-height: 100vh;
     margin: 0 auto;
-    padding: 30px 24px 88px;
+    padding: 30px 24px 96px;
     background: var(--bg);
 }
+
+/* ---------------------------- 헤더 ---------------------------- */
 
 .guardian-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 26px;
+    margin-bottom: 22px;
 }
 
 .guardian-header h1 {
@@ -53,20 +61,35 @@ button {
     font-weight: 800;
 }
 
-.header-actions {
+.bell-button {
+    position: relative;
     display: flex;
-    gap: 7px;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    color: var(--text);
 }
 
-.notice-button,
-.logout-button {
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: #f3f3f3;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 700;
+.bell-button svg {
+    width: 24px;
+    height: 24px;
 }
+
+/* 안 읽은 알림이 있을 때만 보이는 빨간 점 */
+.bell-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #E5484D;
+}
+
+/* ------------------- 이용자 상태 + 연결 상태 ------------------- */
 
 .status-grid {
     display: grid;
@@ -80,114 +103,223 @@ button {
 .info-card,
 .notification-card {
     border-radius: 16px;
-    background: #FAFAFA;
+    background: var(--bg);
     border: 1px solid #ECECEC;
 }
 
 .user-status-card {
-    padding: 18px 16px;
-    background: var(--green);
-    color: #FFFFFF;
+    padding: 16px 15px;
 }
 
-.user-status-card strong,
-.connection-card strong,
-.location-card strong,
-.info-card strong,
-.notification-card strong {
+.user-status-card strong {
     display: block;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 800;
-    line-height: 1.35;
 }
 
-.user-status-card span {
+/* 이동 중 / 이동 정보 없음 배지 */
+.status-badge {
     display: inline-block;
-    margin-top: 14px;
-    padding: 5px 8px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.2);
+    margin-top: 8px;
+    color: var(--green);
     font-size: 12px;
     font-weight: 700;
 }
 
-.user-status-card p,
-.connection-card p,
-.location-card p,
-.info-card p,
-.notification-card p {
-    margin: 8px 0 0;
+.status-badge.off {
+    color: var(--muted);
+}
+
+.user-status-card p {
+    margin: 6px 0 0;
+    color: var(--muted);
     font-size: 13px;
-    line-height: 1.45;
 }
 
 .connection-card {
-    padding: 18px 15px;
+    padding: 16px 15px;
     background: var(--soft-green);
+    border-color: var(--soft-green);
 }
 
-.connection-card p,
-.location-card span,
-.info-card span,
-.notification-card p {
-    color: var(--muted);
+.connection-card .card-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--green);
 }
+
+.connection-card strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.connection-card p {
+    margin: 5px 0 0;
+    color: #6F8A72;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* ---------------------------- 현재 위치 ---------------------------- */
 
 .location-card {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 18px;
-    padding: 18px 16px;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 16px 18px;
+    background: var(--soft-green);
+    border-color: var(--soft-green);
+}
+
+.card-label {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.location-card strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.location-card p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .location-mark {
-    width: 52px;
-    height: 52px;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: var(--soft-green);
-    color: var(--green);
-    font-size: 12px;
-    font-weight: 800;
+    background: var(--green);
+    color: #FFFFFF;
 }
+
+.location-mark svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* -------------------- 체크포인트 / 도착 예정 -------------------- */
 
 .info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin-top: 18px;
+    margin-top: 12px;
 }
 
 .info-card {
-    min-height: 118px;
-    padding: 17px 15px;
+    min-height: 104px;
+    padding: 16px 15px;
 }
 
-.info-card p {
-    color: var(--green);
-    font-size: 17px;
+.info-card strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 18px;
     font-weight: 800;
 }
 
+.info-card p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* ---------------------------- 최근 알림 ---------------------------- */
+
 .notification-card {
-    margin-top: 18px;
-    padding: 18px 16px;
+    margin-top: 22px;
+    padding: 0;
+    border: 0;
 }
 
 .section-title {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.section-title strong {
+    font-size: 15px;
+    font-weight: 800;
 }
 
 .section-title button {
+    padding: 0;
     background: transparent;
     color: var(--muted);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
+}
+
+.notification-list {
+    display: grid;
+    gap: 10px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 15px 16px;
+    border: 1px solid #ECECEC;
+    border-radius: 14px;
+}
+
+/* 도움요청 알림 */
+.notification-item.urgent {
+    border-color: #F3C9CB;
+    background: #FDF3F3;
+}
+
+.notification-item.urgent strong {
+    color: #E5484D;
+}
+
+.notification-item strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.notification-item p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.notification-time {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.empty-text {
+    margin: 0;
+    padding: 18px 16px;
+    border: 1px solid #ECECEC;
+    border-radius: 14px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
 }
 
 .home-message {
@@ -198,6 +330,8 @@ button {
     text-align: center;
 }
 
+/* ---------------------------- 하단 메뉴 ---------------------------- */
+
 .bottom-nav {
     position: fixed;
     left: 50%;
@@ -207,16 +341,25 @@ button {
     transform: translateX(-50%);
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    padding: 12px 24px 18px;
+    padding: 10px 24px 16px;
     border-top: 1px solid #EEEEEE;
     background: #FFFFFF;
 }
 
 .bottom-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
     background: transparent;
     color: var(--line);
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.bottom-nav button svg {
+    width: 22px;
+    height: 22px;
 }
 
 .bottom-nav button.active {

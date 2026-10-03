@@ -6,12 +6,25 @@
             window.location.href = "/route-search.html";
         });
 
+        $(".help-request-link").on("click", function () {
+            window.location.href = "/help-request.html";
+        });
+
         $(".action-card").not(".route-search-link").on("click", function () {
             setMessage($(this).data("ready-message") || "다음 단계에서 연결 예정입니다.");
         });
 
         $(".favorite-places-link").on("click", function () {
             window.location.href = "/route-search.html?view=favorites";
+        });
+
+        $(".help-request-link").on("click", function () {
+            try {
+                sessionStorage.removeItem("helpRequestEntryFromNavigation");
+                sessionStorage.removeItem("currentHelpRequestState");
+            } catch (e) {
+            }
+            window.location.href = "/help-request.html";
         });
 
         $("#homeNavButton").on("click", function () {

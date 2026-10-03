@@ -17,5 +17,6 @@ public class KakaoPlaceDTO {
     private String longitude;
     private String latitude;
     private String phone;
+    private String distance;
     private String placeUrl;
 }

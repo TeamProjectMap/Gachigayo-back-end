@@ -1,6 +1,8 @@
 package com.baegopa.onestep.service.impl;
 
 import com.baegopa.onestep.dto.UserDTO;
+import com.baegopa.onestep.dto.UserSettingsDTO;
+import com.baegopa.onestep.mapper.ILinkMapper;
 import com.baegopa.onestep.mapper.IUserMapper;
 import com.baegopa.onestep.service.IUserService;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +25,10 @@ public class UserService implements IUserService {
     private static final String LINK_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int LINK_CODE_RETRY_LIMIT = 20;
     private static final String PASSWORD_PATTERN = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,16}$";
+    private static final int HELP_REQUEST_MESSAGE_MAX_LENGTH = 500;
 
     private final IUserMapper userMapper;
+    private final ILinkMapper linkMapper;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -41,6 +45,48 @@ public class UserService implements IUserService {
     @Override
     public boolean isValidLinkCode(String linkCode) {
         return userMapper.getUserByLinkCode(linkCode) != null;
+    }
+
+    @Override
+    public void validateLinkCode(String linkCode) {
+        findLinkableUser(linkCode);
+    }
+
+    @Override
+    @Transactional
+    public String reissueLinkCode(Long userId) {
+        String newLinkCode = createUniqueLinkCode();
+
+        if (userMapper.updateLinkCode(userId, newLinkCode) == 0) {
+            throw new IllegalArgumentException("연결코드를 다시 받을 수 없는 계정입니다.");
+        }
+
+        log.info("연결코드 재발급 userId={}, linkCode={}", userId, newLinkCode);
+
+        return newLinkCode;
+    }
+
+    /**
+     * 연결코드로 연결 대상 이용자를 찾음
+     * <p>
+     * 연결은 1:1 이라 이미 보호자가 있는 이용자에게는 연결할 수 없음
+     */
+    private UserDTO findLinkableUser(String linkCode) {
+        if (isBlank(linkCode)) {
+            throw new IllegalArgumentException("연결코드를 입력해주세요.");
+        }
+
+        UserDTO linkedUser = userMapper.getUserByLinkCode(linkCode.trim());
+
+        if (linkedUser == null) {
+            throw new IllegalArgumentException("유효하지 않은 연결코드입니다.");
+        }
+
+        if (linkMapper.getLinkCountByUserId(linkedUser.getUserId()) > 0) {
+            throw new IllegalArgumentException("이미 다른 보호자와 연결된 사용자입니다.");
+        }
+
+        return linkedUser;
     }
 
     @Override
@@ -77,6 +123,39 @@ public class UserService implements IUserService {
         }
 
         return result;
+    }
+
+    @Override
+    public String getHelpRequestMessage(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+
+        UserSettingsDTO settingsDTO = userMapper.getUserSettings(userId);
+        return settingsDTO == null ? null : settingsDTO.getHelpRequestMessage();
+    }
+
+    @Override
+    @Transactional
+    public int saveHelpRequestMessage(Long userId, String helpRequestMessage) {
+        if (userId == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        String message = helpRequestMessage == null ? "" : helpRequestMessage.trim();
+        if (isBlank(message)) {
+            throw new IllegalArgumentException("도움요청 문구를 입력해주세요.");
+        }
+
+        if (message.length() > HELP_REQUEST_MESSAGE_MAX_LENGTH) {
+            throw new IllegalArgumentException("도움요청 문구는 500자 이하로 입력해주세요.");
+        }
+
+        UserSettingsDTO settingsDTO = new UserSettingsDTO();
+        settingsDTO.setUserId(userId);
+        settingsDTO.setHelpRequestMessage(message);
+
+        return userMapper.upsertUserSettings(settingsDTO);
     }
 
     @Override
@@ -121,14 +200,8 @@ public class UserService implements IUserService {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        if (isBlank(linkCode)) {
-            throw new IllegalArgumentException("연결코드를 입력해주세요.");
-        }
-
-        UserDTO linkedUser = userMapper.getUserByLinkCode(linkCode);
-        if (linkedUser == null) {
-            throw new IllegalArgumentException("유효하지 않은 보호자 연결코드입니다.");
-        }
+        // 가입 화면에서 코드 확인을 한 뒤에도 그 사이 다른 보호자가 연결했을 수 있어 여기서 다시 봄
+        UserDTO linkedUser = findLinkableUser(linkCode);
 
         userDTO.setUserRole(ROLE_GUARDIAN);
         userDTO.setLinkCode(null);
