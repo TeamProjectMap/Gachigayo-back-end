@@ -9,11 +9,13 @@
         INSERT INTO NOTIFICATIONS (
             receiverId,
             notifyType,
-            content
+            content,
+            helpRequestId
         ) VALUES (
             #{receiverId},
             #{notifyType},
-            #{content}
+            #{content},
+            #{helpRequestId}
         )
     </insert>
 

@@ -17,8 +17,9 @@ public interface INotificationService {
      * <p>
      * 도움요청은 안전과 직결돼서 보호자의 알림 설정과 상관없이 항상 만든다.
      *
-     * @param helpMessage 이용자가 고른 상황 설명. 알림 목록에서 제목 밑에 보인다.
+     * @param helpMessage   이용자가 고른 상황 설명. 알림 목록에서 제목 밑에 보인다.
+     * @param helpRequestId 저장된 도움요청 번호. 알림 상세에서 위치와 목적지를 찾는 데 쓴다.
      * @return 알림을 만들었으면 true (연결된 보호자가 없으면 false)
      */
-    boolean createHelpRequestNotification(Long userId, String helpMessage);
+    boolean createHelpRequestNotification(Long userId, String helpMessage, Long helpRequestId);
 }
