@@ -6,6 +6,7 @@ import com.baegopa.onestep.dto.UserDTO;
 import com.baegopa.onestep.mapper.IHelpRequestMapper;
 import com.baegopa.onestep.service.IHelpRequestService;
 import com.baegopa.onestep.service.IKakaoMapService;
+import com.baegopa.onestep.service.INotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class HelpRequestService implements IHelpRequestService {
 
     private final IHelpRequestMapper helpRequestMapper;
     private final IKakaoMapService kakaoMapService;
+    private final INotificationService notificationService;
 
     @Override
     @Transactional
@@ -44,6 +46,10 @@ public class HelpRequestService implements IHelpRequestService {
         helpRequestDTO.setStatus(STATUS_REQUESTED);
 
         helpRequestMapper.insertHelpRequest(helpRequestDTO);
+
+        // 보호자 알림 목록에도 보이도록 알림을 함께 만든다
+        notificationService.createHelpRequestNotification(userId, helpRequestDTO.getHelpMessage());
+
         return helpRequestDTO;
     }
 
