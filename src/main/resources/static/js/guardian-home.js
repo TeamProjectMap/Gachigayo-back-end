@@ -215,7 +215,9 @@
         var $text = $("<div>")
                 .append($("<strong>").text(title));
 
-        if (notification.content) {
+        // 도움요청의 content는 이용자가 주변 사람에게 보여주는 긴 카드 문구라
+        // 홈에서는 제목만 보여준다
+        if (notification.content && notification.notifyType !== "HELP_REQUEST") {
             $text.append($("<p>").text(notification.content));
         }
 
