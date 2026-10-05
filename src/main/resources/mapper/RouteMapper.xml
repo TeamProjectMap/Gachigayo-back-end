@@ -136,6 +136,14 @@
         WHERE routeStepId = #{routeStepId}
     </update>
 
+    <update id="updateStepNotRecorded" parameterType="long">
+        UPDATE ROUTE_STEPS
+        SET recordedYn = 'N',
+            lat        = NULL,
+            lng        = NULL
+        WHERE routeStepId = #{routeStepId}
+    </update>
+
     <!--
         값이 실제로 바뀌지 않으면 ON UPDATE CURRENT_TIMESTAMP 가 동작하지 않는다.
         그래서 updDt를 직접 지금으로 올린다.

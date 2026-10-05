@@ -105,6 +105,24 @@ CREATE TABLE ROUTE_STEPS (
         FOREIGN KEY (routeId) REFERENCES ROUTES (routeId) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='경로 단계';
 
+CREATE TABLE ROUTE_PHOTOS (
+    routePhotoId BIGINT       NOT NULL AUTO_INCREMENT COMMENT '경로 사진 고유 번호',
+    routeStepId  BIGINT       NOT NULL COMMENT '사진이 속한 도보 구간',
+    photoUrl     VARCHAR(500)  NOT NULL COMMENT '저장된 이미지 주소',
+    storageKey   VARCHAR(255)  NULL     COMMENT '저장소에서 삭제할 때 쓰는 키',
+    title        VARCHAR(100)  NULL     COMMENT '지점 이름 (예: 정류장 표지판)',
+    description  VARCHAR(255)  NULL     COMMENT '이 지점에서 할 일 (예: 6642번을 기다려요)',
+    lat          DECIMAL(10,7) NULL     COMMENT '촬영 지점 위도 (지도 표시용)',
+    lng          DECIMAL(10,7) NULL     COMMENT '촬영 지점 경도 (지도 표시용)',
+    photoOrder   INT           NOT NULL DEFAULT 1 COMMENT '구간 안에서의 순서',
+    regDt        DATETIME(6)   NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '등록 일시',
+    updDt        DATETIME(6)   NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정 일시',
+    PRIMARY KEY (routePhotoId),
+    KEY IDX_ROUTE_PHOTOS_step (routeStepId, photoOrder),
+    CONSTRAINT FK_ROUTE_PHOTOS_step
+        FOREIGN KEY (routeStepId) REFERENCES ROUTE_STEPS (routeStepId) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='경로 구간 사진';
+
 CREATE TABLE TRIPS (
     tripId        BIGINT      NOT NULL AUTO_INCREMENT COMMENT '이동 기록 번호',
     routeId       BIGINT      NOT NULL COMMENT '이동에 사용한 경로',

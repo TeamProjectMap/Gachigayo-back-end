@@ -5,6 +5,7 @@ import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
 import com.baegopa.onestep.dto.PublicTransitRouteDTO;
 import com.baegopa.onestep.dto.PublicTransitStepDTO;
 import com.baegopa.onestep.dto.RouteDTO;
+import com.baegopa.onestep.dto.RoutePhotoDTO;
 import com.baegopa.onestep.dto.RouteStepDTO;
 import com.baegopa.onestep.dto.TransitVehicleDTO;
 import com.baegopa.onestep.dto.UserDTO;
@@ -12,6 +13,7 @@ import com.baegopa.onestep.dto.WalkingRouteResultDTO;
 import com.baegopa.onestep.dto.WalkingStepDTO;
 import com.baegopa.onestep.mapper.ILinkMapper;
 import com.baegopa.onestep.mapper.IRouteMapper;
+import com.baegopa.onestep.mapper.IRoutePhotoMapper;
 import com.baegopa.onestep.service.IKakaoMapService;
 import com.baegopa.onestep.service.IRouteService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,7 @@ public class RouteService implements IRouteService {
     private static final DateTimeFormatter LIST_DATE_FORMAT = DateTimeFormatter.ofPattern("yy.MM.dd");
 
     private final IRouteMapper routeMapper;
+    private final IRoutePhotoMapper routePhotoMapper;
     private final ILinkMapper linkMapper;
     private final IKakaoMapService kakaoMapService;
 
@@ -133,6 +136,13 @@ public class RouteService implements IRouteService {
         result.put("startName", route.getStartName());
         result.put("endName", route.getEndName());
 
+        // 구간마다 따로 물어보면 질의가 많아져서 한 번에 받아 구간별로 나눈다
+        Map<Long, List<RoutePhotoDTO>> photosByStep = new HashMap<>();
+
+        for (RoutePhotoDTO photo : routePhotoMapper.getPhotosByRoute(routeId)) {
+            photosByStep.computeIfAbsent(photo.getRouteStepId(), key -> new ArrayList<>()).add(photo);
+        }
+
         List<Map<String, Object>> steps = new ArrayList<>();
         int recordedCount = 0;
         int walkCount = 0;
@@ -158,6 +168,7 @@ public class RouteService implements IRouteService {
             // 걸어서 기록해야 하는 구간인지 (버스·지하철은 기록 대상이 아니다)
             item.put("walking", walking);
             item.put("recorded", recorded);
+            item.put("photos", photosByStep.getOrDefault(step.getRouteStepId(), new ArrayList<>()));
             steps.add(item);
         }
 
