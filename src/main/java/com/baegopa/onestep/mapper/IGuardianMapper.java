@@ -3,6 +3,7 @@ package com.baegopa.onestep.mapper;
 import com.baegopa.onestep.dto.GuardianTripDTO;
 import com.baegopa.onestep.dto.NotificationDTO;
 import com.baegopa.onestep.dto.NotificationDetailDTO;
+import com.baegopa.onestep.dto.RouteStepDTO;
 import com.baegopa.onestep.dto.TripLocationDTO;
 import com.baegopa.onestep.dto.UserDTO;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,6 +22,14 @@ public interface IGuardianMapper {
 
     /** 해당 이동에서 마지막으로 기록된 위치 */
     TripLocationDTO getLatestTripLocation(@Param("tripId") Long tripId);
+
+    /**
+     * 이동에 쓰인 경로의 구간들
+     * <p>
+     * 실시간 위치 화면에서 체크포인트를 지도에 찍는 데 쓴다.
+     * 길안내가 즉석에서 만든 경로에는 구간이 없을 수 있다.
+     */
+    List<RouteStepDTO> getTripRouteSteps(@Param("tripId") Long tripId);
 
     /** 최근 알림 목록 */
     List<NotificationDTO> getRecentNotifications(@Param("receiverId") Long receiverId,

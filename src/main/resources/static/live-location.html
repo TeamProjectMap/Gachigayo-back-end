@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 실시간 위치</title>
+    <link rel="stylesheet" href="/css/live-location.css">
+</head>
+<body>
+<main class="live-page hidden" id="livePage">
+    <header class="live-header">
+        <button type="button" class="back-button" id="backButton" aria-label="뒤로">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <h1>실시간 위치</h1>
+        <button type="button" class="refresh-button" id="refreshButton" aria-label="새로고침">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-2.6-6.4"/>
+                <path d="M21 3v6h-6"/>
+            </svg>
+        </button>
+    </header>
+
+    <div class="live-map" id="liveMap">
+        <p class="map-message" id="mapMessage">지도를 불러오는 중이에요</p>
+    </div>
+
+    <section class="live-card">
+        <div class="place-row">
+            <span class="place-tag start">출발</span>
+            <strong id="startName">-</strong>
+        </div>
+        <div class="place-row">
+            <span class="place-tag end">도착</span>
+            <strong id="endName">-</strong>
+        </div>
+    </section>
+
+    <section class="live-card">
+        <strong class="live-title" id="liveTitle">이동 정보를 확인하는 중이에요</strong>
+
+        <div class="info-row">
+            <span>현재 위치</span>
+            <strong id="currentPlace">-</strong>
+        </div>
+        <div class="info-row">
+            <span>다음 체크 포인트</span>
+            <strong id="checkpoint">-</strong>
+        </div>
+        <div class="info-row">
+            <span>예상 도착 시간</span>
+            <strong id="arrival">-</strong>
+        </div>
+    </section>
+
+    <p class="page-message" id="liveMessage"></p>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/live-location.js"></script>
+</body>
+</html>

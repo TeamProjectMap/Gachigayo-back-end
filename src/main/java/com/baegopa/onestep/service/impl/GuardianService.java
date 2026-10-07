@@ -3,6 +3,7 @@ package com.baegopa.onestep.service.impl;
 import com.baegopa.onestep.dto.GuardianTripDTO;
 import com.baegopa.onestep.dto.NotificationDTO;
 import com.baegopa.onestep.dto.NotificationDetailDTO;
+import com.baegopa.onestep.dto.RouteStepDTO;
 import com.baegopa.onestep.dto.TripLocationDTO;
 import com.baegopa.onestep.dto.UserDTO;
 import com.baegopa.onestep.mapper.IGuardianMapper;
@@ -69,6 +70,55 @@ public class GuardianService implements IGuardianService {
     @Transactional
     public int markNotificationsRead(Long guardianId) {
         return guardianMapper.updateNotificationsRead(guardianId);
+    }
+
+    @Override
+    public Map<String, Object> getLiveInfo(Long guardianId) {
+        Map<String, Object> result = getHomeInfo(guardianId);
+
+        if (!Boolean.TRUE.equals(result.get("moving"))) {
+            return result;
+        }
+
+        Object tripId = result.get("tripId");
+
+        if (tripId instanceof Long) {
+            result.put("steps", toMapPoints((Long) tripId));
+        }
+
+        // 홈에서는 "약 15분 남음"이면 되지만, 여기서는 몇 시에 도착하는지도 보여준다
+        Object remainMinutes = result.get("remainMinutes");
+
+        if (remainMinutes instanceof Integer) {
+            result.put("arrivalTime",
+                    LocalDateTime.now().plusMinutes((Integer) remainMinutes).format(TIME_FORMAT));
+        }
+
+        return result;
+    }
+
+    /**
+     * 지도에 찍을 구간들.
+     * 아직 걸으며 기록하지 않은 구간은 좌표가 없어 지도에 그릴 수 없으므로 뺀다.
+     */
+    private List<Map<String, Object>> toMapPoints(Long tripId) {
+        List<Map<String, Object>> points = new ArrayList<>();
+
+        for (RouteStepDTO step : guardianMapper.getTripRouteSteps(tripId)) {
+            if (step.getLat() == null || step.getLng() == null) {
+                continue;
+            }
+
+            Map<String, Object> point = new LinkedHashMap<>();
+            point.put("stepOrder", step.getStepOrder());
+            point.put("lat", step.getLat());
+            point.put("lng", step.getLng());
+            point.put("checkpointName", step.getCheckpointName());
+            point.put("mainText", step.getMainText());
+            points.add(point);
+        }
+
+        return points;
     }
 
     @Override

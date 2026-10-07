@@ -26,6 +26,10 @@
             window.location.href = "/notifications.html";
         });
 
+        $("#locationCard").on("click", function () {
+            window.location.href = "/live-location.html";
+        });
+
         $("#routeButton").on("click", function () {
             window.location.href = "/route-manage.html";
         });
