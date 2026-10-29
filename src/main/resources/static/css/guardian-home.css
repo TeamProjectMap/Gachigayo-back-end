@@ -54,11 +54,19 @@ ul {
     margin-bottom: 22px;
 }
 
+/* 글자 대신 프로젝트 로고를 쓴다. alt로 남겨둬서 못 불러와도 이름은 보인다. */
 .guardian-header h1 {
     margin: 0;
     color: var(--green);
     font-size: 26px;
     font-weight: 800;
+    line-height: 1;
+}
+
+.guardian-header .brand img {
+    display: block;
+    height: 30px;
+    width: auto;
 }
 
 .bell-button {
