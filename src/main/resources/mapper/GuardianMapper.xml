@@ -50,6 +50,30 @@
         LIMIT 1
     </select>
 
+    <!--
+        이동에 쓰인 경로의 구간들.
+        실시간 위치 화면에서 지도에 체크포인트를 찍는 데 쓴다.
+        아직 걸으며 기록하지 않은 구간은 좌표가 비어 있다.
+    -->
+    <select id="getTripRouteSteps" parameterType="long" resultType="com.baegopa.onestep.dto.RouteStepDTO">
+        SELECT s.routeStepId,
+               s.routeId,
+               s.stepOrder,
+               s.stepType,
+               s.mainText,
+               s.lineName,
+               s.lat,
+               s.lng,
+               s.distance,
+               s.checkpointName,
+               s.recordedYn
+        FROM TRIPS t
+                 INNER JOIN ROUTE_STEPS s
+                            ON s.routeId = t.routeId
+        WHERE t.tripId = #{tripId}
+        ORDER BY s.stepOrder
+    </select>
+
     <!-- 해당 이동에서 마지막으로 기록된 위치 1건 -->
     <select id="getLatestTripLocation" parameterType="long" resultType="com.baegopa.onestep.dto.TripLocationDTO">
         SELECT tripLocationId,

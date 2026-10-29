@@ -50,6 +50,25 @@ public class GuardianController {
         }
     }
 
+    /** 실시간 위치 화면 (이동 정보 + 지도에 그릴 구간 + 도착 예정 시각) */
+    @ResponseBody
+    @GetMapping("/live")
+    public Map<String, Object> getLive(HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            Map<String, Object> response = createResponse(true, "실시간 위치를 조회했습니다.");
+            response.putAll(guardianService.getLiveInfo(sessionUser.userId()));
+            return response;
+        } catch (Exception e) {
+            log.error("실시간 위치 조회 실패 guardianId={}", sessionUser.userId(), e);
+            return createResponse(false, "위치를 불러오는 중 오류가 발생했습니다.");
+        }
+    }
+
     /**
      * 알림을 확인했을 때 호출, 안 읽은 알림을 모두 읽음으로 바꿈
      */

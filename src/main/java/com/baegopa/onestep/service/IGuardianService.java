@@ -18,6 +18,13 @@ public interface IGuardianService {
      */
     int markNotificationsRead(Long guardianId);
 
+    /**
+     * 실시간 위치 화면에 필요한 정보
+     * <p>
+     * 홈에 보여주는 이동 정보에, 지도에 그릴 경로 구간과 도착 예정 시각을 더한다.
+     */
+    Map<String, Object> getLiveInfo(Long guardianId);
+
     /** 알림 목록 화면에 필요한 정보 (알림 목록 + 이용자 이름) */
     Map<String, Object> getNotificationList(Long guardianId);
 

@@ -167,6 +167,7 @@ ul {
 /* ---------------------------- 현재 위치 ---------------------------- */
 
 .location-card {
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: space-between;
