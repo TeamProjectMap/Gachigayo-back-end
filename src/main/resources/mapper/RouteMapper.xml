@@ -5,6 +5,11 @@
 
 <mapper namespace="com.baegopa.onestep.mapper.IRouteMapper">
 
+    <!--
+        경로 관리 목록.
+        보호자가 "혼자 가기 어려운 길"로 직접 지정한 경로(GUARDIAN)만 보여준다.
+        길안내를 시작할 때마다 만들어지는 경로(RECOMMENDED)는 이동 기록용이라 뺀다.
+    -->
     <select id="getRoutes" parameterType="long" resultType="com.baegopa.onestep.dto.RouteDTO">
         SELECT routeId,
                userId,
@@ -19,6 +24,7 @@
                updDt
         FROM ROUTES
         WHERE userId = #{userId}
+          AND routeType = 'GUARDIAN'
         ORDER BY updDt DESC, routeId DESC
     </select>
 
@@ -154,10 +160,12 @@
         WHERE routeId = #{routeId}
     </update>
 
+    <!-- 이름 중복도 보호자가 지정한 경로끼리만 본다 -->
     <select id="getRouteNameCount" resultType="int">
         SELECT COUNT(*)
         FROM ROUTES
         WHERE userId = #{userId}
+          AND routeType = 'GUARDIAN'
           AND routeName = #{routeName}
     </select>
 
