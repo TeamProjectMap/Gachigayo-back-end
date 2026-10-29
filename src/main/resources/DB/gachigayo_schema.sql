@@ -159,6 +159,7 @@ CREATE TABLE NOTIFICATIONS (
     notificationId BIGINT       NOT NULL AUTO_INCREMENT COMMENT '알림 고유 번호',
     receiverId     BIGINT       NOT NULL COMMENT '알림을 받는 사용자',
     tripEventId    BIGINT       NULL     COMMENT '관련 이벤트 (없을 수 있음)',
+    helpRequestId  BIGINT       NULL     COMMENT '관련 도움요청 (없을 수 있음)',
     notifyType     VARCHAR(30)  NOT NULL COMMENT '알림 종류',
     content        VARCHAR(255) NOT NULL COMMENT '알림 본문',
     readYn         CHAR(1)      NOT NULL DEFAULT 'N' COMMENT '읽음 여부 (Y/N)',

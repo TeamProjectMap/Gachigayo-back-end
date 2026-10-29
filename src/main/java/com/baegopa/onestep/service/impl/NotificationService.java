@@ -52,7 +52,7 @@ public class NotificationService implements INotificationService {
             return false;
         }
 
-        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_ARRIVED, content);
+        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_ARRIVED, content, null);
 
         log.info("도착 알림 생성 userId={}, guardianId={}, content={}",
                 userId, guardian.getUserId(), content);
@@ -62,7 +62,7 @@ public class NotificationService implements INotificationService {
 
     @Override
     @Transactional
-    public boolean createHelpRequestNotification(Long userId, String helpMessage) {
+    public boolean createHelpRequestNotification(Long userId, String helpMessage, Long helpRequestId) {
         UserDTO guardian = linkMapper.getGuardianByUserId(userId);
 
         if (guardian == null) {
@@ -73,7 +73,7 @@ public class NotificationService implements INotificationService {
         // 도움요청은 설정으로 끌 수 없고, 급할 때 여러 번 보낼 수 있어 중복도 막지 않는다
         String content = helpMessage == null ? "" : helpMessage.trim();
 
-        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_HELP_REQUEST, content);
+        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_HELP_REQUEST, content, helpRequestId);
 
         log.info("도움요청 알림 생성 userId={}, guardianId={}", userId, guardian.getUserId());
 

@@ -48,7 +48,8 @@ public class HelpRequestService implements IHelpRequestService {
         helpRequestMapper.insertHelpRequest(helpRequestDTO);
 
         // 보호자 알림 목록에도 보이도록 알림을 함께 만든다
-        notificationService.createHelpRequestNotification(userId, helpRequestDTO.getHelpMessage());
+        notificationService.createHelpRequestNotification(
+                userId, helpRequestDTO.getHelpMessage(), helpRequestDTO.getHelpRequestId());
 
         return helpRequestDTO;
     }

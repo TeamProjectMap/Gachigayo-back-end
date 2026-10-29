@@ -11,9 +11,14 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface INotificationMapper {
 
+    /**
+     * @param helpRequestId 도움요청으로 생긴 알림이면 그 번호. 아니면 null.
+     *                      알림 상세에서 요청 위치와 목적지를 찾아가는 데 쓴다.
+     */
     int insertNotification(@Param("receiverId") Long receiverId,
                            @Param("notifyType") String notifyType,
-                           @Param("content") String content);
+                           @Param("content") String content,
+                           @Param("helpRequestId") Long helpRequestId);
 
     /**
      * 같은 알림이 짧은 시간 안에 또 들어왔는지 확인한다.

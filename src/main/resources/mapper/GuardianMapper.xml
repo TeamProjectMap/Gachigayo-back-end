@@ -97,10 +97,10 @@
                n.content,
                n.readYn,
                n.regDt,
-               e.lat,
-               e.lng,
-               e.eventDt,
-               r.endName AS destination
+               COALESCE(e.lat, CAST(h.currentLatitude AS DECIMAL(10, 7)))  AS lat,
+               COALESCE(e.lng, CAST(h.currentLongitude AS DECIMAL(10, 7))) AS lng,
+               COALESCE(e.eventDt, h.regDt)                                AS eventDt,
+               COALESCE(r.endName, h.destinationName)                      AS destination
         FROM NOTIFICATIONS n
                  LEFT JOIN TRIP_EVENTS e
                            ON e.tripEventId = n.tripEventId
@@ -108,6 +108,8 @@
                            ON t.tripId = e.tripId
                  LEFT JOIN ROUTES r
                            ON r.routeId = t.routeId
+                 LEFT JOIN HELP_REQUEST h
+                           ON h.helpRequestId = n.helpRequestId
         WHERE n.notificationId = #{notificationId}
           AND n.receiverId = #{receiverId}
     </select>
