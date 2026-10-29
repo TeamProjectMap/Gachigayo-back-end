@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 경로 관리</title>
+    <link rel="stylesheet" href="/css/route-manage.css">
+</head>
+<body>
+<main class="route-page hidden" id="routePage">
+    <h1 class="page-title">경로 관리</h1>
+
+    <ul class="route-list" id="routeList"></ul>
+
+    <p class="empty-text hidden" id="routeEmpty">
+        아직 등록한 경로가 없어요.<br>자주 가는 곳을 경로로 만들어보세요.
+    </p>
+
+    <p class="page-message" id="routeMessage"></p>
+
+    <button type="button" class="main-button" id="newRouteButton">새 경로 등록</button>
+
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <button type="button" id="homeButton">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M13.45 2.53295C13.0442 2.19098 12.5307 2.00342 12 2.00342C11.4693 2.00342 10.9558 2.19098 10.55 2.53295L3.8 8.22795C3.54946 8.43911 3.34806 8.70243 3.20988 8.99952C3.0717 9.29661 3.00007 9.6203 3 9.94795V19.253C3 20.219 3.784 21.003 4.75 21.003H7.75C8.21413 21.003 8.65925 20.8186 8.98744 20.4904C9.31563 20.1622 9.5 19.7171 9.5 19.253V15.25C9.5 14.57 10.042 14.018 10.717 14H13.283C13.6088 14.0086 13.9183 14.144 14.1456 14.3775C14.373 14.611 14.5001 14.9241 14.5 15.25V19.253C14.5 20.219 15.284 21.003 16.25 21.003H19.25C19.7141 21.003 20.1592 20.8186 20.4874 20.4904C20.8156 20.1622 21 19.7171 21 19.253V9.94695C20.9999 9.6193 20.9283 9.29561 20.7901 8.99852C20.6519 8.70143 20.4505 8.43811 20.2 8.22695L13.45 2.53295Z"/>
+            </svg>
+            <span>홈</span>
+        </button>
+
+        <button type="button" class="active">
+            <svg viewBox="0 0 22 20" fill="currentColor" aria-hidden="true">
+                <path d="M14.6667 18.5977L7.33333 16.4532V1.40237L14.6667 3.54691V18.5977ZM15.8889 18.5508V3.45316L20.7434 1.46487C21.3469 1.21878 22 1.67191 22 2.33597V15.4141C22 15.7969 21.7708 16.1407 21.4233 16.2852L15.8889 18.5469V18.5508ZM0.576736 3.71487L6.11111 1.45316V16.5508L1.2566 18.5352C0.653125 18.7813 0 18.3282 0 17.6641V4.58597C0 4.20316 0.229167 3.85941 0.576736 3.71487Z"/>
+            </svg>
+            <span>경로</span>
+        </button>
+
+        <button type="button" id="settingButton">
+            <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" aria-hidden="true">
+                <path d="M4.33337 6.5H21.6667M4.33337 13H21.6667M4.33337 19.5H21.6667"/>
+            </svg>
+            <span>설정</span>
+        </button>
+    </nav>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/route-manage.js"></script>
+</body>
+</html>
