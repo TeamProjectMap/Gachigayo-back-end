@@ -722,13 +722,12 @@ ul {
     }
 }
 
-/* 삭제는 카드 안에 글자로만 둔다.
-   설정 화면의 "연결 해제"와 같은 방식이라 화면끼리 통일된다 */
+/* 삭제는 카드 안에 휴지통 아이콘으로 둔다 */
 .route-row {
     position: relative;
 }
 
-/* 삭제 글자와 화살표가 앉을 자리를 비워둔다 */
+/* 삭제 아이콘과 화살표가 앉을 자리를 비워둔다 */
 .route-row .route-item {
     position: relative;
     padding-right: 78px;
