@@ -37,6 +37,9 @@ public interface IRouteMapper {
                            @Param("lat") java.math.BigDecimal lat,
                            @Param("lng") java.math.BigDecimal lng);
 
+    /** 사진을 모두 지우면 구간을 다시 기록 전으로 되돌린다 */
+    int updateStepNotRecorded(@Param("routeStepId") Long routeStepId);
+
     /** 경로의 수정 시각을 지금으로 올린다 (구간을 기록하면 경로가 바뀐 것) */
     int touchRoute(@Param("routeId") Long routeId);
 

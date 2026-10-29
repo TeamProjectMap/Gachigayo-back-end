@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.IRoutePhotoMapper">
+
+    <sql id="photoColumns">
+        routePhotoId,
+        routeStepId,
+        photoUrl,
+        storageKey,
+        title,
+        description,
+        lat,
+        lng,
+        photoOrder,
+        regDt,
+        updDt
+    </sql>
+
+    <select id="getPhotosByStep" parameterType="long" resultType="com.baegopa.onestep.dto.RoutePhotoDTO">
+        SELECT <include refid="photoColumns"/>
+        FROM ROUTE_PHOTOS
+        WHERE routeStepId = #{routeStepId}
+        ORDER BY photoOrder, routePhotoId
+    </select>
+
+    <!-- 기록 화면은 구간이 여러 개라 사진을 한 번에 받아 화면에서 나눠 쓴다 -->
+    <select id="getPhotosByRoute" parameterType="long" resultType="com.baegopa.onestep.dto.RoutePhotoDTO">
+        SELECT p.routePhotoId,
+               p.routeStepId,
+               p.photoUrl,
+               p.storageKey,
+               p.title,
+               p.description,
+               p.lat,
+               p.lng,
+               p.photoOrder,
+               p.regDt,
+               p.updDt
+        FROM ROUTE_PHOTOS p
+                 INNER JOIN ROUTE_STEPS s
+                            ON s.routeStepId = p.routeStepId
+        WHERE s.routeId = #{routeId}
+        ORDER BY s.stepOrder, p.photoOrder, p.routePhotoId
+    </select>
+
+    <select id="getPhoto" parameterType="long" resultType="com.baegopa.onestep.dto.RoutePhotoDTO">
+        SELECT <include refid="photoColumns"/>
+        FROM ROUTE_PHOTOS
+        WHERE routePhotoId = #{routePhotoId}
+    </select>
+
+    <select id="getPhotoCount" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM ROUTE_PHOTOS
+        WHERE routeStepId = #{routeStepId}
+    </select>
+
+    <insert id="insertPhoto" parameterType="com.baegopa.onestep.dto.RoutePhotoDTO"
+            useGeneratedKeys="true" keyProperty="routePhotoId">
+        INSERT INTO ROUTE_PHOTOS (
+            routeStepId,
+            photoUrl,
+            storageKey,
+            title,
+            description,
+            lat,
+            lng,
+            photoOrder
+        ) VALUES (
+            #{routeStepId},
+            #{photoUrl},
+            #{storageKey},
+            #{title},
+            #{description},
+            #{lat},
+            #{lng},
+            #{photoOrder}
+        )
+    </insert>
+
+    <!-- 설명 수정 -->
+    <update id="updatePhotoText">
+        UPDATE ROUTE_PHOTOS
+        SET title       = #{title},
+            description = #{description}
+        WHERE routePhotoId = #{routePhotoId}
+    </update>
+
+    <!--
+        지도에서 위치만 고친다.
+        현장에서 찍으면 GPS로 자동으로 들어가지만, 집에서 미리 만들 때는
+        엉뚱한 자리에 찍히므로 손으로 옮길 수 있어야 한다.
+    -->
+    <update id="updatePhotoLocation">
+        UPDATE ROUTE_PHOTOS
+        SET lat = #{lat},
+            lng = #{lng}
+        WHERE routePhotoId = #{routePhotoId}
+    </update>
+
+    <!-- 재촬영 : 사진만 갈아끼우고 제목·설명은 그대로 둔다 -->
+    <update id="updatePhotoFile">
+        UPDATE ROUTE_PHOTOS
+        SET photoUrl   = #{photoUrl},
+            storageKey = #{storageKey},
+            lat        = #{lat},
+            lng        = #{lng}
+        WHERE routePhotoId = #{routePhotoId}
+    </update>
+
+    <delete id="deletePhoto" parameterType="long">
+        DELETE
+        FROM ROUTE_PHOTOS
+        WHERE routePhotoId = #{routePhotoId}
+    </delete>
+
+</mapper>

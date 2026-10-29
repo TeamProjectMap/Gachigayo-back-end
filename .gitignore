@@ -37,4 +37,4 @@ out/
 .vscode/
 
 # 로컬 DB 접속 정보
-application-local.properties
+application-local.propertiesuploads/

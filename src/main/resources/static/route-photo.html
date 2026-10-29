@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>같이가요 경로 촬영</title>
+    <link rel="stylesheet" href="/css/route-manage.css">
+</head>
+<body>
+<main class="photo-page hidden" id="photoPage">
+    <div class="photo-map" id="photoMap">
+        <button type="button" class="map-back" id="backButton" aria-label="뒤로">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <p class="map-message" id="mapMessage">지도를 불러오는 중이에요</p>
+    </div>
+
+    <section class="photo-head">
+        <span class="card-label">지금 기록 중인 구간</span>
+        <strong id="stepTitle">-</strong>
+        <p class="photo-count" id="photoCount"></p>
+    </section>
+
+    <ol class="photo-cards" id="photoCards"></ol>
+
+    <input type="file" id="photoInput" class="photo-input" accept="image/*">
+
+    <p class="page-message" id="photoMessage"></p>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/route-photo.js"></script>
+</body>
+</html>

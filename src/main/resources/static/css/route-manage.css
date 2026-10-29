@@ -298,6 +298,293 @@ ul {
     font-weight: 700;
 }
 
+/* ---------------------------- 경로 촬영 화면 ---------------------------- */
+
+.photo-page {
+    width: 100%;
+    max-width: 402px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 0 40px;
+    background: var(--bg);
+}
+
+/* 지도는 화면 맨 위에 꽉 차게 둔다 */
+.photo-map {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    background: #E9E9E9;
+}
+
+.map-back {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text);
+}
+
+.map-back svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* 지도 위의 번호. 목록의 번호와 같은 순서다. */
+.map-pin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #FFFFFF;
+    border-radius: 50%;
+    background: var(--green);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.photo-head {
+    padding: 18px 24px 0;
+}
+
+.photo-head strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.photo-count {
+    margin: 8px 0 0;
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.photo-cards {
+    margin: 16px 0 0;
+    padding: 0 24px;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+}
+
+.photo-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid #ECECEC;
+    border-radius: 14px;
+}
+
+.photo-card img {
+    width: 84px;
+    height: 84px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #D9D9D9;
+}
+
+/* 아직 사진이 없는 칸 */
+.photo-card.empty {
+    cursor: pointer;
+    border-style: dashed;
+}
+
+.photo-blank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 10px;
+    background: #F3F3F3;
+    color: var(--line);
+    font-size: 26px;
+}
+
+.photo-card.empty .photo-text strong {
+    color: var(--green);
+}
+
+.photo-number {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--green);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.photo-text strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.photo-text p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+/* 설명 옆의 연필. 글 끝에 붙어 같이 흐른다. */
+.photo-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin-left: 4px;
+    padding: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--line);
+    vertical-align: middle;
+}
+
+.photo-edit svg {
+    width: 13px;
+    height: 13px;
+}
+
+.photo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+/* 지도를 눌러 위치를 고르는 중이라는 표시 */
+.picking .photo-map {
+    outline: 3px solid var(--green);
+    outline-offset: -3px;
+    cursor: crosshair;
+}
+
+.photo-action {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid #ECECEC;
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.photo-action.danger {
+    border-color: #F3C9CB;
+    color: var(--danger);
+}
+
+/* 이 화면은 지도를 꽉 채우려고 바깥 여백이 없어서, 안쪽 요소에만 여백을 준다 */
+.photo-page .main-button,
+.photo-page .page-message,
+.photo-page .empty-text {
+    margin-left: 24px;
+    margin-right: 24px;
+    width: calc(100% - 48px);
+}
+
+/* ---------------------------- 구간 사진 ---------------------------- */
+
+.photo-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.photo-item {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.photo-item img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #FFFFFF;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* 파일 선택창은 버튼으로 대신 연다 */
+.photo-input {
+    display: none;
+}
+
+/* 기록 완료 상태 + 편집 버튼을 한 줄에 둔다 */
+.step-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.step-actions .step-button {
+    margin-top: 0;
+}
+
+.step-actions .step-button.done {
+    flex: 1;
+    /* 상태 표시라 누를 수 없다 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-button.edit {
+    width: 74px;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--muted);
+}
+
+.step-button.photo {
+    border: 1px solid var(--green);
+    background: var(--bg);
+    color: var(--green);
+}
+
 .step-button.done {
     border: 1px solid var(--green);
     background: var(--bg);
