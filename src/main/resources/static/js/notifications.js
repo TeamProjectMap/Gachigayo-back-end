@@ -118,8 +118,11 @@
     function buildSubText(notification) {
         var timeText = notification.timeText || "";
 
-        // 도착 알림은 목적지를 제목에 이미 썼다
-        if (notification.notifyType === "ARRIVED" || !notification.content) {
+        // 도착 알림은 목적지를 제목에 이미 썼고,
+        // 도움요청의 content는 주변 사람에게 보여주는 카드 문구라 목록에 쓰지 않는다
+        if (notification.notifyType === "ARRIVED"
+                || notification.notifyType === "HELP_REQUEST"
+                || !notification.content) {
             return timeText;
         }
 

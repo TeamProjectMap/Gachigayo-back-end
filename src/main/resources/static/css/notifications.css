@@ -193,17 +193,26 @@ ul {
     line-height: 1.4;
 }
 
-/* 지도 자리. 실시간 위치 화면을 만들 때 여기에 지도를 붙인다. */
-.map-placeholder {
+/* 도움요청이 들어온 위치를 보여주는 지도 */
+.detail-map {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 150px;
+    height: 170px;
     margin-top: 12px;
     border-radius: 12px;
-    background: #D9D9D9;
+    background: #E9E9E9;
+    overflow: hidden;
+}
+
+/* 지도를 못 불러왔을 때만 보이는 안내 */
+.map-message {
+    margin: 0;
+    padding: 0 16px;
     color: #6F6F6F;
     font-size: 12px;
+    text-align: center;
 }
 
 .main-button {
