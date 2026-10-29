@@ -1,5 +1,8 @@
 (function ($) {
     var REALTIME_FALLBACK = "실시간 도착정보를 확인할 수 없어요";
+    // 보호자 홈에 보여줄 위치를 서버에 남기는 간격
+    var TRIP_LOCATION_INTERVAL = 20000;
+    var TRIP_ID_STORAGE_KEY = "currentTripId";
     var GPS_ACCURACY_LIMIT_METERS = 80;
     var STEP_TRANSITION_MAX_ACCURACY_METERS = 50;
     var STEP_COMPLETE_CONFIRMATIONS = 2;
@@ -38,6 +41,9 @@
     var destinationMarker = null;
     // 보호자에게 도착 알림을 이미 보냈는지
     var arrivalNotified = false;
+    // 서버에 기록 중인 이동 번호와 마지막으로 위치를 보낸 시각
+    var currentTripId = null;
+    var lastLocationSentAt = 0;
     var navigationTargetMarker = null;
     var completedPathPolyline = null;
     var remainingPathPolyline = null;
@@ -142,6 +148,7 @@
         $("#navigationPage").removeClass("hidden");
 
         initializeNavigationMap();
+        startTripRecording();
         ensurePositionWatch();
         renderCurrentStep();
     }
@@ -287,7 +294,7 @@
     }
 
     /**
-     * 연결된 보호자에게 도착을 알린다.
+     * 연결된 보호자에게 도착을 알리고 이동을 끝낸다.
      * 도착 처리가 여러 번 불릴 수 있어 한 번만 보내고,
      * 실패해도 길안내 화면에는 영향을 주지 않는다.
      */
@@ -303,9 +310,106 @@
             type: "post",
             dataType: "JSON",
             data: {
+                tripId: currentTripId,
                 destinationName: getDestinationName(selectedRoute && selectedRoute.destination)
             }
         });
+
+        clearTripRecording();
+    }
+
+    /* ------------------- 보호자에게 보여줄 이동 기록 ------------------- */
+
+    /**
+     * 이동 시작을 서버에 남긴다.
+     * 여기서 받은 이동 번호로 위치를 기록해야 보호자 홈에 이동현황이 보인다.
+     * 화면을 새로고침해도 같은 이동으로 이어지도록 저장해둔다.
+     */
+    function startTripRecording() {
+        if (currentTripId !== null || !selectedRoute) {
+            return;
+        }
+
+        var savedTripId = readStoredTripId();
+
+        if (savedTripId) {
+            currentTripId = savedTripId;
+            return;
+        }
+
+        $.ajax({
+            url: "/trip/start",
+            type: "post",
+            dataType: "JSON",
+            data: {
+                startName: getOriginName(selectedRoute.origin),
+                endName: getDestinationName(selectedRoute.destination),
+                totalDistance: selectedRoute.route && selectedRoute.route.totalDistance,
+                totalDuration: selectedRoute.route && selectedRoute.route.totalTime
+            },
+            success: function (json) {
+                if (!json || !json.success) {
+                    return;
+                }
+
+                currentTripId = json.tripId;
+                storeTripId(json.tripId);
+            }
+        });
+    }
+
+    /**
+     * 이동 중 위치를 서버에 남긴다.
+     * GPS는 초 단위로 들어와서 그대로 보내면 너무 잦다. 일정 간격으로만 보낸다.
+     */
+    function sendTripLocation(position) {
+        if (currentTripId === null || arrivalNotified) {
+            return;
+        }
+
+        var now = Date.now();
+
+        if (now - lastLocationSentAt < TRIP_LOCATION_INTERVAL) {
+            return;
+        }
+
+        lastLocationSentAt = now;
+
+        $.ajax({
+            url: "/trip/location",
+            type: "post",
+            dataType: "JSON",
+            data: {
+                tripId: currentTripId,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            }
+        });
+    }
+
+    function clearTripRecording() {
+        currentTripId = null;
+
+        try {
+            sessionStorage.removeItem(TRIP_ID_STORAGE_KEY);
+        } catch (e) {
+        }
+    }
+
+    function readStoredTripId() {
+        try {
+            var saved = sessionStorage.getItem(TRIP_ID_STORAGE_KEY);
+            return saved ? Number(saved) : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function storeTripId(tripId) {
+        try {
+            sessionStorage.setItem(TRIP_ID_STORAGE_KEY, String(tripId));
+        } catch (e) {
+        }
     }
 
     function requestBusRealtime(target, stepIndex) {
@@ -503,6 +607,8 @@
             accuracy: position.coords.accuracy,
             capturedAt: Date.now()
         };
+
+        sendTripLocation(position);
 
         if (Number.isFinite(accuracy) && accuracy > GPS_ACCURACY_LIMIT_METERS) {
             if (walkingWatchContext) {

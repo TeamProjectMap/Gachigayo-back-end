@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.ITripMapper">
+
+    <insert id="insertTrip" parameterType="com.baegopa.onestep.dto.TripDTO"
+            useGeneratedKeys="true" keyProperty="tripId">
+        INSERT INTO TRIPS (
+            routeId,
+            startDt,
+            tripStatus
+        ) VALUES (
+            #{routeId},
+            NOW(6),
+            'MOVING'
+        )
+    </insert>
+
+    <insert id="insertTripLocation">
+        INSERT INTO TRIP_LOCATIONS (
+            tripId,
+            lat,
+            lng
+        ) VALUES (
+            #{tripId},
+            #{lat},
+            #{lng}
+        )
+    </insert>
+
+    <!-- TRIPS에는 이용자 컬럼이 없어 ROUTES를 거쳐 주인을 확인한다 -->
+    <select id="getTrip" parameterType="long" resultType="com.baegopa.onestep.dto.TripDTO">
+        SELECT t.tripId,
+               t.routeId,
+               t.startDt,
+               t.endDt,
+               t.currentStepId,
+               t.tripStatus,
+               r.userId
+        FROM TRIPS t
+                 INNER JOIN ROUTES r
+                            ON r.routeId = t.routeId
+        WHERE t.tripId = #{tripId}
+    </select>
+
+    <select id="getOngoingTrip" parameterType="long" resultType="com.baegopa.onestep.dto.TripDTO">
+        SELECT t.tripId,
+               t.routeId,
+               t.startDt,
+               t.endDt,
+               t.currentStepId,
+               t.tripStatus,
+               r.userId
+        FROM TRIPS t
+                 INNER JOIN ROUTES r
+                            ON r.routeId = t.routeId
+        WHERE r.userId = #{userId}
+          AND t.tripStatus = 'MOVING'
+        ORDER BY t.startDt DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateTripArrived" parameterType="long">
+        UPDATE TRIPS
+        SET tripStatus = 'ARRIVED',
+            endDt      = NOW(6)
+        WHERE tripId = #{tripId}
+          AND tripStatus = 'MOVING'
+    </update>
+
+    <!--
+        도착을 누르지 않고 화면을 닫는 경우가 있어 이동이 계속 '진행 중'으로 남는다.
+        새로 출발할 때 이전 것들을 정리한다.
+    -->
+    <update id="updateOngoingTripsCancelled" parameterType="long">
+        UPDATE TRIPS t
+            INNER JOIN ROUTES r ON r.routeId = t.routeId
+        SET t.tripStatus = 'CANCELLED',
+            t.endDt      = NOW(6)
+        WHERE r.userId = #{userId}
+          AND t.tripStatus = 'MOVING'
+    </update>
+
+</mapper>
