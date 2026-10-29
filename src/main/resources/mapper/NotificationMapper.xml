@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.baegopa.onestep.mapper.INotificationMapper">
+
+    <insert id="insertNotification">
+        INSERT INTO NOTIFICATIONS (
+            receiverId,
+            notifyType,
+            content
+        ) VALUES (
+            #{receiverId},
+            #{notifyType},
+            #{content}
+        )
+    </insert>
+
+    <!-- 같은 내용의 알림이 최근에 들어왔는지 (중복 방지) -->
+    <select id="getRecentNotificationCount" resultType="int">
+        SELECT COUNT(*)
+        FROM NOTIFICATIONS
+        WHERE receiverId = #{receiverId}
+          AND notifyType = #{notifyType}
+          AND content = #{content}
+          AND regDt &gt;= DATE_SUB(NOW(), INTERVAL #{withinMinutes} MINUTE)
+    </select>
+
+</mapper>

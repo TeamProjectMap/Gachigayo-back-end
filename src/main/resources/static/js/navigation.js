@@ -36,6 +36,8 @@
     var currentMarker = null;
     var originMarker = null;
     var destinationMarker = null;
+    // 보호자에게 도착 알림을 이미 보냈는지
+    var arrivalNotified = false;
     var navigationTargetMarker = null;
     var completedPathPolyline = null;
     var remainingPathPolyline = null;
@@ -280,6 +282,30 @@
         $("#guideSubtitle").text("길안내가 완료되었습니다.");
         $("#progressFill").css("width", "100%");
         updateSpeechText("목적지에 도착했어요. 길안내가 완료되었습니다.");
+
+        notifyArrival();
+    }
+
+    /**
+     * 연결된 보호자에게 도착을 알린다.
+     * 도착 처리가 여러 번 불릴 수 있어 한 번만 보내고,
+     * 실패해도 길안내 화면에는 영향을 주지 않는다.
+     */
+    function notifyArrival() {
+        if (arrivalNotified) {
+            return;
+        }
+
+        arrivalNotified = true;
+
+        $.ajax({
+            url: "/trip/arrived",
+            type: "post",
+            dataType: "JSON",
+            data: {
+                destinationName: getDestinationName(selectedRoute && selectedRoute.destination)
+            }
+        });
     }
 
     function requestBusRealtime(target, stepIndex) {
