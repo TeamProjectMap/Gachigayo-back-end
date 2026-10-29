@@ -285,16 +285,6 @@ ul {
     border-radius: 14px;
 }
 
-/* 도움요청 알림 */
-.notification-item.urgent {
-    border-color: #F3C9CB;
-    background: #FDF3F3;
-}
-
-.notification-item.urgent strong {
-    color: #E5484D;
-}
-
 .notification-item strong {
     display: block;
     font-size: 14px;

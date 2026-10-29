@@ -225,10 +225,10 @@
             $text.append($("<p>").text(notification.content));
         }
 
+        // 홈에서는 알림을 한 가지 모양으로 보여준다.
+        // 도움요청을 눈에 띄게 하는 것은 알림 목록 화면에서 한다.
         return $("<li>")
                 .addClass("notification-item")
-                // 도움요청은 목록에서 바로 눈에 띄어야 한다
-                .toggleClass("urgent", notification.notifyType === "HELP_REQUEST")
                 .append($text)
                 .append($("<span>").addClass("notification-time").text(notification.time || ""));
     }
