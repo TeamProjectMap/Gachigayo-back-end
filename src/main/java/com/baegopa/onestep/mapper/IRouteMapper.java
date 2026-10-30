@@ -51,4 +51,7 @@ public interface IRouteMapper {
      * 이용자가 길안내를 시작할 때 이동을 보호자 경로에 이어 붙이는 데 쓴다.
      */
     RouteDTO getGuardianRouteByEndName(@Param("userId") Long userId, @Param("endName") String endName);
+
+    /** 이 경로로 지금 이동 중인 이동 수 (이동 중에는 경로를 지우지 못하게 한다) */
+    int getMovingTripCount(@Param("routeId") Long routeId);
 }

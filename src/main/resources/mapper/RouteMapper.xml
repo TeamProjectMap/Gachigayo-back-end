@@ -193,4 +193,11 @@
         LIMIT 1
     </select>
 
+    <select id="getMovingTripCount" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM TRIPS
+        WHERE routeId = #{routeId}
+          AND tripStatus = 'MOVING'
+    </select>
+
 </mapper>

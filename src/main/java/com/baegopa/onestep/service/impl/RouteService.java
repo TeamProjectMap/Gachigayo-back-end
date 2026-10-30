@@ -239,6 +239,12 @@ public class RouteService implements IRouteService {
             throw new IllegalArgumentException("삭제할 수 있는 경로가 아닙니다.");
         }
 
+        // 이동 기록은 경로를 지우면 같이 지워진다(ON DELETE CASCADE).
+        // 이용자가 이 경로로 가고 있는 중에 지우면 보호자 홈의 이동현황까지 사라지므로 막는다.
+        if (routeMapper.getMovingTripCount(routeId) > 0) {
+            throw new IllegalArgumentException("이용자가 이 경로로 이동 중이라 지금은 삭제할 수 없어요.");
+        }
+
         return routeMapper.deleteRoute(routeId) > 0;
     }
 
