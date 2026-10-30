@@ -30,9 +30,13 @@
     <h2 class="section-title">알림 설정</h2>
     <section class="card">
         <div class="row">
-            <span class="row-label">도움요청 알림</span>
+            <!-- 도움요청은 안전과 바로 이어져서 끌 수 없다. 서버도 설정과 상관없이 보낸다 -->
+            <span class="row-label">
+                도움요청 알림
+                <small class="row-sub">안전을 위해 끌 수 없어요</small>
+            </span>
             <label class="toggle">
-                <input type="checkbox" checked disabled>
+                <input type="checkbox" checked disabled aria-label="도움요청 알림 (끌 수 없음)">
                 <span class="toggle-track" aria-hidden="true"></span>
             </label>
         </div>
