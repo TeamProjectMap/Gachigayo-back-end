@@ -102,6 +102,15 @@ button {
     font-weight: 500;
 }
 
+/* 라벨 아래 붙는 짧은 설명 (예: 끌 수 없는 알림) */
+.row-sub {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+
 .profile .row-label {
     color: var(--muted);
 }
