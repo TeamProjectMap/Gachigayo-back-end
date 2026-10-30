@@ -4,6 +4,8 @@
     --muted: #8D8D8D;
     --line: #C8C8C8;
     --soft-green: #EEF5EB;
+    --blue: #0463F5;
+    --card-line: #E8E8E8;
     --bg: #FFFFFF;
     --danger: #E5484D;
 }
@@ -43,15 +45,15 @@ button {
 .live-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 22px 20px 14px;
+    gap: 14px;
+    padding: 22px 20px 16px;
 }
 
 .live-header h1 {
     flex: 1;
     margin: 0;
-    font-size: 20px;
-    font-weight: 800;
+    font-size: 22px;
+    font-weight: 700;
 }
 
 .back-button,
@@ -66,8 +68,9 @@ button {
     color: var(--text);
 }
 
+/* 디자인에서는 뒤로가기와 같은 색이다 */
 .refresh-button {
-    color: var(--muted);
+    color: var(--text);
 }
 
 .back-button svg,
@@ -82,7 +85,7 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 360px;
+    height: 424px;
     background: #E9E9E9;
 }
 
@@ -120,47 +123,49 @@ button {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 
+/* 수치와 색은 화면설계서(보호자 실시간 위치)에 맞춘다 */
 .live-card {
-    margin: 14px 20px 0;
-    padding: 16px;
-    border: 1px solid #ECECEC;
+    margin: 13px 20px 0;
+    padding: 13px 22px;
+    border: 1px solid var(--card-line);
     border-radius: 16px;
+}
+
+.live-card + .live-card {
+    margin-top: 8px;
+    padding: 22px 22px 25px;
 }
 
 .place-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 5px 0;
+    gap: 12px;
+    min-height: 31px;
 }
 
 .place-row strong {
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* 출발은 초록, 도착은 파랑 글자만 (배경 없음) */
+.place-tag {
+    flex-shrink: 0;
+    color: var(--green);
+    font-size: 12px;
     font-weight: 700;
 }
 
-.place-tag {
-    flex-shrink: 0;
-    width: 38px;
-    padding: 3px 0;
-    border-radius: 6px;
-    background: var(--soft-green);
-    color: var(--green);
-    font-size: 11px;
-    font-weight: 800;
-    text-align: center;
-}
-
 .place-tag.end {
-    background: var(--green);
-    color: #FFFFFF;
+    color: var(--blue);
 }
 
 .live-title {
     display: block;
-    margin-bottom: 12px;
-    font-size: 17px;
-    font-weight: 800;
+    margin-bottom: 16px;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 24px;
 }
 
 .info-row {
@@ -168,17 +173,17 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 7px 0;
+    min-height: 25px;
 }
 
 .info-row span {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .info-row strong {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
     text-align: right;
 }
 
