@@ -45,4 +45,10 @@ public interface IRouteMapper {
 
     /** 같은 이름의 경로가 이미 있는지 */
     int getRouteNameCount(@Param("userId") Long userId, @Param("routeName") String routeName);
+
+    /**
+     * 보호자가 이 목적지로 지정해둔 경로 (여러 개면 가장 최근에 손본 것)
+     * 이용자가 길안내를 시작할 때 이동을 보호자 경로에 이어 붙이는 데 쓴다.
+     */
+    RouteDTO getGuardianRouteByEndName(@Param("userId") Long userId, @Param("endName") String endName);
 }

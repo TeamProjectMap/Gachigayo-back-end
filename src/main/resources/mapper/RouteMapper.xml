@@ -169,4 +169,28 @@
           AND routeName = #{routeName}
     </select>
 
+    <!--
+        목적지 이름으로 보호자 경로를 찾는다.
+        보호자 등록과 이용자 길안내 모두 카카오 장소 이름을 쓰므로 같은 장소면 이름이 같다.
+    -->
+    <select id="getGuardianRouteByEndName" resultType="com.baegopa.onestep.dto.RouteDTO">
+        SELECT routeId,
+               userId,
+               routeName,
+               routeType,
+               startName,
+               endName,
+               totalDistance,
+               totalDuration,
+               riskLevel,
+               regDt,
+               updDt
+        FROM ROUTES
+        WHERE userId = #{userId}
+          AND routeType = 'GUARDIAN'
+          AND endName = #{endName}
+        ORDER BY updDt DESC, routeId DESC
+        LIMIT 1
+    </select>
+
 </mapper>
