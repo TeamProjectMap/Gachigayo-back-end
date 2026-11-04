@@ -6,11 +6,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 경로 구간을 쉬운 말로 바꿔준다.
+ * 경로 구간 문구를 길찾기 앱처럼 깔끔하게 바꿔준다.
  * <p>
  * 저장된 구간 문구는 카카오 안내를 그대로 쓴 것이라
- * "한국폴리텍대학 서울강서캠퍼스 → 우장산 (도보)", "5호선 (우장산 > 김포공항)" 처럼 기호가 많다.
- * 이용 대상이 발달장애인이라 화면에는 "우장산역까지 걸어가기", "5호선 타기" 처럼 짧은 문장으로 보여준다.
+ * "김포공항김포공항역 환승", "5호선 (우장산 > 김포공항)" 처럼 이름이 겹치거나 기호가 많다.
+ * 화면에는 "우장산역까지 도보", "5호선 / 우장산역 승차 → 김포공항역 하차" 처럼 보여준다.
  * 저장된 문구는 그대로 두고 보여줄 때만 바꾸므로 이미 만든 경로에도 적용된다.
  */
 public class StepTextUtil {
@@ -40,21 +40,21 @@ public class StepTextUtil {
         String walkTo = walkDestination(mainText);
         if (walkTo != null) {
             // 타러 가는 곳이 지하철이면 "역"을 붙여야 알아듣기 쉽다
-            return stationName(walkTo, next != null && isSubway(next)) + "까지 걸어가기";
+            return stationName(walkTo, next != null && isSubway(next)) + "까지 도보";
         }
 
         if (mainText.endsWith("환승")) {
             String[] stops = transitStops(prev);
             return stops == null
-                    ? "갈아타기"
-                    : stationName(stops[1], isSubway(prev)) + "에서 갈아타기";
+                    ? "환승"
+                    : stationName(stops[1], isSubway(prev)) + " 환승";
         }
 
-        return mainText.isEmpty() ? "걸어서 이동하기" : mainText;
+        return mainText.isEmpty() ? "도보" : mainText;
     }
 
     /**
-     * 버스·지하철 구간의 보충 설명. ("우장산역에서 타고 김포공항역에서 내려요")
+     * 버스·지하철 구간의 보충 설명. ("우장산역 승차 → 김포공항역 하차")
      * 타고 내리는 곳을 못 찾으면 저장된 문구를 그대로 쓴다.
      */
     public static String description(RouteStepDTO step) {
@@ -65,7 +65,7 @@ public class StepTextUtil {
         }
 
         boolean subway = isSubway(step);
-        return stationName(stops[0], subway) + "에서 타고 " + stationName(stops[1], subway) + "에서 내려요";
+        return stationName(stops[0], subway) + " 승차 → " + stationName(stops[1], subway) + " 하차";
     }
 
     /** "A → B (도보)" 에서 B. 걷는 구간 문구가 아니면 null. */
@@ -78,14 +78,14 @@ public class StepTextUtil {
         String lineName = trim(step.getLineName());
 
         if (lineName.isEmpty()) {
-            return isSubway(step) ? "지하철 타기" : "버스 타기";
+            return isSubway(step) ? "지하철" : "버스";
         }
 
         if ("BUS".equalsIgnoreCase(step.getStepType()) && !lineName.endsWith("번")) {
-            return lineName + "번 버스 타기";
+            return lineName + "번 버스";
         }
 
-        return lineName + " 타기";
+        return lineName;
     }
 
     /** 타는 곳, 내리는 곳. 버스·지하철 구간이 아니거나 문구에서 못 찾으면 null. */

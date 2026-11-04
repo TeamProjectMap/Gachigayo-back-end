@@ -168,7 +168,7 @@ public class RouteService implements IRouteService {
             item.put("routeStepId", step.getRouteStepId());
             item.put("stepOrder", step.getStepOrder());
             item.put("stepType", step.getStepType());
-            // 기호가 많은 카카오 문구 대신 쉬운 문장으로 보여준다 ("우장산역까지 걸어가기", "5호선 타기")
+            // 카카오 문구를 길찾기 앱처럼 정리해서 보여준다 ("우장산역까지 도보", "김포공항역 환승")
             item.put("title", StepTextUtil.title(step, prev, next));
             item.put("mainText", StepTextUtil.description(step));
             item.put("distance", step.getDistance());
