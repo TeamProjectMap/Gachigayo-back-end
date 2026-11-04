@@ -33,4 +33,12 @@ public interface INotificationService {
      * @return 알림을 만들었으면 true (보호자가 없거나 꺼둔 경우 false)
      */
     boolean createCheckpointNotification(Long userId, String checkpointName, Long tripEventId);
+
+    /**
+     * 경로 이탈 알림을 연결된 보호자에게 만든다.
+     *
+     * @param tripEventId 이탈을 남긴 이벤트 번호. 알림 상세에서 벗어난 위치와 목적지를 찾는 데 쓴다.
+     * @return 알림을 만들었으면 true (보호자가 없거나 꺼둔 경우 false)
+     */
+    boolean createDeviationNotification(Long userId, Long tripEventId);
 }
