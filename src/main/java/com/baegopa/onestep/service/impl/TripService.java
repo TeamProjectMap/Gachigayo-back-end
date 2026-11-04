@@ -36,6 +36,27 @@ public class TripService implements ITripService {
         // 도착을 누르지 않고 화면을 닫은 이동이 남아 있으면 정리한다
         tripMapper.updateOngoingTripsCancelled(userId);
 
+        // 보호자가 이 목적지로 지정해둔 경로가 있으면 그 경로로 이동을 남긴다.
+        // 그래야 보호자 화면에서 걸으며 기록한 구간·체크포인트를 이 이동에 겹쳐 볼 수 있다.
+        // 이용자 화면은 그대로 두고 서버에서만 잇는다.
+        RouteDTO guardianRoute = routeMapper.getGuardianRouteByEndName(userId, routeDTO.getEndName().trim());
+        Long routeId = guardianRoute != null
+                ? guardianRoute.getRouteId()
+                : insertRecommendedRoute(userId, routeDTO);
+
+        TripDTO tripDTO = new TripDTO();
+        tripDTO.setRouteId(routeId);
+        tripMapper.insertTrip(tripDTO);
+
+        log.info("이동 시작 userId={}, tripId={}, routeId={}, 보호자경로={}, {} -> {}",
+                userId, tripDTO.getTripId(), routeId, guardianRoute != null,
+                routeDTO.getStartName(), routeDTO.getEndName());
+
+        return tripDTO.getTripId();
+    }
+
+    /** 보호자 경로가 없으면 이번 이동용 경로를 새로 남긴다 (TRIPS는 경로 없이 만들 수 없다) */
+    private Long insertRecommendedRoute(Long userId, RouteDTO routeDTO) {
         routeDTO.setUserId(userId);
         routeDTO.setRouteType(ROUTE_TYPE_RECOMMENDED);
         routeDTO.setRiskLevel(DEFAULT_RISK_LEVEL);
@@ -50,14 +71,7 @@ public class TripService implements ITripService {
 
         routeMapper.insertRoute(routeDTO);
 
-        TripDTO tripDTO = new TripDTO();
-        tripDTO.setRouteId(routeDTO.getRouteId());
-        tripMapper.insertTrip(tripDTO);
-
-        log.info("이동 시작 userId={}, tripId={}, {} -> {}",
-                userId, tripDTO.getTripId(), routeDTO.getStartName(), routeDTO.getEndName());
-
-        return tripDTO.getTripId();
+        return routeDTO.getRouteId();
     }
 
     @Override
