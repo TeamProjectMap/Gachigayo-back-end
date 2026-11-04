@@ -8,6 +8,7 @@ import com.baegopa.onestep.mapper.IRouteMapper;
 import com.baegopa.onestep.mapper.ITripMapper;
 import com.baegopa.onestep.service.INotificationService;
 import com.baegopa.onestep.service.ITripService;
+import com.baegopa.onestep.util.StepTextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -148,7 +149,10 @@ public class TripService implements ITripService {
         }
     }
 
-    /** 알림에 보일 이름. 체크포인트 이름이 없으면 랜드마크, 그것도 없으면 구간 안내 문구를 쓴다. */
+    /**
+     * 알림에 보일 이름.
+     * 체크포인트 이름 → 랜드마크 → 걸어가는 곳("A → B (도보)"의 B) → 구간 안내 문구 순으로 쓴다.
+     */
     private String checkpointName(RouteStepDTO step) {
         if (!isBlank(step.getCheckpointName())) {
             return step.getCheckpointName().trim();
@@ -156,6 +160,11 @@ public class TripService implements ITripService {
 
         if (!isBlank(step.getLandmark())) {
             return step.getLandmark().trim();
+        }
+
+        String walkTo = StepTextUtil.walkDestination(step.getMainText());
+        if (walkTo != null) {
+            return walkTo;
         }
 
         return step.getMainText() == null ? "" : step.getMainText().trim();
