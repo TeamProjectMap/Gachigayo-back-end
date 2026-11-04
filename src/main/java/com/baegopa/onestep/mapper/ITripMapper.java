@@ -1,6 +1,7 @@
 package com.baegopa.onestep.mapper;
 
 import com.baegopa.onestep.dto.TripDTO;
+import com.baegopa.onestep.dto.TripEventDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -34,4 +35,15 @@ public interface ITripMapper {
 
     /** 끝나지 않은 다른 이동을 정리한다 (새로 출발할 때) */
     int updateOngoingTripsCancelled(@Param("userId") Long userId);
+
+    /** 이번 이동에서 이 체크포인트를 이미 지났는지 (알림을 한 번만 보내려고) */
+    int getCheckpointEventCount(@Param("tripId") Long tripId,
+                                @Param("routeStepId") Long routeStepId);
+
+    /** 이동 중 생긴 일 저장. 저장 후 tripEventId가 DTO에 채워진다. */
+    int insertTripEvent(TripEventDTO tripEventDTO);
+
+    /** 지금 진행 중인 구간을 바꾼다 (보호자 화면의 "다음 체크포인트"가 이걸 기준으로 한다) */
+    int updateTripCurrentStep(@Param("tripId") Long tripId,
+                              @Param("routeStepId") Long routeStepId);
 }

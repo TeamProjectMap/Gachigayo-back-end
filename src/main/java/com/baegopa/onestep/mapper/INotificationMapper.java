@@ -12,12 +12,14 @@ import org.apache.ibatis.annotations.Param;
 public interface INotificationMapper {
 
     /**
+     * @param tripEventId   이동 중 생긴 일(체크포인트 통과 등)로 생긴 알림이면 그 번호. 아니면 null.
      * @param helpRequestId 도움요청으로 생긴 알림이면 그 번호. 아니면 null.
-     *                      알림 상세에서 요청 위치와 목적지를 찾아가는 데 쓴다.
+     *                      알림 상세에서 위치와 목적지를 찾아가는 데 쓴다.
      */
     int insertNotification(@Param("receiverId") Long receiverId,
                            @Param("notifyType") String notifyType,
                            @Param("content") String content,
+                           @Param("tripEventId") Long tripEventId,
                            @Param("helpRequestId") Long helpRequestId);
 
     /**

@@ -83,4 +83,41 @@
           AND t.tripStatus = 'MOVING'
     </update>
 
+    <select id="getCheckpointEventCount" resultType="int">
+        SELECT COUNT(*)
+        FROM TRIP_EVENTS
+        WHERE tripId = #{tripId}
+          AND routeStepId = #{routeStepId}
+          AND eventType = 'CHECKPOINT'
+    </select>
+
+    <insert id="insertTripEvent" parameterType="com.baegopa.onestep.dto.TripEventDTO"
+            useGeneratedKeys="true" keyProperty="tripEventId">
+        INSERT INTO TRIP_EVENTS (
+            userId,
+            tripId,
+            routeStepId,
+            eventType,
+            eventMessage,
+            lat,
+            lng,
+            autoSentYn
+        ) VALUES (
+            #{userId},
+            #{tripId},
+            #{routeStepId},
+            #{eventType},
+            #{eventMessage},
+            #{lat},
+            #{lng},
+            'Y'
+        )
+    </insert>
+
+    <update id="updateTripCurrentStep">
+        UPDATE TRIPS
+        SET currentStepId = #{routeStepId}
+        WHERE tripId = #{tripId}
+    </update>
+
 </mapper>
