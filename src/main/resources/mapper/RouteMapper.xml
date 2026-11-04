@@ -193,11 +193,15 @@
         LIMIT 1
     </select>
 
+    <!-- 보호자 홈과 같은 기준: 30분 넘게 위치가 안 온 이동은 끝난 것으로 본다 -->
     <select id="getMovingTripCount" parameterType="long" resultType="int">
         SELECT COUNT(*)
-        FROM TRIPS
-        WHERE routeId = #{routeId}
-          AND tripStatus = 'MOVING'
+        FROM TRIPS t
+        WHERE t.routeId = #{routeId}
+          AND t.tripStatus = 'MOVING'
+          AND COALESCE((SELECT MAX(l.regDt)
+                        FROM TRIP_LOCATIONS l
+                        WHERE l.tripId = t.tripId), t.startDt) &gt;= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
     </select>
 
 </mapper>
