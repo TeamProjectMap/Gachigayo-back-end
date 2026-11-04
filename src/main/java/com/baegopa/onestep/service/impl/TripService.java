@@ -103,22 +103,17 @@ public class TripService implements ITripService {
     }
 
     /**
-     * 보호자가 걸으며 기록해 둔 체크포인트 근처에 왔으면 지나간 것으로 보고 보호자에게 알린다.
+     * 보호자가 걸으며 찍어 둔 지점 근처에 왔으면 지나간 것으로 보고 보호자에게 알린다.
      * <p>
+     * 보호자가 기록한 구간의 지점이 곧 체크포인트다. (체크포인트 이름이 없어도 된다)
      * 이용자 화면은 그대로 두고, 길안내가 보내는 위치만으로 서버에서 판단한다.
-     * 좌표가 없는(아직 기록 전인) 체크포인트는 어디인지 몰라서 건너뛴다.
+     * 아직 기록 전인 구간은 어디인지 몰라서 건너뛴다.
      */
     private void checkCheckpointPassed(TripDTO trip, BigDecimal lat, BigDecimal lng) {
-        RouteDTO route = routeMapper.getRoute(trip.getRouteId());
         List<RouteStepDTO> steps = routeMapper.getRouteSteps(trip.getRouteId());
 
         for (RouteStepDTO step : steps) {
-            if (isBlank(step.getCheckpointName()) || step.getLat() == null || step.getLng() == null) {
-                continue;
-            }
-
-            // 목적지는 도착 알림이 따로 가서 체크포인트 알림까지 보내지 않는다
-            if (route != null && step.getCheckpointName().trim().equals(route.getEndName())) {
+            if (step.getLat() == null || step.getLng() == null) {
                 continue;
             }
 
@@ -136,7 +131,9 @@ public class TripService implements ITripService {
             eventDTO.setTripId(trip.getTripId());
             eventDTO.setRouteStepId(step.getRouteStepId());
             eventDTO.setEventType(EVENT_TYPE_CHECKPOINT);
-            eventDTO.setEventMessage(step.getCheckpointName());
+            String checkpointName = checkpointName(step);
+
+            eventDTO.setEventMessage(checkpointName);
             eventDTO.setLat(lat);
             eventDTO.setLng(lng);
             tripMapper.insertTripEvent(eventDTO);
@@ -144,11 +141,24 @@ public class TripService implements ITripService {
             moveCurrentStepPast(trip, steps, step);
 
             log.info("체크포인트 통과 tripId={}, routeStepId={}, name={}",
-                    trip.getTripId(), step.getRouteStepId(), step.getCheckpointName());
+                    trip.getTripId(), step.getRouteStepId(), checkpointName);
 
             notificationService.createCheckpointNotification(
-                    trip.getUserId(), step.getCheckpointName(), eventDTO.getTripEventId());
+                    trip.getUserId(), checkpointName, eventDTO.getTripEventId());
         }
+    }
+
+    /** 알림에 보일 이름. 체크포인트 이름이 없으면 랜드마크, 그것도 없으면 구간 안내 문구를 쓴다. */
+    private String checkpointName(RouteStepDTO step) {
+        if (!isBlank(step.getCheckpointName())) {
+            return step.getCheckpointName().trim();
+        }
+
+        if (!isBlank(step.getLandmark())) {
+            return step.getLandmark().trim();
+        }
+
+        return step.getMainText() == null ? "" : step.getMainText().trim();
     }
 
     /**

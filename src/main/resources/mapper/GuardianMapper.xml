@@ -23,10 +23,14 @@
                r.startName,
                r.endName,
                r.totalDuration,
-               (SELECT s.checkpointName
+               <!--
+                   보호자가 걸으며 찍어 둔 지점(좌표가 있는 구간)이 체크포인트다.
+                   이름이 없으면 랜드마크, 안내 문구 순으로 보여준다. (체크포인트 알림과 같은 기준)
+               -->
+               (SELECT COALESCE(NULLIF(s.checkpointName, ''), NULLIF(s.landmark, ''), s.mainText)
                 FROM ROUTE_STEPS s
                 WHERE s.routeId = t.routeId
-                  AND s.checkpointName IS NOT NULL
+                  AND s.lat IS NOT NULL
                   AND s.stepOrder >= COALESCE((SELECT cur.stepOrder
                                                FROM ROUTE_STEPS cur
                                                WHERE cur.routeStepId = t.currentStepId), 0)
@@ -35,7 +39,7 @@
                (SELECT s.distance
                 FROM ROUTE_STEPS s
                 WHERE s.routeId = t.routeId
-                  AND s.checkpointName IS NOT NULL
+                  AND s.lat IS NOT NULL
                   AND s.stepOrder >= COALESCE((SELECT cur.stepOrder
                                                FROM ROUTE_STEPS cur
                                                WHERE cur.routeStepId = t.currentStepId), 0)
