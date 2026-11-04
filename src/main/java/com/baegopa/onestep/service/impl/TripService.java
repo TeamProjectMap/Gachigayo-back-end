@@ -4,10 +4,12 @@ import com.baegopa.onestep.dto.RouteDTO;
 import com.baegopa.onestep.dto.RouteStepDTO;
 import com.baegopa.onestep.dto.TripDTO;
 import com.baegopa.onestep.dto.TripEventDTO;
+import com.baegopa.onestep.dto.TripLocationDTO;
 import com.baegopa.onestep.mapper.IRouteMapper;
 import com.baegopa.onestep.mapper.ITripMapper;
 import com.baegopa.onestep.service.INotificationService;
 import com.baegopa.onestep.service.ITripService;
+import com.baegopa.onestep.util.GeoUtil;
 import com.baegopa.onestep.util.StepTextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -32,7 +35,15 @@ public class TripService implements ITripService {
      * 길안내는 20초마다 위치를 보내고 그 사이 20m 넘게 걸을 수 있어서 넉넉히 잡는다.
      */
     private static final double CHECKPOINT_RADIUS_METERS = 40;
-    private static final double EARTH_RADIUS_METERS = 6_371_000;
+
+    private static final String EVENT_TYPE_DEVIATION = "DEVIATION";
+    private static final String EVENT_TYPE_ROUTE_RETURN = "ROUTE_RETURN";
+
+    /**
+     * 보호자가 찍은 지점들을 이은 길에서 이만큼 넘게 떨어지면 벗어난 것으로 본다.
+     * 너무 짧으면 GPS 오차로 잘못 울리고, 너무 길면 늦게 울린다.
+     */
+    private static final double DEVIATION_DISTANCE_METERS = 200;
 
     private final ITripMapper tripMapper;
     private final IRouteMapper routeMapper;
@@ -100,7 +111,10 @@ public class TripService implements ITripService {
 
         tripMapper.insertTripLocation(tripId, lat, lng);
 
-        checkCheckpointPassed(trip, lat, lng);
+        List<RouteStepDTO> steps = routeMapper.getRouteSteps(trip.getRouteId());
+
+        checkCheckpointPassed(trip, lat, lng, steps);
+        checkRouteDeviation(trip, lat, lng, steps);
     }
 
     /**
@@ -110,15 +124,13 @@ public class TripService implements ITripService {
      * 이용자 화면은 그대로 두고, 길안내가 보내는 위치만으로 서버에서 판단한다.
      * 아직 기록 전인 구간은 어디인지 몰라서 건너뛴다.
      */
-    private void checkCheckpointPassed(TripDTO trip, BigDecimal lat, BigDecimal lng) {
-        List<RouteStepDTO> steps = routeMapper.getRouteSteps(trip.getRouteId());
-
+    private void checkCheckpointPassed(TripDTO trip, BigDecimal lat, BigDecimal lng, List<RouteStepDTO> steps) {
         for (RouteStepDTO step : steps) {
             if (step.getLat() == null || step.getLng() == null) {
                 continue;
             }
 
-            if (distanceMeters(lat, lng, step.getLat(), step.getLng()) > CHECKPOINT_RADIUS_METERS) {
+            if (GeoUtil.distanceMeters(lat, lng, step.getLat(), step.getLng()) > CHECKPOINT_RADIUS_METERS) {
                 continue;
             }
 
@@ -127,17 +139,9 @@ public class TripService implements ITripService {
                 continue;
             }
 
-            TripEventDTO eventDTO = new TripEventDTO();
-            eventDTO.setUserId(trip.getUserId());
-            eventDTO.setTripId(trip.getTripId());
-            eventDTO.setRouteStepId(step.getRouteStepId());
-            eventDTO.setEventType(EVENT_TYPE_CHECKPOINT);
             String checkpointName = checkpointName(step);
-
-            eventDTO.setEventMessage(checkpointName);
-            eventDTO.setLat(lat);
-            eventDTO.setLng(lng);
-            tripMapper.insertTripEvent(eventDTO);
+            Long tripEventId = insertEvent(trip, step.getRouteStepId(), EVENT_TYPE_CHECKPOINT,
+                    checkpointName, lat, lng);
 
             moveCurrentStepPast(trip, steps, step);
 
@@ -145,7 +149,7 @@ public class TripService implements ITripService {
                     trip.getTripId(), step.getRouteStepId(), checkpointName);
 
             notificationService.createCheckpointNotification(
-                    trip.getUserId(), checkpointName, eventDTO.getTripEventId());
+                    trip.getUserId(), checkpointName, tripEventId);
         }
     }
 
@@ -194,16 +198,90 @@ public class TripService implements ITripService {
         }
     }
 
-    /** 두 좌표 사이 거리(m). 걷는 거리 정도라 지구를 구로 보는 계산으로 충분하다. */
-    private double distanceMeters(BigDecimal lat1, BigDecimal lng1, BigDecimal lat2, BigDecimal lng2) {
-        double dLat = Math.toRadians(lat2.doubleValue() - lat1.doubleValue());
-        double dLng = Math.toRadians(lng2.doubleValue() - lng1.doubleValue());
+    /**
+     * 보호자가 찍어 둔 지점들을 이은 길에서 많이 벗어났으면 보호자에게 알린다.
+     * <p>
+     * 서버에는 길 전체 모양이 없어서, 출발 위치와 보호자가 찍은 지점들을 순서대로 이은 선을 길로 본다.
+     * GPS가 한 번 튀는 것으로 울리지 않도록 위치가 두 번 연속 벗어나야 이탈로 본다.
+     * 벗어난 동안은 한 번만 알리고, 길로 돌아왔다가 다시 벗어나면 또 알린다.
+     */
+    private void checkRouteDeviation(TripDTO trip, BigDecimal lat, BigDecimal lng, List<RouteStepDTO> steps) {
+        List<RouteStepDTO> points = new ArrayList<>();
+        for (RouteStepDTO step : steps) {
+            if (step.getLat() != null && step.getLng() != null) {
+                points.add(step);
+            }
+        }
 
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1.doubleValue())) * Math.cos(Math.toRadians(lat2.doubleValue()))
-                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        // 보호자가 찍은 지점이 없으면 길을 몰라서 판단하지 않는다
+        if (points.isEmpty()) {
+            return;
+        }
 
-        return EARTH_RADIUS_METERS * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        // 마지막 지점을 지난 뒤로는 목적지까지의 길을 몰라서 판단하지 않는다
+        RouteStepDTO lastPoint = points.get(points.size() - 1);
+        if (tripMapper.getCheckpointEventCount(trip.getTripId(), lastPoint.getRouteStepId()) > 0) {
+            return;
+        }
+
+        List<BigDecimal[]> path = new ArrayList<>();
+
+        // 출발 위치를 길의 시작으로 넣어야, 첫 지점까지 걸어가는 동안 이탈로 잡히지 않는다
+        TripLocationDTO first = tripMapper.getFirstTripLocation(trip.getTripId());
+        if (first != null) {
+            path.add(new BigDecimal[]{first.getLat(), first.getLng()});
+        }
+
+        for (RouteStepDTO point : points) {
+            path.add(new BigDecimal[]{point.getLat(), point.getLng()});
+        }
+
+        boolean offNow = GeoUtil.distanceToPathMeters(lat, lng, path) > DEVIATION_DISTANCE_METERS;
+        boolean deviated = EVENT_TYPE_DEVIATION.equals(tripMapper.getLastDeviationEventType(trip.getTripId()));
+
+        // 벗어나 있다가 길로 돌아왔으면 돌아왔다고만 남긴다 (다음에 또 벗어나면 다시 알리려고)
+        if (deviated && !offNow) {
+            insertEvent(trip, null, EVENT_TYPE_ROUTE_RETURN, null, lat, lng);
+            log.info("경로 복귀 tripId={}", trip.getTripId());
+            return;
+        }
+
+        if (deviated || !offNow) {
+            return;
+        }
+
+        // 바로 앞 위치도 벗어나 있어야 이탈로 본다 (방금 저장한 위치가 첫 번째다)
+        List<TripLocationDTO> recent = tripMapper.getRecentTripLocations(trip.getTripId(), 2);
+        if (recent.size() < 2) {
+            return;
+        }
+
+        TripLocationDTO before = recent.get(1);
+        if (GeoUtil.distanceToPathMeters(before.getLat(), before.getLng(), path) <= DEVIATION_DISTANCE_METERS) {
+            return;
+        }
+
+        Long tripEventId = insertEvent(trip, null, EVENT_TYPE_DEVIATION, null, lat, lng);
+
+        log.info("경로 이탈 tripId={}, lat={}, lng={}", trip.getTripId(), lat, lng);
+
+        notificationService.createDeviationNotification(trip.getUserId(), tripEventId);
+    }
+
+    /** 이동 중 생긴 일을 남기고 번호를 돌려준다 */
+    private Long insertEvent(TripDTO trip, Long routeStepId, String eventType, String message,
+                             BigDecimal lat, BigDecimal lng) {
+        TripEventDTO eventDTO = new TripEventDTO();
+        eventDTO.setUserId(trip.getUserId());
+        eventDTO.setTripId(trip.getTripId());
+        eventDTO.setRouteStepId(routeStepId);
+        eventDTO.setEventType(eventType);
+        eventDTO.setEventMessage(message);
+        eventDTO.setLat(lat);
+        eventDTO.setLng(lng);
+        tripMapper.insertTripEvent(eventDTO);
+
+        return eventDTO.getTripEventId();
     }
 
     @Override

@@ -19,6 +19,7 @@ public class NotificationService implements INotificationService {
     private static final String NOTIFY_TYPE_ARRIVED = "ARRIVED";
     private static final String NOTIFY_TYPE_HELP_REQUEST = "HELP_REQUEST";
     private static final String NOTIFY_TYPE_CHECKPOINT = "CHECKPOINT";
+    private static final String NOTIFY_TYPE_DEVIATION = "DEVIATION";
 
     /** 길안내가 도착 처리를 여러 번 불러도 알림은 한 번만 남긴다 */
     private static final int DUPLICATE_WINDOW_MINUTES = 10;
@@ -105,6 +106,36 @@ public class NotificationService implements INotificationService {
                 userId, guardian.getUserId(), content);
 
         return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean createDeviationNotification(Long userId, Long tripEventId) {
+        UserDTO guardian = linkMapper.getGuardianByUserId(userId);
+
+        if (guardian == null) {
+            log.info("연결된 보호자가 없어 경로 이탈 알림을 만들지 않음 userId={}", userId);
+            return false;
+        }
+
+        if (!isDeviationAlarmOn(guardian.getUserId())) {
+            log.info("보호자가 꺼둔 알림이라 만들지 않음 guardianId={}", guardian.getUserId());
+            return false;
+        }
+
+        // 벗어난 위치와 목적지는 알림 상세가 이벤트를 따라가 보여주므로 본문은 비워 둔다
+        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_DEVIATION, "", tripEventId, null);
+
+        log.info("경로 이탈 알림 생성 userId={}, guardianId={}", userId, guardian.getUserId());
+
+        return true;
+    }
+
+    /** 설정 화면에는 아직 토글이 없어서, 저장된 적이 없으면 받는 것으로 본다 (테이블 기본값과 같다) */
+    private boolean isDeviationAlarmOn(Long guardianId) {
+        UserSettingsDTO settings = settingsMapper.getUserSettings(guardianId);
+
+        return settings == null || !"N".equals(settings.getDeviationAlarmYn());
     }
 
     /** 화면에서는 도착과 한 토글이지만, 컬럼이 따로 있어 체크포인트는 이쪽을 본다 */

@@ -114,6 +114,40 @@
         )
     </insert>
 
+    <select id="getFirstTripLocation" parameterType="long" resultType="com.baegopa.onestep.dto.TripLocationDTO">
+        SELECT tripLocationId,
+               tripId,
+               lat,
+               lng,
+               regDt
+        FROM TRIP_LOCATIONS
+        WHERE tripId = #{tripId}
+        ORDER BY regDt, tripLocationId
+        LIMIT 1
+    </select>
+
+    <select id="getRecentTripLocations" resultType="com.baegopa.onestep.dto.TripLocationDTO">
+        SELECT tripLocationId,
+               tripId,
+               lat,
+               lng,
+               regDt
+        FROM TRIP_LOCATIONS
+        WHERE tripId = #{tripId}
+        ORDER BY regDt DESC, tripLocationId DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 벗어남(DEVIATION)과 돌아옴(ROUTE_RETURN) 중 마지막 것 -->
+    <select id="getLastDeviationEventType" parameterType="long" resultType="string">
+        SELECT eventType
+        FROM TRIP_EVENTS
+        WHERE tripId = #{tripId}
+          AND eventType IN ('DEVIATION', 'ROUTE_RETURN')
+        ORDER BY eventDt DESC, tripEventId DESC
+        LIMIT 1
+    </select>
+
     <update id="updateTripCurrentStep">
         UPDATE TRIPS
         SET currentStepId = #{routeStepId}
