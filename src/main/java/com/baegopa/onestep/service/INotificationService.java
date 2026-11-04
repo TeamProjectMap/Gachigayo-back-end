@@ -22,4 +22,15 @@ public interface INotificationService {
      * @return 알림을 만들었으면 true (연결된 보호자가 없으면 false)
      */
     boolean createHelpRequestNotification(Long userId, String helpMessage, Long helpRequestId);
+
+    /**
+     * 체크포인트 통과 알림을 연결된 보호자에게 만든다.
+     * <p>
+     * 보호자가 설정에서 "도착·체크포인트 알림"을 꺼두었으면 만들지 않는다.
+     *
+     * @param checkpointName 지나간 체크포인트 이름. 알림 목록에서 제목 밑에 보인다.
+     * @param tripEventId    통과를 남긴 이벤트 번호. 알림 상세에서 그때 위치와 목적지를 찾는 데 쓴다.
+     * @return 알림을 만들었으면 true (보호자가 없거나 꺼둔 경우 false)
+     */
+    boolean createCheckpointNotification(Long userId, String checkpointName, Long tripEventId);
 }

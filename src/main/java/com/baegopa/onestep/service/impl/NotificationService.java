@@ -18,6 +18,7 @@ public class NotificationService implements INotificationService {
 
     private static final String NOTIFY_TYPE_ARRIVED = "ARRIVED";
     private static final String NOTIFY_TYPE_HELP_REQUEST = "HELP_REQUEST";
+    private static final String NOTIFY_TYPE_CHECKPOINT = "CHECKPOINT";
 
     /** 길안내가 도착 처리를 여러 번 불러도 알림은 한 번만 남긴다 */
     private static final int DUPLICATE_WINDOW_MINUTES = 10;
@@ -52,7 +53,7 @@ public class NotificationService implements INotificationService {
             return false;
         }
 
-        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_ARRIVED, content, null);
+        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_ARRIVED, content, null, null);
 
         log.info("도착 알림 생성 userId={}, guardianId={}, content={}",
                 userId, guardian.getUserId(), content);
@@ -73,11 +74,44 @@ public class NotificationService implements INotificationService {
         // 도움요청은 설정으로 끌 수 없고, 급할 때 여러 번 보낼 수 있어 중복도 막지 않는다
         String content = helpMessage == null ? "" : helpMessage.trim();
 
-        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_HELP_REQUEST, content, helpRequestId);
+        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_HELP_REQUEST, content, null, helpRequestId);
 
         log.info("도움요청 알림 생성 userId={}, guardianId={}", userId, guardian.getUserId());
 
         return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean createCheckpointNotification(Long userId, String checkpointName, Long tripEventId) {
+        UserDTO guardian = linkMapper.getGuardianByUserId(userId);
+
+        if (guardian == null) {
+            log.info("연결된 보호자가 없어 체크포인트 알림을 만들지 않음 userId={}", userId);
+            return false;
+        }
+
+        if (!isCheckpointAlarmOn(guardian.getUserId())) {
+            log.info("보호자가 꺼둔 알림이라 만들지 않음 guardianId={}", guardian.getUserId());
+            return false;
+        }
+
+        // 같은 체크포인트는 이동마다 한 번만 지나가도록 TripService에서 이미 걸러서 온다
+        String content = checkpointName == null ? "" : checkpointName.trim();
+
+        notificationMapper.insertNotification(guardian.getUserId(), NOTIFY_TYPE_CHECKPOINT, content, tripEventId, null);
+
+        log.info("체크포인트 알림 생성 userId={}, guardianId={}, content={}",
+                userId, guardian.getUserId(), content);
+
+        return true;
+    }
+
+    /** 화면에서는 도착과 한 토글이지만, 컬럼이 따로 있어 체크포인트는 이쪽을 본다 */
+    private boolean isCheckpointAlarmOn(Long guardianId) {
+        UserSettingsDTO settings = settingsMapper.getUserSettings(guardianId);
+
+        return settings == null || "Y".equals(settings.getCheckpointAlarmYn());
     }
 
     /**

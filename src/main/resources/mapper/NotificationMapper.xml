@@ -10,11 +10,13 @@
             receiverId,
             notifyType,
             content,
+            tripEventId,
             helpRequestId
         ) VALUES (
             #{receiverId},
             #{notifyType},
             #{content},
+            #{tripEventId},
             #{helpRequestId}
         )
     </insert>

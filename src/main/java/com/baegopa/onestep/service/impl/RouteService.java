@@ -16,6 +16,7 @@ import com.baegopa.onestep.mapper.IRouteMapper;
 import com.baegopa.onestep.mapper.IRoutePhotoMapper;
 import com.baegopa.onestep.service.IKakaoMapService;
 import com.baegopa.onestep.service.IRouteService;
+import com.baegopa.onestep.util.StepTextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -147,7 +148,12 @@ public class RouteService implements IRouteService {
         int recordedCount = 0;
         int walkCount = 0;
 
-        for (RouteStepDTO step : routeMapper.getRouteSteps(routeId)) {
+        List<RouteStepDTO> routeSteps = routeMapper.getRouteSteps(routeId);
+
+        for (int i = 0; i < routeSteps.size(); i++) {
+            RouteStepDTO step = routeSteps.get(i);
+            RouteStepDTO prev = i > 0 ? routeSteps.get(i - 1) : null;
+            RouteStepDTO next = i + 1 < routeSteps.size() ? routeSteps.get(i + 1) : null;
             boolean walking = isWalking(step.getStepType());
             boolean recorded = "Y".equals(step.getRecordedYn());
 
@@ -162,8 +168,9 @@ public class RouteService implements IRouteService {
             item.put("routeStepId", step.getRouteStepId());
             item.put("stepOrder", step.getStepOrder());
             item.put("stepType", step.getStepType());
-            item.put("title", isBlank(step.getLineName()) ? step.getMainText() : step.getLineName());
-            item.put("mainText", step.getMainText());
+            // 카카오 문구를 길찾기 앱처럼 정리해서 보여준다 ("우장산역까지 도보", "김포공항역 환승")
+            item.put("title", StepTextUtil.title(step, prev, next));
+            item.put("mainText", StepTextUtil.description(step));
             item.put("distance", step.getDistance());
             // 걸어서 기록해야 하는 구간인지 (버스·지하철은 기록 대상이 아니다)
             item.put("walking", walking);
