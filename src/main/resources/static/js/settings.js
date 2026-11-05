@@ -32,7 +32,11 @@
         });
 
         $("#arrivalAlarmToggle").on("change", function () {
-            updateAlarm($(this).is(":checked"));
+            updateAlarm("/settings/alarm", $(this));
+        });
+
+        $("#deviationAlarmToggle").on("change", function () {
+            updateAlarm("/settings/alarm/deviation", $(this));
         });
 
         $("#connectButton").on("click", function () {
@@ -118,6 +122,7 @@
 
     function renderAlarm(json) {
         $("#arrivalAlarmToggle").prop("checked", json.arrivalAlarmOn !== false);
+        $("#deviationAlarmToggle").prop("checked", json.deviationAlarmOn !== false);
     }
 
     function renderLink(json) {
@@ -180,9 +185,12 @@
         });
     }
 
-    function updateAlarm(alarmOn) {
+    /** 알림 토글 저장. 토글마다 주소만 다르다. */
+    function updateAlarm(url, $toggle) {
+        var alarmOn = $toggle.is(":checked");
+
         $.ajax({
-            url: "/settings/alarm",
+            url: url,
             type: "post",
             dataType: "JSON",
             data: { alarmOn: alarmOn },
@@ -191,12 +199,12 @@
 
                 // 저장에 실패하면 화면만 바뀐 상태로 두지 않고 되돌린다
                 if (!json.success) {
-                    $("#arrivalAlarmToggle").prop("checked", !alarmOn);
+                    $toggle.prop("checked", !alarmOn);
                 }
             },
             error: function () {
                 setMessage("알림 설정 중 오류가 발생했습니다.", false);
-                $("#arrivalAlarmToggle").prop("checked", !alarmOn);
+                $toggle.prop("checked", !alarmOn);
             }
         });
     }
