@@ -131,7 +131,7 @@ public class NotificationService implements INotificationService {
         return true;
     }
 
-    /** 설정 화면에는 아직 토글이 없어서, 저장된 적이 없으면 받는 것으로 본다 (테이블 기본값과 같다) */
+    /** 설정 화면의 "경로 이탈 알림" 토글. 저장된 적이 없으면 받는 것으로 본다 (테이블 기본값과 같다) */
     private boolean isDeviationAlarmOn(Long guardianId) {
         UserSettingsDTO settings = settingsMapper.getUserSettings(guardianId);
 

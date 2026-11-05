@@ -24,4 +24,7 @@ public interface ISettingsService {
      * 도움요청 알림은 안전과 직결돼서 끌 수 없다.
      */
     void updateArrivalAlarm(Long userId, boolean alarmOn);
+
+    /** 경로 이탈 알림 켜고 끄기 */
+    void updateDeviationAlarm(Long userId, boolean alarmOn);
 }

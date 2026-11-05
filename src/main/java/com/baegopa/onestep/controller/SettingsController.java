@@ -86,6 +86,27 @@ public class SettingsController {
         }
     }
 
+    /** 경로 이탈 알림 켜고 끄기 */
+    @ResponseBody
+    @PostMapping("/alarm/deviation")
+    public Map<String, Object> updateDeviationAlarm(HttpServletRequest request, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session, null);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        boolean alarmOn = "true".equalsIgnoreCase(getParameter(request, "alarmOn"));
+
+        try {
+            settingsService.updateDeviationAlarm(sessionUser.userId(), alarmOn);
+
+            return createResponse(true, alarmOn ? "알림을 켰습니다." : "알림을 껐습니다.");
+        } catch (Exception e) {
+            log.error("알림 설정 실패 userId={}", sessionUser.userId(), e);
+            return createResponse(false, "알림 설정 중 오류가 발생했습니다.");
+        }
+    }
+
     private SessionUser getSessionUser(HttpSession session, String requiredRole) {
         Long userId = (Long) session.getAttribute("SS_USER_ID");
         String userRole = (String) session.getAttribute("SS_USER_ROLE");

@@ -35,4 +35,17 @@
             checkpointAlarmYn = #{alarmYn}
     </insert>
 
+    <!-- 경로 이탈 알림 토글. 행이 없으면 만들고, 있으면 고친다. -->
+    <insert id="upsertDeviationAlarm">
+        INSERT INTO USER_SETTINGS (
+            userId,
+            deviationAlarmYn
+        ) VALUES (
+            #{userId},
+            #{alarmYn}
+        )
+        ON DUPLICATE KEY UPDATE
+            deviationAlarmYn = #{alarmYn}
+    </insert>
+
 </mapper>

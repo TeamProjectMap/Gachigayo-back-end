@@ -51,6 +51,8 @@ public class SettingsService implements ISettingsService {
         UserSettingsDTO userSettings = settingsMapper.getUserSettings(userId);
         settings.put("arrivalAlarmOn",
                 userSettings == null || YES.equals(userSettings.getArrivalAlarmYn()));
+        settings.put("deviationAlarmOn",
+                userSettings == null || YES.equals(userSettings.getDeviationAlarmYn()));
 
         settings.putAll(linkService.getLinkStatus(userId, userRole));
 
@@ -84,5 +86,13 @@ public class SettingsService implements ISettingsService {
         settingsMapper.upsertArrivalAlarm(userId, alarmOn ? "Y" : "N");
 
         log.info("알림 설정 변경 userId={}, arrivalAlarmOn={}", userId, alarmOn);
+    }
+
+    @Override
+    @Transactional
+    public void updateDeviationAlarm(Long userId, boolean alarmOn) {
+        settingsMapper.upsertDeviationAlarm(userId, alarmOn ? "Y" : "N");
+
+        log.info("알림 설정 변경 userId={}, deviationAlarmOn={}", userId, alarmOn);
     }
 }

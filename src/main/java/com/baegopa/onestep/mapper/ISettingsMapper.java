@@ -16,4 +16,7 @@ public interface ISettingsMapper {
      * 가입할 때 USER_SETTINGS 행을 만들지 않아서, 없으면 만들고 있으면 고친다.
      */
     int upsertArrivalAlarm(@Param("userId") Long userId, @Param("alarmYn") String alarmYn);
+
+    /** 경로 이탈 알림. 설정 행이 없으면 만든다. */
+    int upsertDeviationAlarm(@Param("userId") Long userId, @Param("alarmYn") String alarmYn);
 }
