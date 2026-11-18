@@ -1,0 +1,50 @@
+/* Shared by both home screens, route management and settings. */
+.bottom-nav {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 402px;
+  height: calc(84px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #e5e5e5;
+  background: #fff;
+}
+.bottom-nav :is(button, a) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 50px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #c8c8c8;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+}
+.bottom-nav :is(button, a) svg {
+  display: block;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
+.bottom-nav :is(button, a) span { display: block; white-space: nowrap; }
+.bottom-nav :is(button, a).active { color: #018b38; }
+.bottom-nav :is(button, a):focus-visible { outline: 2px solid #018b38; outline-offset: -2px; }
+
+#routeSearchPage .search-nav-space { flex: 0 0 calc(84px + env(safe-area-inset-bottom, 0px)); }

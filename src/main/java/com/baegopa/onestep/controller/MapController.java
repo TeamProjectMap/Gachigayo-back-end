@@ -25,10 +25,15 @@ public class MapController {
     private static final String ROLE_USER = "USER";
 
     private final IKakaoMapService kakaoMapService;
+    private final com.baegopa.onestep.service.impl.PlaceSearchService placeSearchService;
 
     @ResponseBody
     @GetMapping("/search")
     public Map<String, Object> searchPlaces(@RequestParam(value = "query", required = false) String query,
+                                            @RequestParam(defaultValue = "1") int page,
+                                            @RequestParam(required = false) Double longitude,
+                                            @RequestParam(required = false) Double latitude,
+                                            @RequestParam(defaultValue = "accuracy") String sort,
                                             HttpSession session) {
         Long userId = (Long) session.getAttribute("SS_USER_ID");
         String userRole = (String) session.getAttribute("SS_USER_ROLE");
@@ -45,11 +50,23 @@ public class MapController {
             return createResponse(false, "검색어를 입력해주세요.");
         }
 
+        if (query.length() > 100 || page < 1 || page > 45
+                || (longitude == null) != (latitude == null)
+                || (longitude != null && (!Double.isFinite(longitude) || Math.abs(longitude) > 180))
+                || (latitude != null && (!Double.isFinite(latitude) || Math.abs(latitude) > 90))
+                || !java.util.Set.of("accuracy", "distance").contains(sort)) {
+            return createResponse(false, "검색 조건을 확인해주세요.");
+        }
+
         try {
-            List<KakaoPlaceDTO> places = kakaoMapService.searchPlaces(query.trim());
+            var result = placeSearchService.search(query.trim(), page, longitude, latitude, "distance".equals(sort));
+            List<KakaoPlaceDTO> places = result.places();
             Map<String, Object> response = createResponse(true,
                     places.isEmpty() ? "검색 결과가 없습니다." : "장소 검색이 완료되었습니다.");
             response.put("places", places);
+            response.put("totalCount", result.totalCount());
+            response.put("end", result.end());
+            response.put("page", page);
 
             return response;
         } catch (Exception e) {

@@ -242,52 +242,7 @@ button {
 
 /* ---------------------------- 하단 메뉴 ---------------------------- */
 
-.bottom-nav {
-    position: fixed;
-    left: 50%;
-    bottom: 0;
-    width: 100%;
-    max-width: 402px;
-    transform: translateX(-50%);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    align-items: start;
-    padding: 16px 12px 20px;
-    border-top: 0.5px solid var(--line);
-    background: #FFFFFF;
-}
-
-.bottom-nav button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    color: var(--line);
-    font-size: 12px;
-    font-weight: 500;
-}
-
 /* 아이콘마다 원래 크기가 달라서 각각 지정한다 */
-.bottom-nav button svg {
-    width: 24px;
-    height: 24px;
-}
-
-.bottom-nav #routeButton svg {
-    width: 22px;
-    height: 20px;
-}
-
-.bottom-nav button.active svg {
-    width: 26px;
-    height: 26px;
-}
-
-.bottom-nav button.active {
-    color: var(--green);
-}
-
 @media (max-width: 402px) {
     body {
         background: #FFFFFF;

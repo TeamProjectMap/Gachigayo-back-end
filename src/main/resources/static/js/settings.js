@@ -1,6 +1,7 @@
 (function ($) {
 
     var userRole = null;
+    var sessionUserId = null;
 
     // 마지막으로 저장된 관계. 값이 그대로면 굳이 다시 저장하지 않는다
     var savedRelation = "";
@@ -17,7 +18,7 @@
         });
 
         $("#routeButton").on("click", function () {
-            window.location.href = "/route-manage.html";
+            window.location.href = userRole === "GUARDIAN" ? "/route-manage.html" : "/route-search.html";
         });
 
         // 저장 버튼이 없는 화면이라 입력칸을 벗어나거나 엔터를 치면 저장한다
@@ -76,6 +77,25 @@
                 }
 
                 userRole = json.userRole;
+                sessionUserId = json.userId;
+                $("#profileLoginId").text(json.loginId || "-");
+                $("#loginIdRow").toggleClass("hidden", userRole !== "USER");
+                $("#userSettingsSection").toggleClass("hidden", userRole !== "USER");
+                $("#guardianAlarmSection").toggleClass("hidden", userRole === "USER");
+                $("#routeButton span").text(userRole === "USER" ? "길안내" : "경로");
+                var prefs = JourneyState.preferences(sessionUserId, localStorage);
+                $("#shareLocationToggle").prop("checked", prefs.shareLocation);
+                $("#voiceGuideToggle").prop("checked", prefs.voice);
+                $("#shareLocationToggle, #voiceGuideToggle").on("change", function () {
+                    var name = this.id === "shareLocationToggle" ? "shareLocation" : "voice";
+                    try {
+                        JourneyState.savePreference(sessionUserId, name, this.checked, localStorage);
+                        setMessage("이 기기의 설정을 저장했습니다.", true);
+                    } catch (error) {
+                        this.checked = !this.checked;
+                        setMessage("설정을 저장하지 못했습니다. 브라우저 저장 공간을 확인해주세요.", false);
+                    }
+                });
                 $("#settingsPage").removeClass("hidden");
                 loadSettings();
             },
@@ -127,6 +147,8 @@
 
     function renderLink(json) {
         var isUser = json.userRole === "USER";
+        $("#disconnectButton, #reissueButton, #connectBox").addClass("hidden");
+        $("#linkCodeRow").removeClass("hidden");
 
         $("#linkSectionTitle").text(isUser ? "보호자 연결 관리" : "사용자 연결 관리");
 
@@ -256,6 +278,7 @@
             type: "post",
             dataType: "JSON",
             success: function () {
+                JourneyState.clear(sessionStorage);
                 window.location.replace("/login.html");
             },
             error: function () {

@@ -57,6 +57,7 @@ public class GuardianService implements IGuardianService {
         homeInfo.put("linked", true);
         homeInfo.put("linkedUserId", linkedUser.getUserId());
         homeInfo.put("linkedUserName", linkedUser.getUserName());
+        homeInfo.put("linkedUserPhone", linkedUser.getPhone());
 
         putTripInfo(homeInfo, linkedUser.getUserId());
 
@@ -130,6 +131,7 @@ public class GuardianService implements IGuardianService {
         // 알림 문구에 이용자 이름
         if (linkedUser != null) {
             result.put("linkedUserName", linkedUser.getUserName());
+            result.put("linkedUserPhone", linkedUser.getPhone());
         }
 
         result.put("notifications", getNotifications(guardianId, NOTIFICATION_PAGE_SIZE));
@@ -166,6 +168,7 @@ public class GuardianService implements IGuardianService {
         UserDTO linkedUser = guardianMapper.getLinkedUser(guardianId);
         if (linkedUser != null) {
             result.put("linkedUserName", linkedUser.getUserName());
+            result.put("linkedUserPhone", linkedUser.getPhone());
         }
 
         return result;

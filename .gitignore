@@ -4,6 +4,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+*.log
 
 ### STS ###
 .apt_generated
@@ -37,4 +38,5 @@ out/
 .vscode/
 
 # 로컬 DB 접속 정보
-application-local.propertiesuploads/
+application-local.properties
+uploads/

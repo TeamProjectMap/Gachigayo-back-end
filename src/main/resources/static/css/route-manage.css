@@ -682,40 +682,6 @@ ul {
     color: var(--danger);
 }
 
-.bottom-nav {
-    position: fixed;
-    left: 50%;
-    bottom: 0;
-    width: 100%;
-    max-width: 402px;
-    transform: translateX(-50%);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    padding: 10px 24px 16px;
-    border-top: 1px solid #EEEEEE;
-    background: #FFFFFF;
-}
-
-.bottom-nav button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    background: transparent;
-    color: var(--line);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.bottom-nav button svg {
-    width: 22px;
-    height: 22px;
-}
-
-.bottom-nav button.active {
-    color: var(--green);
-}
-
 @media (max-width: 402px) {
     body {
         background: #FFFFFF;

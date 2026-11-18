@@ -16,6 +16,9 @@ public interface IRouteMapper {
     /** 경로 한 건 */
     RouteDTO getRoute(@Param("routeId") Long routeId);
 
+    /** Serialize photo additions across all steps in one route. */
+    RouteDTO lockRoute(@Param("routeId") Long routeId);
+
     /** 경로의 구간 목록 */
     List<RouteStepDTO> getRouteSteps(@Param("routeId") Long routeId);
 

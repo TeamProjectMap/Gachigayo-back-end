@@ -1,346 +1,501 @@
 (function ($) {
-    var selectedDestination = null;
-    var favorite = false;
+  var selectedDestination = null;
+  var favorite = false;
+  var placeMap = null;
+  var endpointRevision = 0;
+  var routeRequest = null;
+  function invalidateEndpoints() {
+    endpointRevision++;
+    routeRequest?.abort();
+    routeRequest = null;
+    ["routeSearchResult", "selectedRoute", "navigationProgress"].forEach(
+      function (key) {
+        sessionStorage.removeItem(key);
+      },
+    );
+    setLoading(false);
+  }
+  function drawEndpoints() {
+    if (!placeMap || !selectedDestination) return;
+    var origin = NavigationUI.read("currentOrigin");
+    placeMap.clear();
+    placeMap.pin(selectedDestination, "도착");
+    if (NavigationUI.coordinate(origin)) {
+      placeMap.pin(origin, "출발");
+      placeMap.fit([origin, selectedDestination]);
+    } else placeMap.fit([selectedDestination]);
+  }
+  async function swapEndpoints() {
+    var version = endpointRevision;
+    var origin = NavigationUI.read("currentOrigin");
+    if (!NavigationUI.coordinate(origin)) {
+      setMessage("현재 위치를 확인하고 출발·도착을 바꾸고 있습니다…");
+      try {
+        origin = await NavigationUI.locate();
+      } catch (error) {
+        setMessage(error.message);
+        return;
+      }
+    }
+    if (!NavigationUI.coordinate(selectedDestination) || version !== endpointRevision) return;
+    invalidateEndpoints();
+    var nextOrigin = Object.assign({}, selectedDestination, {
+      manual: true,
+      capturedAt: Date.now(),
+    });
+    selectedDestination = normalizePlace(
+      Object.assign({}, origin, {
+        placeName: origin.placeName || "현재 위치로 지정한 지점",
+      }),
+    );
+    sessionStorage.setItem("currentOrigin", JSON.stringify(nextOrigin));
+    sessionStorage.setItem(
+      "selectedDestination",
+      JSON.stringify(selectedDestination),
+    );
+    $("#originSelectionName").text(nextOrigin.placeName);
+    renderDestination(selectedDestination);
+    checkFavorite();
+    drawEndpoints();
+    setMessage("출발지와 도착지를 바꿨습니다. 경로를 다시 검색해주세요.");
+  }
 
-    $(function () {
-        checkSession();
+  $(function () {
+    checkSession();
+    var origin = NavigationUI.read("currentOrigin");
+    if (origin && origin.manual) {
+      $("#originSelectionName").text(origin.placeName);
+    }
+    $("#useCurrentOrigin").on("click", async function () {
+      invalidateEndpoints();
+      var version = endpointRevision;
+      $("#originSelectionName").text("현재 위치 확인 중…");
+      try {
+        var origin = await NavigationUI.locate();
+        if (version !== endpointRevision) return;
+        sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
+        $("#originSelectionName").text("현재 위치");
+        drawEndpoints();
+        setMessage("현재 위치를 출발지로 지정했습니다.");
+      } catch (error) {
+        if (version === endpointRevision) {
+          var original = NavigationUI.read("currentOrigin");
+          $("#originSelectionName").text(original && original.manual ? original.placeName : "현재 위치");
+          setMessage(error.message);
+        }
+      }
+    });
+    $("#swapEndpoints").on("click", swapEndpoints);
 
-        $("#backButton").on("click", function () {
-            window.location.href = "/route-search.html";
-        });
-
-        $("#favoriteButton").on("click", function () {
-            toggleFavorite();
-        });
-
-        $("#confirmDestinationButton").on("click", function () {
-            requestCurrentOrigin();
-        });
+    $("#backButton").on("click", function () {
+      window.location.href = "/route-search.html";
     });
 
-    function checkSession() {
-        $.ajax({
-            url: "/user/session",
-            type: "get",
-            dataType: "JSON",
-            success: function (json) {
-                if (!json.success) {
-                    window.location.replace("/login.html");
-                    return;
-                }
+    $("#favoriteButton").on("click", function () {
+      toggleFavorite();
+    });
 
-                if (json.userRole !== "USER") {
-                    window.location.replace("/guardian-home.html");
-                    return;
-                }
+    $("#confirmDestinationButton").on("click", function () {
+      requestCurrentOrigin();
+    });
+  });
 
-                loadSelectedDestination();
-            },
-            error: function () {
-                window.location.replace("/login.html");
-            }
-        });
+  function checkSession() {
+    $.ajax({
+      url: "/user/session",
+      type: "get",
+      dataType: "JSON",
+      success: function (json) {
+        if (!json.success) {
+          window.location.replace("/login.html");
+          return;
+        }
+
+        if (json.userRole !== "USER") {
+          window.location.replace("/guardian-home.html");
+          return;
+        }
+
+        loadSelectedDestination();
+      },
+      error: function () {
+        window.location.replace("/login.html");
+      },
+    });
+  }
+
+  function loadSelectedDestination() {
+    var rawDestination = sessionStorage.getItem("selectedDestination");
+
+    if (!rawDestination) {
+      window.location.replace("/route-search.html");
+      return;
     }
 
-    function loadSelectedDestination() {
-        var rawDestination = sessionStorage.getItem("selectedDestination");
-
-        if (!rawDestination) {
-            window.location.replace("/route-search.html");
-            return;
-        }
-
-        try {
-            selectedDestination = JSON.parse(rawDestination);
-        } catch (e) {
-            sessionStorage.removeItem("selectedDestination");
-            window.location.replace("/route-search.html");
-            return;
-        }
-
-        if (!selectedDestination || !selectedDestination.placeName) {
-            window.location.replace("/route-search.html");
-            return;
-        }
-
-        selectedDestination = normalizePlace(selectedDestination);
-        renderDestination(selectedDestination);
-        $("#placeDetailPage").removeClass("hidden");
-        checkFavorite();
+    try {
+      selectedDestination = JSON.parse(rawDestination);
+    } catch (e) {
+      sessionStorage.removeItem("selectedDestination");
+      window.location.replace("/route-search.html");
+      return;
     }
 
-    function renderDestination(place) {
-        var address = place.roadAddressName || place.addressName || "주소 정보 없음";
-
-        $("#headerPlaceName").text(place.placeName);
-        $("#placeName").text(place.placeName);
-        $("#placeAddress").text(address);
-
-        if (place.categoryName) {
-            $("#placeCategory").text(place.categoryName).removeClass("hidden");
-        }
-
-        if (place.phone) {
-            $("#placePhone").text(place.phone).removeClass("hidden");
-        }
+    if (!selectedDestination || !selectedDestination.placeName) {
+      window.location.replace("/route-search.html");
+      return;
     }
 
-    function checkFavorite() {
-        if (!selectedDestination.id) {
-            renderFavorite(false);
-            return;
-        }
+    selectedDestination = normalizePlace(selectedDestination);
+    renderDestination(selectedDestination);
+    $("#placeDetailPage").removeClass("hidden");
+    checkFavorite();
+    NavigationUI.create(
+      document.getElementById("placeMap"),
+      selectedDestination,
+    )
+      .then(function (view) {
+        placeMap = view;
+        drawEndpoints();
+      })
+      .catch(function () {});
+  }
 
-        $.ajax({
-            url: "/place/favorites/check",
-            type: "GET",
-            dataType: "JSON",
-            data: {
-                placeId: selectedDestination.id
-            },
-            success: function (json) {
-                renderFavorite(!!(json.success && json.favorite));
-            },
-            error: function () {
-                renderFavorite(false);
-            }
-        });
+  function renderDestination(place) {
+    var address =
+      place.roadAddressName || place.addressName || "주소 정보 없음";
+
+    $("#headerPlaceName").text(place.placeName);
+    $("#placeName").text(place.placeName);
+    $("#placeAddress").text(address);
+
+    $("#placeCategory, #placePhone").addClass("hidden").text("");
+    if (place.categoryName) {
+      $("#placeCategory").text(place.categoryName).removeClass("hidden");
     }
 
-    function toggleFavorite() {
-        if (!selectedDestination || !selectedDestination.id) {
-            setMessage("선택한 장소 정보를 확인할 수 없습니다.");
-            return;
-        }
+    if (place.phone) {
+      $("#placePhone").text(place.phone).removeClass("hidden");
+    }
+  }
 
-        $("#favoriteButton").prop("disabled", true);
-
-        if (favorite) {
-            deleteFavorite();
-        } else {
-            addFavorite();
-        }
+  function checkFavorite() {
+    if (!selectedDestination.id) {
+      renderFavorite(false);
+      return;
     }
 
-    function addFavorite() {
-        $.ajax({
-            url: "/place/favorites",
-            type: "POST",
-            dataType: "JSON",
-            data: toPlaceRequest(selectedDestination),
-            success: function (json) {
-                if (!json.success) {
-                    setMessage(json.message || "즐겨찾기 저장 중 오류가 발생했습니다.");
-                    return;
-                }
+    $.ajax({
+      url: "/place/favorites/check",
+      type: "GET",
+      dataType: "JSON",
+      data: {
+        placeId: selectedDestination.id,
+      },
+      success: function (json) {
+        renderFavorite(!!(json.success && json.favorite));
+      },
+      error: function () {
+        renderFavorite(false);
+      },
+    });
+  }
 
-                renderFavorite(true);
-                setMessage(json.message || "자주 가는 곳에 저장했습니다.");
-            },
-            error: function () {
-                setMessage("즐겨찾기 저장 중 오류가 발생했습니다.");
-            },
-            complete: function () {
-                $("#favoriteButton").prop("disabled", false);
-            }
-        });
+  function toggleFavorite() {
+    if (!selectedDestination || !selectedDestination.id) {
+      setMessage("선택한 장소 정보를 확인할 수 없습니다.");
+      return;
     }
 
-    function deleteFavorite() {
-        $.ajax({
-            url: "/place/favorites/delete",
-            type: "POST",
-            dataType: "JSON",
-            data: {
-                placeId: selectedDestination.id
-            },
-            success: function (json) {
-                if (!json.success) {
-                    setMessage(json.message || "즐겨찾기 삭제 중 오류가 발생했습니다.");
-                    return;
-                }
+    $("#favoriteButton").prop("disabled", true);
 
-                renderFavorite(false);
-                setMessage(json.message || "자주 가는 곳에서 삭제했습니다.");
-            },
-            error: function () {
-                setMessage("즐겨찾기 삭제 중 오류가 발생했습니다.");
-            },
-            complete: function () {
-                $("#favoriteButton").prop("disabled", false);
-            }
-        });
+    if (favorite) {
+      deleteFavorite();
+    } else {
+      addFavorite();
+    }
+  }
+
+  function addFavorite() {
+    $.ajax({
+      url: "/place/favorites",
+      type: "POST",
+      dataType: "JSON",
+      data: toPlaceRequest(selectedDestination),
+      success: function (json) {
+        if (!json.success) {
+          setMessage(json.message || "즐겨찾기 저장 중 오류가 발생했습니다.");
+          return;
+        }
+
+        renderFavorite(true);
+        setMessage(json.message || "자주 가는 곳에 저장했습니다.");
+      },
+      error: function () {
+        setMessage("즐겨찾기 저장 중 오류가 발생했습니다.");
+      },
+      complete: function () {
+        $("#favoriteButton").prop("disabled", false);
+      },
+    });
+  }
+
+  function deleteFavorite() {
+    $.ajax({
+      url: "/place/favorites/delete",
+      type: "POST",
+      dataType: "JSON",
+      data: {
+        placeId: selectedDestination.id,
+      },
+      success: function (json) {
+        if (!json.success) {
+          setMessage(json.message || "즐겨찾기 삭제 중 오류가 발생했습니다.");
+          return;
+        }
+
+        renderFavorite(false);
+        setMessage(json.message || "자주 가는 곳에서 삭제했습니다.");
+      },
+      error: function () {
+        setMessage("즐겨찾기 삭제 중 오류가 발생했습니다.");
+      },
+      complete: function () {
+        $("#favoriteButton").prop("disabled", false);
+      },
+    });
+  }
+
+  function renderFavorite(isFavorite) {
+    favorite = isFavorite;
+    $("#favoriteButton")
+      .attr("aria-pressed", String(favorite))
+      .text(favorite ? "★ 즐겨찾기" : "☆ 즐겨찾기");
+  }
+
+  function requestCurrentOrigin() {
+    if (!hasSelectedDestination()) {
+      setMessage("선택한 목적지가 없습니다.");
+      setTimeout(function () {
+        window.location.href = "/route-search.html";
+      }, 800);
+      return;
     }
 
-    function renderFavorite(isFavorite) {
-        favorite = isFavorite;
-        $("#favoriteButton")
-                .attr("aria-pressed", String(favorite))
-                .text(favorite ? "★ 즐겨찾기" : "☆ 즐겨찾기");
+    var manualOrigin = NavigationUI.read("currentOrigin");
+    if (
+      manualOrigin &&
+      manualOrigin.manual &&
+      NavigationUI.coordinate(manualOrigin)
+    ) {
+      setLoading(true);
+      searchRoutes(manualOrigin);
+      return;
     }
 
-    function requestCurrentOrigin() {
-        if (!hasSelectedDestination()) {
-            setMessage("선택한 목적지가 없습니다.");
-            setTimeout(function () {
-                window.location.href = "/route-search.html";
-            }, 800);
-            return;
-        }
-
-        if (!navigator.geolocation) {
-            setMessage("현재 위치를 확인할 수 없는 브라우저입니다.");
-            return;
-        }
-
-        setLoading(true);
-        setMessage("현재 위치 확인 중...");
-
-        navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    var currentOrigin = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy,
-                        capturedAt: Date.now()
-                    };
-
-                    sessionStorage.setItem("currentOrigin", JSON.stringify(currentOrigin));
-                    searchRoutes(currentOrigin);
-                },
-                function (error) {
-                    setMessage(getGeolocationErrorMessage(error));
-                    setLoading(false);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                }
-        );
+    if (
+      manualOrigin &&
+      !manualOrigin.manual &&
+      NavigationUI.coordinate(manualOrigin) &&
+      Date.now() - Number(manualOrigin.capturedAt) < 30000
+    ) {
+      setLoading(true);
+      searchRoutes(manualOrigin);
+      return;
+    }
+    var version = endpointRevision;
+    if (!navigator.geolocation) {
+      setMessage("현재 위치를 확인할 수 없는 브라우저입니다.");
+      return;
     }
 
-    function searchRoutes(currentOrigin) {
-        setMessage("경로 찾는 중...");
+    setLoading(true);
+    setMessage("현재 위치 확인 중...");
 
-        $.ajax({
-            url: "/map/routes",
-            type: "GET",
-            dataType: "JSON",
-            data: {
-                startLongitude: currentOrigin.longitude,
-                startLatitude: currentOrigin.latitude,
-                endLongitude: selectedDestination.longitude,
-                endLatitude: selectedDestination.latitude,
-                destinationName: selectedDestination.placeName
-            },
-            success: function (json) {
-                if (!json.success) {
-                    setMessage(json.message || "경로 검색 중 오류가 발생했습니다.");
-                    return;
-                }
-
-                sessionStorage.setItem("routeSearchResult", JSON.stringify(json));
-                setMessage(createRouteSummaryMessage(json));
-                window.location.href = "/route-compare.html";
-            },
-            error: function () {
-                setMessage("경로 검색 중 오류가 발생했습니다.");
-            },
-            complete: function () {
-                setLoading(false);
-            }
-        });
-    }
-
-    function createRouteSummaryMessage(routeResult) {
-        var publicTransitCount = routeResult.publicTransit && routeResult.publicTransit.routes
-                ? routeResult.publicTransit.routes.length : 0;
-        var walkingAvailable = routeResult.walking && routeResult.walking.available;
-
-        if (publicTransitCount > 0 && walkingAvailable) {
-            return "경로를 찾았습니다. 대중교통 경로 " + publicTransitCount + "개와 도보 경로를 확인했습니다.";
-        }
-
-        if (publicTransitCount > 0) {
-            return "경로를 찾았습니다. 대중교통 경로 " + publicTransitCount + "개를 확인했습니다.";
-        }
-
-        if (walkingAvailable) {
-            return "경로를 찾았습니다. 도보 경로를 확인했습니다.";
-        }
-
-        return routeResult.message || "이동 가능한 경로를 찾지 못했습니다.";
-    }
-
-    function hasSelectedDestination() {
-        var rawDestination = sessionStorage.getItem("selectedDestination");
-
-        return !!rawDestination
-                && !!selectedDestination
-                && !!selectedDestination.longitude
-                && !!selectedDestination.latitude;
-    }
-
-    function getGeolocationErrorMessage(error) {
-        if (!error) {
-            return "현재 위치를 확인하는 중 오류가 발생했습니다.";
-        }
-
-        if (error.code === error.PERMISSION_DENIED) {
-            return "현재 위치 권한이 필요합니다. 브라우저에서 위치 권한을 허용해주세요.";
-        }
-
-        if (error.code === error.POSITION_UNAVAILABLE) {
-            return "현재 위치를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.";
-        }
-
-        if (error.code === error.TIMEOUT) {
-            return "현재 위치 확인 시간이 초과되었습니다. 다시 시도해주세요.";
-        }
-
-        return "현재 위치를 확인하는 중 오류가 발생했습니다.";
-    }
-
-    function normalizePlace(place) {
-        return {
-            id: value(place.id || place.kakaoPlaceId),
-            placeName: value(place.placeName),
-            categoryName: value(place.categoryName),
-            addressName: value(place.addressName || place.address),
-            roadAddressName: value(place.roadAddressName || place.roadAddress),
-            longitude: value(place.longitude || place.lng),
-            latitude: value(place.latitude || place.lat),
-            phone: value(place.phone),
-            placeUrl: value(place.placeUrl)
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        if (version !== endpointRevision) return;
+        var currentOrigin = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          capturedAt: Date.now(),
         };
+
+        sessionStorage.setItem("currentOrigin", JSON.stringify(currentOrigin));
+        searchRoutes(currentOrigin);
+      },
+      function (error) {
+        if (version !== endpointRevision) return;
+        setMessage(getGeolocationErrorMessage(error));
+        setLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      },
+    );
+  }
+
+  function searchRoutes(currentOrigin) {
+    if (PlaceProximity.distance(currentOrigin, selectedDestination) < 10) {
+      setMessage(
+        "출발지와 도착지가 같은 위치입니다. 다른 장소를 선택해주세요.",
+      );
+      setLoading(false);
+      return;
+    }
+    var version = endpointRevision;
+    setMessage("경로 찾는 중...");
+    $("#confirmDestinationButton").text("경로 찾는 중…");
+    routeRequest = $.ajax({
+      url: "/map/routes",
+      timeout: 40000,
+      type: "GET",
+      dataType: "JSON",
+      data: {
+        startLongitude: currentOrigin.longitude,
+        startLatitude: currentOrigin.latitude,
+        endLongitude: selectedDestination.longitude,
+        endLatitude: selectedDestination.latitude,
+        destinationName: selectedDestination.placeName,
+      },
+      success: function (json) {
+        if (version !== endpointRevision) return;
+        if (!json.success) {
+          setMessage(json.message || "경로 검색 중 오류가 발생했습니다.");
+          return;
+        }
+
+        if (
+          !(json.walking && json.walking.available) &&
+          !(json.publicTransit && json.publicTransit.available)
+        ) {
+          setMessage(
+            ((json.walking && json.walking.message) || "") +
+              " " +
+              ((json.publicTransit && json.publicTransit.message) || ""),
+          );
+          return;
+        }
+        sessionStorage.setItem("routeSearchResult", JSON.stringify(json));
+        setMessage(createRouteSummaryMessage(json));
+        window.location.href = "/route-compare.html";
+      },
+      error: function (_, status) {
+        if (version === endpointRevision && status !== "abort")
+          setMessage(
+            status === "timeout"
+              ? "경로 검색이 지연되고 있습니다. 다시 시도해주세요."
+              : "경로 검색 중 오류가 발생했습니다.",
+          );
+      },
+      complete: function () {
+        if (version === endpointRevision) setLoading(false);
+      },
+    });
+  }
+
+  function createRouteSummaryMessage(routeResult) {
+    var publicTransitCount =
+      routeResult.publicTransit && routeResult.publicTransit.routes
+        ? routeResult.publicTransit.routes.length
+        : 0;
+    var walkingAvailable = routeResult.walking && routeResult.walking.available;
+
+    if (publicTransitCount > 0 && walkingAvailable) {
+      return (
+        "경로를 찾았습니다. 대중교통 경로 " +
+        publicTransitCount +
+        "개와 도보 경로를 확인했습니다."
+      );
     }
 
-    function toPlaceRequest(place) {
-        return {
-            placeId: place.id,
-            placeName: place.placeName,
-            categoryName: place.categoryName,
-            addressName: place.addressName,
-            roadAddressName: place.roadAddressName,
-            longitude: place.longitude,
-            latitude: place.latitude,
-            phone: place.phone,
-            placeUrl: place.placeUrl
-        };
+    if (publicTransitCount > 0) {
+      return (
+        "경로를 찾았습니다. 대중교통 경로 " +
+        publicTransitCount +
+        "개를 확인했습니다."
+      );
     }
 
-    function value(source) {
-        return source == null ? "" : String(source);
+    if (walkingAvailable) {
+      return "경로를 찾았습니다. 도보 경로를 확인했습니다.";
     }
 
-    function setLoading(isLoading) {
-        $("#confirmDestinationButton")
-                .prop("disabled", isLoading)
-                .text(isLoading ? "현재 위치 확인 중..." : "이곳으로 가기");
+    return routeResult.message || "이동 가능한 경로를 찾지 못했습니다.";
+  }
+
+  function hasSelectedDestination() {
+    var rawDestination = sessionStorage.getItem("selectedDestination");
+
+    return (
+      !!rawDestination &&
+      !!selectedDestination &&
+      !!selectedDestination.longitude &&
+      !!selectedDestination.latitude
+    );
+  }
+
+  function getGeolocationErrorMessage(error) {
+    if (!error) {
+      return "현재 위치를 확인하는 중 오류가 발생했습니다.";
     }
 
-    function setMessage(message) {
-        $("#detailMessage").text(message);
+    if (error.code === error.PERMISSION_DENIED) {
+      return "현재 위치 권한이 필요합니다. 브라우저에서 위치 권한을 허용해주세요.";
     }
+
+    if (error.code === error.POSITION_UNAVAILABLE) {
+      return "현재 위치를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.";
+    }
+
+    if (error.code === error.TIMEOUT) {
+      return "현재 위치 확인 시간이 초과되었습니다. 다시 시도해주세요.";
+    }
+
+    return "현재 위치를 확인하는 중 오류가 발생했습니다.";
+  }
+
+  function normalizePlace(place) {
+    return {
+      id: value(place.id || place.kakaoPlaceId),
+      placeName: value(place.placeName),
+      categoryName: value(place.categoryName),
+      addressName: value(place.addressName || place.address),
+      roadAddressName: value(place.roadAddressName || place.roadAddress),
+      longitude: value(place.longitude || place.lng),
+      latitude: value(place.latitude || place.lat),
+      phone: value(place.phone),
+      placeUrl: value(place.placeUrl),
+    };
+  }
+
+  function toPlaceRequest(place) {
+    return {
+      placeId: place.id,
+      placeName: place.placeName,
+      categoryName: place.categoryName,
+      addressName: place.addressName,
+      roadAddressName: place.roadAddressName,
+      longitude: place.longitude,
+      latitude: place.latitude,
+      phone: place.phone,
+      placeUrl: place.placeUrl,
+    };
+  }
+
+  function value(source) {
+    return source == null ? "" : String(source);
+  }
+
+  function setLoading(isLoading) {
+    $("#confirmDestinationButton")
+      .prop("disabled", isLoading)
+      .text(isLoading ? "현재 위치 확인 중..." : "이곳으로 가기");
+  }
+
+  function setMessage(message) {
+    $("#detailMessage").text(message);
+  }
 })(jQuery);

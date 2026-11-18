@@ -2,6 +2,9 @@ package com.baegopa.onestep.controller;
 
 import com.baegopa.onestep.dto.RouteDTO;
 import com.baegopa.onestep.service.ITripService;
+import com.baegopa.onestep.service.impl.NavigationLandmarkService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,25 @@ public class TripController {
     private static final String ROLE_USER = "USER";
 
     private final ITripService tripService;
+    private final NavigationLandmarkService landmarkService;
+
+    @ResponseBody
+    @GetMapping("/{tripId}/landmarks")
+    public Map<String, Object> landmarks(@PathVariable Long tripId, HttpSession session) {
+        SessionUser user = getSessionUser(session);
+        if (!user.valid()) return user.response();
+        try {
+            Map<String, Object> response = createResponse(true, "경로 랜드마크를 조회했습니다.");
+            response.put("landmarks", landmarkService.getLandmarks(user.userId(), tripId));
+            return response;
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("랜드마크 조회 실패 userId={}, tripId={}", user.userId(), tripId, e);
+            return createResponse(false, "랜드마크를 불러오지 못했습니다.");
+        }
+    }
+
 
     /**
      * 이동 시작

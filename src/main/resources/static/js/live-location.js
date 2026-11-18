@@ -106,6 +106,8 @@
 
     function render(json) {
         var name = json.linkedUserName || "사용자";
+        var phone = String(json.linkedUserPhone || "").replace(/[^0-9+]/g, "");
+        $("#linkedUserCall").prop("hidden", !phone).attr("href", phone ? "tel:" + phone : null);
 
         if (!json.moving) {
             $("#liveTitle").text(name + "님은 이동 중이 아니에요");
@@ -114,6 +116,7 @@
             $("#currentPlace").text("이동 정보 없음");
             $("#checkpoint").text("-");
             $("#arrival").text("-");
+            clearOverlays();
             setMapMessage("이동을 시작하면 위치가 표시됩니다");
             return;
         }
@@ -171,6 +174,7 @@
 
     function showMap(json) {
         if (!json.currentLat || !json.currentLng) {
+            clearOverlays();
             setMapMessage("아직 위치가 들어오지 않았어요");
             return;
         }
@@ -231,7 +235,7 @@
             return;
         }
 
-        $("#mapMessage").remove();
+        $("#mapMessage").prop("hidden", true);
 
         var now = new window.kakao.maps.LatLng(json.currentLat, json.currentLng);
 
@@ -299,7 +303,15 @@
     }
 
     function setMapMessage(message) {
-        $("#mapMessage").text(message);
+        var messageElement = document.getElementById("mapMessage");
+        if (!messageElement) {
+            messageElement = document.createElement("p");
+            messageElement.id = "mapMessage";
+            document.getElementById("liveMap").appendChild(messageElement);
+        }
+        messageElement.className = "live-map-message";
+        messageElement.hidden = false;
+        messageElement.textContent = message;
     }
 
     function setMessage(message, success) {
