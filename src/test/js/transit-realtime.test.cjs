@@ -1,0 +1,9 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const rt=require('../../main/resources/static/js/transit-realtime.js');
+const bus=rt.target({type:'BUS',stops:['시청','종로'],vehicles:[{name:'간선:150'}]});
+const subway=rt.target({type:'SUBWAY',stops:['시청역','을지로입구역','강남역'],vehicles:[{name:'수도권 2호선'}]});
+test('normalizes route targets without mixing opposite directions',()=>{assert.equal(bus.vehicle,'150');assert.equal(subway.vehicle,'2호선');assert.notEqual(rt.key(bus),rt.key({...bus,next:'서울역'}));assert.equal(rt.target({type:'WALKING'}),null);});
+test('only selects subway trains with confirmed travel direction',()=>{assert.equal(rt.matches({trainLineName:'성수행 - 을지로입구방면'},subway),true);assert.equal(rt.matches({trainLineName:'신도림행 - 충정로방면'},subway),false);});
+test('counts down bus arrivals and preserves zero rather than treating it as missing',()=>{let r=rt.rows({success:true,available:true,status:'OK',firstArrival:{seconds:80,lowFloor:true}},bus,100000,120000);assert.equal(r[0].seconds,60);assert.deepEqual(r[0].tags,['저상']);assert.equal(rt.arrivalText({seconds:0}),'곧 도착');assert.equal(rt.rows({success:true,available:true,status:'OK',firstArrival:{seconds:null,message:'운행대기'}},bus,100000,100000)[0].seconds,null);});
+test('expires old responses instead of displaying arrived forever',()=>{assert.deepEqual(rt.rows({success:true,available:true,status:'OK',firstArrival:{seconds:5}},bus,0,61000),[]);});
+test('corrects subway source timestamp in Korea time and rejects stale data',()=>{const now=Date.parse('2026-11-05T12:00:30+09:00');const r={success:true,available:true,status:'OK',arrivals:[{trainLineName:'성수행 - 을지로입구방면',arrivalSeconds:120,receivedAt:'2026-11-05 12:00:00'}]};assert.equal(rt.rows(r,subway,now,now)[0].seconds,90);assert.equal(rt.rows(r,subway,now+200000,now+200000).length,0);});

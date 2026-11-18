@@ -18,8 +18,13 @@
     $(function () {
         checkSession();
 
-        $(".action-card").on("click", function () {
-            setMessage($(this).data("ready-message") || "다음 단계에서 연결 예정입니다.");
+        $(".connection-card").attr({ role: "link", tabindex: "0" }).on("click", function () {
+            window.location.href = "/settings.html#linkSectionTitle";
+        }).on("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $(this).trigger("click"); }
+        });
+        $("#locationCard").attr({ role: "link", tabindex: "0" }).on("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $(this).trigger("click"); }
         });
 
         $("#noticeButton, #notificationMore").on("click", function () {
@@ -228,6 +233,9 @@
         // 홈에서는 알림을 한 가지 모양으로 보여준다.
         // 도움요청을 눈에 띄게 하는 것은 알림 목록 화면에서 한다.
         return $("<li>")
+                .attr({role: "link", tabindex: "0"})
+                .on("click", function () { window.location.href = "/notification-detail.html?id=" + encodeURIComponent(notification.notificationId); })
+                .on("keydown", function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $(this).trigger("click"); } })
                 .addClass("notification-item")
                 .append($text)
                 .append($("<span>").addClass("notification-time").text(notification.time || ""));

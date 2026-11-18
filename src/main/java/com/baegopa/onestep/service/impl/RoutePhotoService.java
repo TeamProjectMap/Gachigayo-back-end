@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -26,8 +27,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RoutePhotoService implements IRoutePhotoService {
 
-    /** 한 구간에 너무 많이 쌓이면 이용자가 보기 어렵다 */
-    private static final int MAX_PHOTOS_PER_STEP = 3;
+    /** 화면설계서: 경로 전체에서 최대 3장의 랜드마크 사진. */
+    private static final int MAX_PHOTOS_PER_ROUTE = 3;
 
     private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;
 
@@ -52,7 +53,11 @@ public class RoutePhotoService implements IRoutePhotoService {
         result.put("routeName", route == null ? "" : route.getRouteName());
         result.put("stepTitle", isBlank(step.getLineName()) ? step.getMainText() : step.getLineName());
         result.put("walking", STEP_TYPE_WALK.equalsIgnoreCase(step.getStepType()));
-        result.put("maxPhotos", MAX_PHOTOS_PER_STEP);
+        int routePhotoCount = routePhotoMapper.getPhotosByRoute(step.getRouteId()).size();
+        int stepPhotoCount = routePhotoMapper.getPhotoCount(routeStepId);
+        result.put("maxPhotos", stepPhotoCount + Math.max(0, MAX_PHOTOS_PER_ROUTE - routePhotoCount));
+        result.put("routePhotoCount", routePhotoCount);
+        result.put("routePhotoLimit", MAX_PHOTOS_PER_ROUTE);
         // 사진에 위치가 아직 없을 때 지도를 어디에 맞출지 쓰는 값
         result.put("stepLat", step.getLat());
         result.put("stepLng", step.getLng());
@@ -62,7 +67,7 @@ public class RoutePhotoService implements IRoutePhotoService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public RoutePhotoDTO addPhoto(Long guardianId, Long routeStepId, MultipartFile file,
                                   String title, String description,
                                   String latitude, String longitude) {
@@ -75,10 +80,14 @@ public class RoutePhotoService implements IRoutePhotoService {
 
         validate(file);
 
+        if (routeMapper.lockRoute(step.getRouteId()) == null) {
+            throw new IllegalArgumentException("경로를 찾을 수 없습니다.");
+        }
+        int routePhotoCount = routePhotoMapper.getPhotosByRoute(step.getRouteId()).size();
         int photoCount = routePhotoMapper.getPhotoCount(routeStepId);
 
-        if (photoCount >= MAX_PHOTOS_PER_STEP) {
-            throw new IllegalArgumentException("한 구간에는 사진을 " + MAX_PHOTOS_PER_STEP + "장까지 넣을 수 있습니다.");
+        if (routePhotoCount >= MAX_PHOTOS_PER_ROUTE) {
+            throw new IllegalArgumentException("한 경로에는 사진을 " + MAX_PHOTOS_PER_ROUTE + "장까지 넣을 수 있습니다.");
         }
 
         // 파일을 먼저 저장하고, 주소만 표에 남긴다

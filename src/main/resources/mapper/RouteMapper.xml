@@ -44,6 +44,10 @@
         WHERE routeId = #{routeId}
     </select>
 
+    <select id="lockRoute" parameterType="long" resultType="com.baegopa.onestep.dto.RouteDTO">
+        SELECT routeId, userId FROM ROUTES WHERE routeId = #{routeId} FOR UPDATE
+    </select>
+
     <select id="getRouteSteps" parameterType="long" resultType="com.baegopa.onestep.dto.RouteStepDTO">
         SELECT routeStepId,
                routeId,

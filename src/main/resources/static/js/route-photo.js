@@ -9,6 +9,7 @@
     var routeId = null;
     var photos = [];
     var maxPhotos = DEFAULT_SLOTS;
+    var routePhotoCount = 0, routePhotoLimit = 3;
 
     // 사진을 새로 찍는 중인지, 기존 사진을 바꾸는 중인지
     var replacingPhotoId = null;
@@ -97,10 +98,12 @@
                 photos = json.photos || [];
 
                 $("#stepTitle").text(json.stepTitle || "구간");
-                maxPhotos = json.maxPhotos || DEFAULT_SLOTS;
+                maxPhotos = Number.isInteger(json.maxPhotos) ? json.maxPhotos : DEFAULT_SLOTS;
+                routePhotoCount = Number(json.routePhotoCount ?? photos.length);
+                routePhotoLimit = Number(json.routePhotoLimit ?? 3);
                 stepLat = json.stepLat;
                 stepLng = json.stepLng;
-                $("#photoCount").text(buildCountText(maxPhotos));
+                $("#photoCount").text("경로 전체 " + routePhotoCount + "/" + routePhotoLimit + "장 · " + buildCountText(maxPhotos));
 
 
                 render();
@@ -118,7 +121,8 @@
      */
     function buildCountText(limit) {
         if (!photos.length) {
-            return "최대 " + limit + "장까지 찍을 수 있어요";
+            if (limit === 0) return "이 경로의 사진이 모두 등록되어 있어요";
+            return "이 구간에 최대 " + limit + "장까지 찍을 수 있어요";
         }
 
         var described = photos.filter(function (photo) {
@@ -138,6 +142,11 @@
         var $list = $("#photoCards").empty();
         var slotCount = Math.min(maxPhotos, Math.max(DEFAULT_SLOTS, photos.length + 1));
 
+        if (!slotCount) {
+            $list.append($("<li>").addClass("photo-card").text("이 경로의 사진 3장이 모두 등록되어 있어요. 다른 구간에서 기존 사진을 수정할 수 있어요."));
+        }
+        // Keep existing photos editable even for older routes that exceeded the new limit.
+        slotCount = Math.max(slotCount, photos.length);
         for (var index = 0; index < slotCount; index++) {
             $list.append(index < photos.length
                     ? createCard(photos[index], index + 1)

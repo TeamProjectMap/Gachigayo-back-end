@@ -32,9 +32,13 @@ public class SubwayRealtimeService implements ISubwayRealtimeService {
     private static final int STATION_END_INDEX = 20;
     private static final int TIMEOUT_MILLIS = 5000;
     private static final Duration ALL_CACHE_TTL = Duration.ofSeconds(25);
-    private static final Map<String, String> SUBWAY_ID_BY_LINE_NUMBER = Map.of(
-            "5", "1005"
-    );
+    private static final Map<String, String> SUBWAY_ID_BY_LINE_NUMBER = Map.ofEntries(
+            Map.entry("1", "1001"), Map.entry("2", "1002"), Map.entry("3", "1003"),
+            Map.entry("4", "1004"), Map.entry("5", "1005"), Map.entry("6", "1006"),
+            Map.entry("7", "1007"), Map.entry("8", "1008"), Map.entry("9", "1009"),
+            Map.entry("중앙", "1061"), Map.entry("경의중앙", "1063"), Map.entry("공항철도", "1065"),
+            Map.entry("경춘", "1067"), Map.entry("수인분당", "1075"), Map.entry("신분당", "1077"),
+            Map.entry("우이신설", "1092"), Map.entry("서해", "1093"), Map.entry("경강", "1081"), Map.entry("GTX-A", "1032"));
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -287,7 +291,7 @@ public class SubwayRealtimeService implements ISubwayRealtimeService {
             return "";
         }
 
-        String normalized = value.trim().replaceAll("\\s+", "");
+        String normalized = value.trim().replaceAll("\\s+", "").replace("수도권", "").replace("서울지하철", "");
         if (normalized.endsWith("호선")) {
             normalized = normalized.substring(0, normalized.length() - 2);
         }
@@ -308,7 +312,7 @@ public class SubwayRealtimeService implements ISubwayRealtimeService {
 
     private String text(JsonNode node, String fieldName) {
         JsonNode valueNode = node == null ? null : node.get(fieldName);
-        return valueNode == null || valueNode.isNull() ? null : valueNode.asText();
+        return valueNode == null || valueNode.isNull() ? null : valueNode.asString();
     }
 
     private JsonNode firstExisting(JsonNode first, JsonNode second) {

@@ -266,31 +266,6 @@ button {
     text-align: center;
 }
 
-.bottom-nav {
-    position: fixed;
-    left: 50%;
-    bottom: 0;
-    width: 100%;
-    max-width: 402px;
-    transform: translateX(-50%);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    padding: 12px 24px 18px;
-    border-top: 1px solid #EEEEEE;
-    background: #FFFFFF;
-}
-
-.bottom-nav button {
-    background: transparent;
-    color: var(--line);
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.bottom-nav button.active {
-    color: var(--green);
-}
-
 @media (max-width: 402px) {
     body {
         background: #FFFFFF;

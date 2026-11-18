@@ -1,40 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>같이가요 경로 선택</title>
-    <link rel="stylesheet" href="/css/route-compare.css">
+    <link rel="stylesheet" href="/css/route-compare.css" />
+    <link rel="stylesheet" href="/css/map-experience.css" />
+    <link rel="stylesheet" href="/css/app-frame.css" />
+      <link rel="stylesheet" href="/css/figma-skin.css?v=20261118-1">
+    <script defer src="/js/figma-skin.js?v=20261118-1"></script>
 </head>
-<body>
-<main class="route-compare-page hidden" id="routeComparePage">
-    <header class="compare-header">
-        <button type="button" class="back-button" id="backButton" aria-label="장소 상세로 돌아가기">&lt;</button>
+  <body>
+    <main class="route-compare-page hidden" id="routeComparePage">
+      <header class="compare-header">
+        <button
+          type="button"
+          class="back-button"
+          id="backButton"
+          aria-label="장소 상세로 돌아가기"
+        >
+          &lt;
+        </button>
         <div class="route-points" aria-label="출발지와 도착지">
-            <div class="point-row">
-                <span>출발</span>
-                <strong>현재 위치</strong>
-            </div>
-            <div class="point-row destination">
-                <span>도착</span>
-                <strong id="destinationName">목적지</strong>
-            </div>
+          <div class="point-row">
+            <span>출발</span>
+            <strong id="compareOriginName">현재 위치</strong>
+          </div>
+          <div class="point-row destination">
+            <span>도착</span>
+            <strong id="destinationName">목적지</strong>
+          </div>
         </div>
-    </header>
+      </header>
 
-    <section class="route-tabs" role="tablist" aria-label="경로 종류">
-        <button type="button" class="route-tab" id="publicTransitTab" data-tab="publicTransit" role="tab" aria-selected="false">버스/지하철</button>
-        <button type="button" class="route-tab" id="walkingTab" data-tab="walking" role="tab" aria-selected="false">걷기</button>
-    </section>
+      <section class="route-tabs" role="tablist" aria-label="경로 종류">
+        <button
+          type="button"
+          class="route-tab"
+          id="publicTransitTab"
+          data-tab="publicTransit"
+          role="tab"
+          aria-selected="false"
+        >
+          버스/지하철
+        </button>
+        <button
+          type="button"
+          class="route-tab"
+          id="walkingTab"
+          data-tab="walking"
+          role="tab"
+          aria-selected="false"
+        >
+          걷기
+        </button>
+      </section>
 
-    <section class="route-list" id="routeList" aria-label="경로 후보"></section>
+      <section
+        id="compareMap"
+        class="compare-map experience-map"
+        aria-label="선택한 경로 지도"
+      >
+        지도를 불러오는 중입니다.
+      </section>
+      <div class="map-legend">
+        <span>도보</span><span class="bus">버스</span
+        ><span class="subway">지하철</span>
+      </div>
+      <div class="route-filter-toolbar">
+        <div id="transitFilters" class="transit-filters">
+          <button type="button" data-route-filter="all" aria-pressed="true">
+            전체</button
+          ><button type="button" data-route-filter="bus" aria-pressed="false">
+            버스만</button
+          ><button
+            type="button"
+            data-route-filter="subway"
+            aria-pressed="false"
+          >
+            지하철만
+          </button>
+        </div>
+        <button type="button" id="refreshArrivals">도착정보 갱신</button>
+      </div>
+      <section
+        class="route-list"
+        id="routeList"
+        aria-label="경로 후보"
+      ></section>
 
-    <p id="compareMessage" class="compare-message" role="status"></p>
+      <p id="compareMessage" class="compare-message" role="status"></p>
 
-    <button type="button" class="guide-button" id="guideButton">안내하기</button>
-</main>
+      <button type="button" class="guide-button" id="guideButton">
+        안내하기
+      </button>
+    </main>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/route-compare.js"></script>
-</body>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/js/navigation-map.js"></script>
+    <script src="/js/transit-realtime.js"></script>
+    <script src="/js/journey-state.js?v=20261117"></script>
+    <script src="/js/route-compare.js"></script>
+  </body>
 </html>

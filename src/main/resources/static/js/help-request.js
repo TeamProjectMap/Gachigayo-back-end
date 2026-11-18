@@ -91,7 +91,7 @@
                     return;
                 }
 
-                guardianPhone = json.guardianPhone || "";
+                guardianPhone = normalizePhone(json.guardianPhone);
                 if (!guardianPhone) {
                     setGuardianUnavailable("연결된 보호자 연락처가 없어요");
                     return;
@@ -113,6 +113,12 @@
         }
 
         navigator.geolocation.getCurrentPosition(function (position) {
+            var coords = position.coords;
+            if (!Number.isFinite(coords.latitude) || Math.abs(coords.latitude) > 90 ||
+                    !Number.isFinite(coords.longitude) || Math.abs(coords.longitude) > 180) {
+                handleGpsFailure();
+                return;
+            }
             currentPosition = {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
@@ -191,11 +197,14 @@
             return;
         }
 
+        safetyCenterPhone = "";
+        $("#safetyCenterModal").addClass("hidden");
         $("#safetyCenterButton").prop("disabled", true);
         $("#safetyCenterMessage").text("가까운 안전센터를 찾고 있어요");
 
         $.ajax({
             url: "/help-request/nearby-safety-center",
+            timeout: 15000,
             type: "get",
             dataType: "JSON",
             data: {
@@ -204,7 +213,7 @@
             },
             success: function (json) {
                 $("#safetyCenterButton").prop("disabled", false);
-                if (!json.success || !json.hasPhone || !json.safetyCenter) {
+                if (!json.success || !json.hasPhone || !json.safetyCenter || !normalizePhone(json.safetyCenter.phone)) {
                     $("#safetyCenterMessage").text(json.message || "가까운 안전센터 연락처를 찾지 못했어요");
                     return;
                 }
@@ -230,7 +239,7 @@
     }
 
     function openSafetyCenterModal(safetyCenter) {
-        safetyCenterPhone = safetyCenter.phone || "";
+        safetyCenterPhone = normalizePhone(safetyCenter.phone);
         $("#safetyCenterName").text(safetyCenter.placeName || "안전센터");
         $("#safetyCenterDistance").text(formatDistance(safetyCenter.distance));
         $("#safetyCenterModal").removeClass("hidden");
@@ -240,7 +249,15 @@
         $(".modal-backdrop").addClass("hidden");
     }
 
+    function normalizePhone(value) {
+        var raw = String(value || "").trim();
+        if (!/^\+?[\d\s().-]+$/.test(raw)) return "";
+        var normalized = raw.replace(/[^\d+]/g, "");
+        return /^\+?\d{3,15}$/.test(normalized) ? normalized : "";
+    }
+
     function callPhone(phone) {
+        phone = normalizePhone(phone);
         if (!phone) {
             return;
         }
@@ -332,7 +349,7 @@
 
     function formatDistance(distance) {
         var meters = Number(distance);
-        if (!Number.isFinite(meters)) {
+        if (distance === null || distance === undefined || distance === "" || !Number.isFinite(meters) || meters < 0) {
             return "현재 위치 기준 가까운 곳";
         }
 

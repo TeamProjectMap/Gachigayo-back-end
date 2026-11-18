@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@lombok.RequiredArgsConstructor
 public class KakaoMapService implements IKakaoMapService {
 
     private static final String KAKAO_KEYWORD_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/keyword.json";
@@ -36,10 +37,18 @@ public class KakaoMapService implements IKakaoMapService {
     private static final int SAFETY_CENTER_SEARCH_SIZE = 15;
     private static final int SAFETY_CENTER_RADIUS_METERS = 20000;
     private static final String PUBLIC_OFFICE_CATEGORY_GROUP_CODE = "PO3";
-    private static final String ROUTE_MODE_ACCESSIBLE = "ACCESSIBLE";
+    private static final String ROUTE_MODE_WALKING_DEFAULT = "BROAD_FIRST";
     private static final int ADDRESS_CACHE_LIMIT = 500;
 
-    private final RestClient restClient = RestClient.create();
+    private final PlaceSearchService placeSearchService;
+    private final RestClient restClient = RestClient.builder().requestFactory(requestFactory()).build();
+
+    private static org.springframework.http.client.JdkClientHttpRequestFactory requestFactory() {
+        var factory = new org.springframework.http.client.JdkClientHttpRequestFactory(java.net.http.HttpClient.newBuilder()
+                .connectTimeout(java.time.Duration.ofSeconds(5)).build());
+        factory.setReadTimeout(java.time.Duration.ofSeconds(15));
+        return factory;
+    }
     private final Map<String, String> addressCache = new ConcurrentHashMap<>();
 
     @Value("${kakao.rest-api-key:}")
@@ -47,37 +56,7 @@ public class KakaoMapService implements IKakaoMapService {
 
     @Override
     public List<KakaoPlaceDTO> searchPlaces(String query) {
-        if (isBlank(kakaoRestApiKey)) {
-            log.error("Kakao REST API key is not configured. Check KAKAO_REST_API_KEY and Kakao Map API settings.");
-            throw new IllegalStateException("Kakao REST API key is not configured.");
-        }
-
-        try {
-            KakaoKeywordSearchResponseDTO responseDTO = restClient
-                    .get()
-                    .uri(KAKAO_KEYWORD_SEARCH_URL, uriBuilder -> uriBuilder
-                            .queryParam("query", query)
-                            .queryParam("size", SEARCH_SIZE)
-                            .build())
-                    .header("Authorization", "KakaoAK " + kakaoRestApiKey)
-                    .retrieve()
-                    .body(KakaoKeywordSearchResponseDTO.class);
-
-            if (responseDTO == null || responseDTO.getDocuments() == null) {
-                return Collections.emptyList();
-            }
-
-            return responseDTO.getDocuments().stream()
-                    .map(documentDTO -> documentDTO.toPlaceDTO())
-                    .toList();
-        } catch (RestClientResponseException e) {
-            log.error("Kakao place search failed. status={}. Check REST API key and Kakao Map API settings.",
-                    e.getStatusCode());
-            throw e;
-        } catch (Exception e) {
-            log.error("Kakao place search failed.", e);
-            throw e;
-        }
+        return placeSearchService.search(query, 1, null, null, false).places().stream().limit(10).toList();
     }
 
     @Override
@@ -121,10 +100,22 @@ public class KakaoMapService implements IKakaoMapService {
         }
 
         KakaoRouteSearchResultDTO resultDTO = new KakaoRouteSearchResultDTO();
-        resultDTO.setPublicTransit(searchPublicTransitRoutes(
-                startLongitude, startLatitude, endLongitude, endLatitude, destinationName));
-        resultDTO.setWalking(searchWalkingRoute(
-                startLongitude, startLatitude, endLongitude, endLatitude, destinationName));
+        try {
+            resultDTO.setPublicTransit(searchPublicTransitRoutes(startLongitude, startLatitude, endLongitude, endLatitude, destinationName));
+        } catch (Exception error) {
+            var unavailable = new PublicTransitRouteResultDTO();
+            unavailable.setStatus("PROVIDER_ERROR");
+            unavailable.setMessage("대중교통 경로를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+            resultDTO.setPublicTransit(unavailable);
+        }
+        try {
+            resultDTO.setWalking(searchWalkingRoute(startLongitude, startLatitude, endLongitude, endLatitude, destinationName));
+        } catch (Exception error) {
+            var unavailable = new WalkingRouteResultDTO();
+            unavailable.setStatus("PROVIDER_ERROR");
+            unavailable.setMessage("도보 경로를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+            resultDTO.setWalking(unavailable);
+        }
 
         return resultDTO;
     }
@@ -231,7 +222,7 @@ public class KakaoMapService implements IKakaoMapService {
                             .queryParam("end_y", endLatitude)
                             .queryParam("s_name", "현재 위치")
                             .queryParam("e_name", isBlank(destinationName) ? "도착" : destinationName)
-                            .queryParam("route_mode", ROUTE_MODE_ACCESSIBLE)
+                            .queryParam("route_mode", ROUTE_MODE_WALKING_DEFAULT)
                             .build())
                     .header("Authorization", "KakaoAK " + kakaoRestApiKey)
                     .retrieve()
@@ -578,7 +569,7 @@ public class KakaoMapService implements IKakaoMapService {
     private String text(JsonNode node, String fieldName) {
         JsonNode valueNode = node == null ? null : node.get(fieldName);
 
-        return valueNode == null || valueNode.isNull() ? null : valueNode.asText();
+        return valueNode == null || valueNode.isNull() ? null : valueNode.asString();
     }
 
     private Integer integer(JsonNode node, String fieldName) {

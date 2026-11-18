@@ -1,63 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>같이가요 길안내</title>
-    <link rel="stylesheet" href="/css/navigation.css">
+    <link rel="stylesheet" href="/css/navigation.css" />
+    <link rel="stylesheet" href="/css/map-experience.css" />
+    <link rel="stylesheet" href="/css/app-frame.css" />
+      <link rel="stylesheet" href="/css/figma-skin.css?v=20261118-1">
+    <script defer src="/js/figma-skin.js?v=20261118-1"></script>
 </head>
-<body>
-<main class="navigation-page hidden" id="navigationPage">
-    <header class="navigation-header">
-        <button type="button" class="back-button" id="backButton" aria-label="경로 비교로 돌아가기">&lt;</button>
+  <body>
+    <main class="navigation-page hidden" id="navigationPage">
+      <header class="navigation-header">
+        <button
+          type="button"
+          class="back-button"
+          id="backButton"
+          aria-label="경로 비교로 돌아가기"
+        >
+          &lt;
+        </button>
         <h1>길안내</h1>
-    </header>
+      </header>
 
-    <section class="route-card" id="routeSummaryCard" aria-label="출발지와 도착지">
+      <section
+        class="route-card"
+        id="routeSummaryCard"
+        aria-label="출발지와 도착지"
+      >
         <div class="point-row">
-            <span class="origin-label">출발</span>
-            <strong id="originName">현재 위치</strong>
+          <span class="origin-label">출발</span>
+          <strong id="originName">현재 위치</strong>
         </div>
         <div class="point-row">
-            <span class="destination-label">도착</span>
-            <strong id="destinationName">목적지</strong>
+          <span class="destination-label">도착</span>
+          <strong id="destinationName">목적지</strong>
         </div>
         <div class="progress-track" aria-label="길안내 진행률">
-            <div class="progress-fill" id="progressFill"></div>
+          <div class="progress-fill" id="progressFill"></div>
         </div>
-    </section>
+      </section>
 
-    <section class="navigation-map" id="navigationMap" aria-label="지도">
+      <section class="navigation-map" id="navigationMap" aria-label="지도">
         <div class="map-fallback">지도를 불러오는 중입니다.</div>
-    </section>
+      </section>
 
-    <section class="guide-card" id="guideCard" aria-label="현재 안내">
+      <section class="guide-card" id="guideCard" aria-label="현재 안내">
         <div class="guide-main">
-            <div class="transport-visual" id="transportVisual" aria-hidden="true">
-                <span id="transportText">-</span>
-            </div>
-            <div class="guide-copy">
-                <h2 id="guideTitle">안내를 불러오는 중입니다.</h2>
-                <p id="guideSubtitle"></p>
-                <div class="step-fallback hidden" id="stepFallback">
-                    <span>위치를 정확히 확인하기 어려워요.</span>
-                    <button type="button" id="nextStepFallbackButton">다음 안내로 이동</button>
-                </div>
-            </div>
-        </div>
-        <div class="guide-actions">
-            <button type="button" class="help-button" id="helpButton">도움이 필요해요</button>
-            <button type="button" class="replay-button" id="replayButton">안내 다시 듣기</button>
-        </div>
-    </section>
+          <div class="transport-visual" id="transportVisual" aria-hidden="true">
+            <span id="transportText">-</span>
+          </div>
+          <div class="guide-copy">
+            <h2 id="guideTitle">안내를 불러오는 중입니다.</h2>
+            <p id="guideSubtitle"></p>
+            <button type="button" id="boardingButton" class="boarding-button" hidden>탑승했어요</button>
 
-    <section class="empty-panel hidden" id="emptyPanel" aria-label="선택한 경로 없음">
+          </div>
+        </div>
+
+        <div class="guide-actions">
+          <button type="button" class="help-button" id="helpButton">
+            도움이 필요해요
+          </button>
+          <button type="button" class="replay-button" id="replayButton">
+            안내 다시 듣기
+          </button>
+        </div>
+      </section>
+
+      <section id="landmarkCard" class="landmark-card" hidden aria-label="보호자가 등록한 랜드마크">
+        <img id="landmarkPhoto" alt="" hidden>
+        <div><small>보호자가 알려준 장소</small><h2 id="landmarkTitle"></h2><p id="landmarkDescription"></p>
+          <button type="button" id="dismissLandmarkButton">확인했어요</button></div>
+      </section>
+      <section id="arrivalActions" class="arrival-actions hidden" aria-label="도착 후 할 일">
+        <p id="arrivalNotificationStatus" role="status"></p>
+        <button type="button" id="retryArrivalButton" hidden>도착 처리 다시 시도</button>
+        <a href="/user-home.html" class="finish-journey">홈으로 돌아가기</a>
+        <a href="/route-search.html">다른 목적지 찾기</a>
+      </section>
+      <section
+        id="liveTransitCard"
+        class="live-transit-card"
+        aria-label="탑승할 교통편 도착정보"
+        hidden
+      ></section>
+      <details class="journey-steps">
+        <summary>전체 이동 단계</summary>
+        <div id="journeySteps"></div>
+      </details>
+      <details class="navigation-options" open><summary>안내 도구 · 현재 위치</summary>
+            <div class="step-fallback hidden" id="stepFallback">
+              <span>위치를 정확히 확인하기 어려워요.</span>
+              <button type="button" id="nextStepFallbackButton">
+                다음 안내로 이동
+              </button>
+            </div>
+        <p id="nextGuide" class="next-guide"></p>
+      <div class="journey-toolbar">
+        <span id="journeyRemaining" role="status"></span
+        ><span id="journeyArrival" class="journey-arrival"></span
+        ><button type="button" id="overviewButton">전체 경로</button
+        ><button type="button" id="voiceToggle" aria-pressed="false">
+          음성 안내 켜기</button
+        ><button type="button" id="rerouteButton">경로 다시 찾기</button>
+      </div>
+      <p
+        id="gpsStatus"
+        class="gps-status"
+        role="status"
+        style="padding: 0 22px"
+      >
+        현재 위치를 확인하고 있습니다.
+      </p>
+      </details>
+      <section
+        class="empty-panel hidden"
+        id="emptyPanel"
+        aria-label="선택한 경로 없음"
+      >
         <h2>선택한 경로가 없습니다.</h2>
         <button type="button" id="compareButton">경로 다시 선택하기</button>
-    </section>
-</main>
+      </section>
+    </main>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/navigation.js"></script>
-</body>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/js/navigation-map.js"></script>
+    <script src="/js/transit-realtime.js"></script>
+    <script src="/js/navigation-geometry.js"></script>
+    <script src="/js/navigation-landmarks.js?v=20261118"></script>
+    <script src="/js/journey-state.js?v=20261117"></script>
+    <script src="/js/navigation.js?v=20261117"></script>
+  </body>
 </html>

@@ -67,6 +67,9 @@
 
     function render(json) {
         var isHelp = json.notifyType === "HELP_REQUEST";
+        $("#helpContactActions").prop("hidden", !isHelp);
+        var phone = String(json.linkedUserPhone || "").replace(/[^0-9+]/g, "");
+        $("#linkedUserCall").prop("hidden", !phone).attr("href", phone ? "tel:" + phone : null);
 
         // 도움요청이 아니면 경고 느낌을 뺀다
         $("#detailMark").toggleClass("normal", !isHelp);
