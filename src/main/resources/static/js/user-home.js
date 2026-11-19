@@ -85,7 +85,7 @@
       add.type = "button";
       add.className = "feature-card favorite-add";
       add.textContent = "＋ 자주 가는 곳 추가";
-      add.addEventListener("click", () => go("/route-search.html?view=favorites"));
+      add.addEventListener("click", () => go("/route-search.html?select=favorite"));
       list.append(add);
     }
   }

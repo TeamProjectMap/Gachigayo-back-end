@@ -38,8 +38,8 @@
     if (query.get("view") === "favorites") {
       document.getElementById("routeSearchPage").classList.add("is-favorites");
       document.getElementById("searchTitle").textContent = "자주 가는 곳";
-      const add = document.createElement("a"); add.className = "favorites-add-link"; add.href = "/route-search.html"; add.textContent = "+ 추가";
-      document.querySelector(".map-header").insertAdjacentElement("afterend",add);
+      const add = document.createElement("a"); add.className = "favorites-add-link"; add.href = "/route-search.html?select=favorite"; add.textContent = "+ 추가";
+      document.querySelector(".map-header").append(add);
     }
   }
   // Keep current-location / sorting controls in the Figma search panel as optional tools.

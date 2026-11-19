@@ -411,6 +411,12 @@
       return;
     }
     try {
+      // 자주 가는 곳 추가: 길안내 목적지와 섞이지 않게 따로 담고, 최근 검색에도 남기지 않는다
+      if (new URLSearchParams(location.search).get("select") === "favorite") {
+        sessionStorage.setItem("favoriteCandidate", JSON.stringify(place));
+        location.href = "/place-detail.html?mode=favorite";
+        return;
+      }
       if (new URLSearchParams(location.search).get("select") === "origin") {
         sessionStorage.setItem(
           "currentOrigin",
@@ -570,12 +576,20 @@
     }
     $("routeSearchPage").hidden = false;
     ensureCurrentLocation();
-    if (new URLSearchParams(location.search).get("select") === "origin")
+    const selectParam = new URLSearchParams(location.search).get("select");
+    if (selectParam === "origin")
       $("searchTitle").textContent = "출발지를 선택해주세요";
+    if (selectParam === "favorite") {
+      $("routeSearchPage").classList.add("is-favorite-add");
+      $("searchTitle").textContent = "자주 가는 곳 추가";
+      input.placeholder = "등록할 장소를 검색해주세요";
+    }
     document.getElementById("searchBackButton").href =
-      new URLSearchParams(location.search).get("select") === "origin"
+      selectParam === "origin"
         ? "/place-detail.html"
-        : "/user-home.html";
+        : selectParam === "favorite"
+          ? "/route-search.html?view=favorites"
+          : "/user-home.html";
     create($("searchMap"))
       .then((view) => {
         mapView = view;
@@ -590,6 +604,7 @@
         new URLSearchParams(location.search).get("view") === "favorites",
       previous = sessionStorage.getItem("navigationSearchQuery");
     if (favorite) saved("favorites");
+    else if (selectParam === "favorite") saved("recent");
     else if (previous) {
       input.value = previous;
       search();
