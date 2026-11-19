@@ -36,3 +36,20 @@
 .place-detail-page.is-saved-place .detail-top > .detail-header {
     display: none;
 }
+
+/* 현재 위치를 못 가져올 때 나오는 '출발지 직접 검색하기' */
+.place-detail-page .origin-fallback {
+    order: 5;
+    align-self: center;
+    margin: 8px 20px 48px;
+    padding: 8px 16px;
+    border: 0.7px solid #018B38;
+    border-radius: 20px;
+    color: #018B38;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.place-detail-page .origin-fallback.hidden {
+    display: none;
+}

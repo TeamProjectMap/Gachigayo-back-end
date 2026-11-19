@@ -59,6 +59,8 @@
       </section>
 
       <p id="detailMessage" class="detail-message" role="status"></p>
+      <!-- 현재 위치를 못 가져올 때만 보인다 -->
+      <a id="originSearchLink" class="origin-fallback hidden" href="/route-search.html?select=origin">출발지 직접 검색하기</a>
 
       <button
         type="button"
@@ -72,6 +74,6 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="/js/navigation-map.js"></script>
     <script src="/js/place-proximity.js?v=20261106-journey"></script>
-    <script src="/js/place-detail.js?v=20261106-journey"></script>
+    <script src="/js/place-detail.js?v=20261119-origin"></script>
   </body>
 </html>

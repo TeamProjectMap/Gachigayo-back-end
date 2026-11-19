@@ -425,6 +425,8 @@
         return;
       }
       sessionStorage.setItem("selectedDestination", JSON.stringify(place));
+      // 목적지를 새로 골랐으니 예전에 직접 고른 출발지는 지운다 (기본은 현재 위치)
+      if (NavigationUI.read("currentOrigin")?.manual) sessionStorage.removeItem("currentOrigin");
       // 자주 가는 곳 목록에서 고르면 최근 검색에 남기지 않고, 상세에서 뒤로가기는 이 목록으로
       if (new URLSearchParams(location.search).get("view") === "favorites") {
         location.href = "/place-detail.html?from=favorites";

@@ -71,10 +71,10 @@
 
   $(function () {
     checkSession();
-    // 출발지 고르기 버튼을 없앴으므로 출발은 항상 현재 위치. 예전에 직접 고른 출발지가 남아 있으면 지운다
+    // 위치를 못 가져와 출발지를 직접 골랐으면 알려준다 (목적지를 새로 고르면 검색·홈 화면에서 지운다)
     var origin = NavigationUI.read("currentOrigin");
-    if (origin && origin.manual) {
-      sessionStorage.removeItem("currentOrigin");
+    if (origin && origin.manual && origin.placeName) {
+      setMessage("출발: " + origin.placeName);
     }
     $("#useCurrentOrigin").on("click", async function () {
       invalidateEndpoints();
@@ -389,6 +389,8 @@
       function (error) {
         if (version !== endpointRevision) return;
         setMessage(getGeolocationErrorMessage(error));
+        // 위치 권한이 없거나 못 찾으면 출발지를 직접 고를 수 있게 한다
+        $("#originSearchLink").removeClass("hidden");
         setLoading(false);
       },
       {
@@ -505,7 +507,7 @@
     }
 
     if (error.code === error.PERMISSION_DENIED) {
-      return "현재 위치 권한이 필요합니다. 브라우저에서 위치 권한을 허용해주세요.";
+      return "현재 위치를 확인할 수 없어요. 위치 권한을 허용하거나 출발지를 직접 검색해주세요.";
     }
 
     if (error.code === error.POSITION_UNAVAILABLE) {

@@ -52,6 +52,8 @@
       button.addEventListener("click", () => {
         try {
           sessionStorage.setItem("selectedDestination", JSON.stringify({ ...place, id }));
+          // 목적지를 새로 골랐으니 예전에 직접 고른 출발지는 지운다 (기본은 현재 위치)
+          try { if (JSON.parse(sessionStorage.getItem("currentOrigin") || "null")?.manual) sessionStorage.removeItem("currentOrigin"); } catch {}
           go("/place-detail.html?from=home");
         } catch { message("장소를 저장하지 못했습니다. 브라우저 저장 공간을 확인해주세요."); }
       });
