@@ -36,7 +36,6 @@
   function renderFavorites() {
     const list = $("homeFavorites");
     list.replaceChildren();
-    $("allFavoritesLink").textContent = `전체 보기 (${favoritePlaces.length})`;
     favoritePlaces.slice(0, 4).forEach((place) => {
       const tile = document.createElement("div"), button = document.createElement("button"),
         title = document.createElement("strong"), address = document.createElement("span"),
@@ -71,7 +70,7 @@
           favoritePlaces = favoritePlaces.filter(item => favoriteId(item) !== id);
           message(`${place.placeName}을 즐겨찾기에서 삭제했습니다.`);
           renderFavorites();
-          $("allFavoritesLink").focus({ preventScroll: true });
+          $("homeFavorites").querySelector("button")?.focus({ preventScroll: true });
         } catch (error) { message(error.message); remove.disabled = false; }
         finally {
           deletingFavorites.delete(id);
@@ -118,24 +117,6 @@
   $("resumeJourneyButton").addEventListener("click", () =>
     go("/navigation.html"),
   );
-  document.querySelectorAll(".help-request-link").forEach((button) =>
-    button.addEventListener("click", () => {
-      sessionStorage.removeItem("helpRequestEntryFromNavigation");
-      sessionStorage.removeItem("currentHelpRequestState");
-      go("/help-request.html");
-    }),
-  );
-  document
-    .querySelector(".logout-button")
-    .addEventListener("click", async () => {
-      try {
-        await api("/user/logout", { method: "POST" });
-        state.clear(sessionStorage);
-        location.replace("/login.html");
-      } catch (error) {
-        message(error.message);
-      }
-    });
   (async () => {
     let session;
     try {
