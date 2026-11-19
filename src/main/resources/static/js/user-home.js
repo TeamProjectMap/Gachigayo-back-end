@@ -52,7 +52,7 @@
       button.addEventListener("click", () => {
         try {
           sessionStorage.setItem("selectedDestination", JSON.stringify({ ...place, id }));
-          go("/place-detail.html");
+          go("/place-detail.html?from=home");
         } catch { message("장소를 저장하지 못했습니다. 브라우저 저장 공간을 확인해주세요."); }
       });
       remove.type = "button";

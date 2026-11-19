@@ -4,6 +4,11 @@
   var favoriteMode = new URLSearchParams(location.search).get("mode") === "favorite";
   var destinationKey = favoriteMode ? "favoriteCandidate" : "selectedDestination";
   var searchPage = favoriteMode ? "/route-search.html?select=favorite" : "/route-search.html";
+  // 자주 가는 곳(목록·홈)에서 열면 검색창·즐겨찾기 없이 지도·이름·이곳으로 가기만
+  var fromParam = new URLSearchParams(location.search).get("from");
+  var savedPlaceMode = fromParam === "favorites" || fromParam === "home";
+  var backPage = fromParam === "favorites" ? "/route-search.html?view=favorites"
+      : fromParam === "home" ? "/user-home.html" : searchPage;
   var favorite = false;
   var placeMap = null;
   var endpointRevision = 0;
@@ -93,8 +98,13 @@
     $("#swapEndpoints").on("click", swapEndpoints);
 
     $("#backButton").on("click", function () {
-      window.location.href = searchPage;
+      window.location.href = backPage;
     });
+
+    if (savedPlaceMode) {
+      $("#placeDetailPage").addClass("is-saved-place");
+      $("#favoriteButton").remove();
+    }
 
     if (favoriteMode) {
       $("#favoriteButton").remove();

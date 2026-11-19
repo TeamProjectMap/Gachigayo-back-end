@@ -31,3 +31,8 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* 자주 가는 곳에서 연 장소: 검색창은 숨기고 뒤로가기만 */
+.place-detail-page.is-saved-place .detail-top > .detail-header {
+    display: none;
+}

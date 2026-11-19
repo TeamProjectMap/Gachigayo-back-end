@@ -425,6 +425,11 @@
         return;
       }
       sessionStorage.setItem("selectedDestination", JSON.stringify(place));
+      // 자주 가는 곳 목록에서 고르면 최근 검색에 남기지 않고, 상세에서 뒤로가기는 이 목록으로
+      if (new URLSearchParams(location.search).get("view") === "favorites") {
+        location.href = "/place-detail.html?from=favorites";
+        return;
+      }
       const data = { ...place, placeId: place.id };
       delete data.id;
       await api("/place/recent", {
