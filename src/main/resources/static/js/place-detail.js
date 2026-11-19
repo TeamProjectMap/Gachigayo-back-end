@@ -71,11 +71,8 @@
 
   $(function () {
     checkSession();
-    // 위치를 못 가져와 출발지를 직접 골랐으면 알려준다 (목적지를 새로 고르면 검색·홈 화면에서 지운다)
-    var origin = NavigationUI.read("currentOrigin");
-    if (origin && origin.manual && origin.placeName) {
-      setMessage("출발: " + origin.placeName);
-    }
+    // 직접 고른 출발지는 지도의 '출발' 핀으로 보이므로 따로 글씨로 알리지 않는다
+    // (목적지를 새로 고르면 검색·홈 화면에서 지운다)
     $("#useCurrentOrigin").on("click", async function () {
       invalidateEndpoints();
       var version = endpointRevision;
