@@ -70,7 +70,7 @@
         try {
           await api("/place/favorites/delete", { method: "POST", body: new URLSearchParams({ placeId: id }) });
           favoritePlaces = favoritePlaces.filter(item => favoriteId(item) !== id);
-          message(`${place.placeName}을 즐겨찾기에서 삭제했습니다.`);
+          message(""); // 삭제되면 칸이 바로 사라지므로 아래 안내 문구는 띄우지 않는다
           renderFavorites();
           $("homeFavorites").querySelector("button")?.focus({ preventScroll: true });
         } catch (error) { message(error.message); remove.disabled = false; }
