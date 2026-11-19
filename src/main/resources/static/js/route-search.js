@@ -263,7 +263,6 @@
   /** 검색하면 지도를 배경에 깔고 장소는 아래 시트로 보여준다 (카카오맵처럼) */
   function setSearching(on) {
     $("routeSearchPage").classList.toggle("is-searching", on);
-    $("clearSearchButton").hidden = !on && !input.value;
     if (!on) $("searchThisArea").hidden = true;
   }
   function selectMode(next) {
@@ -473,10 +472,12 @@
   // Korean input can keep the final full syllable in composition until blur.
   // Query complete syllables while typing; only isolated jamo are deferred.
   input.addEventListener("input", requestSuggestions);
-  // 글자가 있으면 지우기(×) 버튼을 보여준다
+  // 검색어를 다 지우면 지도를 닫고 장소 목록으로 돌아간다
   input.addEventListener("input", () => {
-    $("clearSearchButton").hidden =
-      !input.value && !$("routeSearchPage").classList.contains("is-searching");
+    if (!input.value && $("routeSearchPage").classList.contains("is-searching")) {
+      sessionStorage.removeItem("navigationSearchQuery");
+      saved("recent");
+    }
   });
   input.addEventListener("focus", () => {
     if (input.value.trim().length >= 2) requestSuggestions();
@@ -544,14 +545,6 @@
     if (location) mapView?.center(location);
     else message("현재 위치를 확인하지 못했습니다. 브라우저 위치 권한을 확인해주세요.");
     $("locateButton").disabled = false;
-  });
-  // 검색어를 지우면 지도를 닫고 장소 목록으로 돌아간다
-  $("clearSearchButton").addEventListener("click", () => {
-    input.value = "";
-    cancelSuggestions();
-    sessionStorage.removeItem("navigationSearchQuery");
-    saved("recent");
-    input.focus();
   });
   $("searchThisArea").addEventListener("click", () => {
     const p = mapView.map.getCenter();
