@@ -185,21 +185,9 @@
 
 /* ---------- 자주 가는 곳 목록 / 추가 ---------- */
 
-/* 목록 화면의 '+ 추가'는 제목 줄 오른쪽 끝 */
-#routeSearchPage.is-favorites .map-header {
-    align-items: center;
-}
-
-#routeSearchPage.is-favorites .map-header > div {
-    flex: 1;
-    min-width: 0;
-}
-
-#routeSearchPage.is-favorites .map-header > .favorites-add-link {
-    margin: 0 0 0 auto;
-    flex: 0 0 auto;
-    align-self: center;
-    white-space: nowrap;
+/* 목록 화면의 '+ 추가': 모양·위치는 그대로, 오른쪽으로만 */
+#routeSearchPage.is-favorites > .map-sidebar > .favorites-add-link {
+    align-self: flex-end;
 }
 
 /* 등록할 장소 고르기: 뒤로가기를 보이게 */
@@ -212,4 +200,10 @@
 /* 등록하는 중에는 이미 등록된 '자주 가는 곳' 칩은 필요 없다 */
 #routeSearchPage.is-favorite-add .saved-tabs [data-list="favorites"] {
     display: none;
+}
+
+/* 브라우저 기본 검색 지우기(남색 ×)는 숨기고 같이가요 × 버튼을 쓴다 */
+#routeSearchPage .search-input-row input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
 }
