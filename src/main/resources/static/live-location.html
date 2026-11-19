@@ -2,14 +2,11 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 실시간 위치</title>
     <link rel="stylesheet" href="/css/live-location.css">
-    <link rel="stylesheet" href="/css/menu-flow.css?v=20261117">
-    <link rel="stylesheet" href="/css/figma-skin.css?v=20261118-1">
-    <script defer src="/js/figma-skin.js?v=20261118-1"></script>
 </head>
-<body class="menu-app">
+<body>
 <main class="live-page hidden" id="livePage">
     <header class="live-header">
         <button type="button" class="back-button" id="backButton" aria-label="뒤로">
@@ -60,15 +57,10 @@
         </div>
     </section>
 
-    <section class="guardian-shortcuts" aria-label="연결된 사용자 연락">
-      <a id="linkedUserCall" hidden>사용자에게 전화</a>
-      <a href="/settings.html#linkSectionTitle">연결 관리</a>
-    </section>
     <p class="page-message" id="liveMessage"></p>
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/journey-state.js?v=20261117"></script>
 <script src="/js/live-location.js"></script>
 </body>
 </html>
