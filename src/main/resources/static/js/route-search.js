@@ -579,9 +579,13 @@
     if (selectParam === "origin")
       $("searchTitle").textContent = "출발지를 선택해주세요";
     if (selectParam === "favorite") {
+      // 장소 상세 위쪽처럼: 뒤로가기는 왼쪽, 검색창은 오른쪽 한 줄 (제목·칩 없음)
       $("routeSearchPage").classList.add("is-favorite-add");
-      $("searchTitle").textContent = "자주 가는 곳 추가";
       input.placeholder = "등록할 장소를 검색해주세요";
+      const top = document.createElement("div");
+      top.className = "favorite-add-top";
+      $("searchForm").before(top);
+      top.append($("searchBackButton"), $("searchForm"));
     }
     document.getElementById("searchBackButton").href =
       selectParam === "origin"

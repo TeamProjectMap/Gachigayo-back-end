@@ -170,20 +170,65 @@
     align-self: flex-end;
 }
 
-/* 등록할 장소 고르기: 뒤로가기를 보이게 */
-#routeSearchPage.is-favorite-add .map-header > a {
-    width: 30px;
-    flex-basis: 30px;
+/* 등록할 장소 고르기: 장소 상세 위쪽과 똑같이 (뒤로가기 왼쪽 + 짧은 검색창, 제목·칩 없음) */
+#routeSearchPage.is-favorite-add .map-header,
+#routeSearchPage.is-favorite-add .saved-tabs {
+    display: none;
+}
+
+#routeSearchPage.is-favorite-add .favorite-add-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin: calc(122px + env(safe-area-inset-top, 0px)) 20px 26px 12px;
+}
+
+@media (max-height: 740px) {
+    #routeSearchPage.is-favorite-add .favorite-add-top {
+        margin-top: calc(69px + env(safe-area-inset-top, 0px));
+    }
+}
+
+#routeSearchPage.is-favorite-add .favorite-add-top > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
     overflow: visible;
 }
 
-/* 등록하는 중에는 이미 등록된 '자주 가는 곳' 칩은 필요 없다 */
-#routeSearchPage.is-favorite-add .saved-tabs [data-list="favorites"] {
+#routeSearchPage.is-favorite-add .favorite-add-top > .map-search {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+}
+
+/* 장소 상세 검색박스처럼 돋보기 없이 글자만 */
+#routeSearchPage.is-favorite-add .favorite-add-top .search-input-row::before {
     display: none;
 }
+
+#routeSearchPage.is-favorite-add .favorite-add-top .search-input-row input {
+    font-size: 15px;
+}
+
 
 /* 브라우저 기본 검색 지우기(×)는 숨긴다. 검색어를 다 지우면 목록으로 돌아간다 */
 #routeSearchPage .search-input-row input[type="search"]::-webkit-search-cancel-button {
     -webkit-appearance: none;
     appearance: none;
+}
+
+/* 등록 화면에서 검색해 지도가 깔리면 위쪽 줄을 지도 위로 올린다 */
+#routeSearchPage.is-favorite-add.is-searching .favorite-add-top {
+    margin-top: calc(env(safe-area-inset-top, 0px) + 16px);
+}
+
+#routeSearchPage.is-favorite-add.is-searching .favorite-add-top > a {
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 }
