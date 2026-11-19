@@ -1,0 +1,31 @@
+/*
+ * 길안내 화면을 피그마(길안내 - 도보/지하철/버스 이용)처럼:
+ * 제목, 출발·도착 카드(진행 막대), 지도, 아래 안내 카드, '도움이 필요해요 / 안내 다시 듣기'만 보인다.
+ * 아래 요소들은 JS가 계속 쓰므로 지우지 않고 화면에서만 숨긴다.
+ */
+
+/* 전체 이동 단계, 안내 도구·현재 위치(전체 경로·음성 켜기·경로 다시 찾기·GPS 문구) */
+.navigation-page .journey-steps,
+.navigation-page .navigation-options {
+    display: none !important;
+}
+
+/* 교통편 실시간 도착정보 카드 */
+.navigation-page #liveTransitCard {
+    display: none !important;
+}
+
+/* 직접 다음 안내로 넘기기: 안내 카드 안에 작게 */
+.navigation-page #guideCard .step-fallback {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    color: #8D8D8D;
+    font-size: 11px;
+}
+
+.navigation-page #guideCard .step-fallback.hidden {
+    display: none;
+}
