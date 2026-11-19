@@ -306,7 +306,7 @@
       render();
       message(
         places.length
-          ? `${query} · ${result.totalCount ?? places.length}개 중 ${places.length}개 표시`
+          ? "" // 개수 안내('190개 중 15개 표시')는 띄우지 않는다
           : "검색 결과가 없습니다. 다른 장소 이름이나 주소로 검색해주세요.",
       );
       $("moreResults").hidden = result.end !== false || page >= 45;
@@ -461,7 +461,7 @@
       render();
       message(
         places.length
-          ? `${next === "recent" ? "최근 검색" : "자주 가는 곳"} ${places.length}개`
+          ? "" // 개수 안내('최근 검색 5개')는 띄우지 않는다
           : "아직 저장된 장소가 없습니다.",
       );
     } catch (error) {
