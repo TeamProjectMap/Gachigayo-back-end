@@ -12,10 +12,11 @@
     <link rel="stylesheet" href="/css/app-frame.css" />
       <link rel="stylesheet" href="/css/figma-skin.css?v=20261118-1">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
+    <link rel="stylesheet" href="/css/place-detail-top.css">
 </head>
   <body>
     <main class="place-detail-page hidden" id="placeDetailPage">
-      <header class="detail-header">
+      <header class="detail-top">
         <button
           type="button"
           class="back-button"
@@ -24,9 +25,11 @@
         >
           &lt;
         </button>
-        <div class="selected-summary">
-          <span>선택한 목적지</span>
-          <strong id="headerPlaceName">목적지</strong>
+        <div class="detail-header">
+          <div class="selected-summary">
+            <span>선택한 목적지</span>
+            <strong id="headerPlaceName">목적지</strong>
+          </div>
         </div>
       </header>
 
@@ -55,15 +58,6 @@
         <span id="placePhone" class="place-meta hidden"></span>
       </section>
 
-      <div class="origin-picker">
-        <span>출발</span><strong id="originSelectionName">현재 위치</strong
-        ><a href="/route-search.html?select=origin">출발지 검색</a
-        ><button type="button" id="useCurrentOrigin">내 위치 사용</button>
-      </div>
-      <div class="endpoint-actions">
-        <button type="button" id="swapEndpoints">⇅ 출발·도착 바꾸기</button
-        ><a href="/route-search.html">도착지 변경</a>
-      </div>
       <p id="detailMessage" class="detail-message" role="status"></p>
 
       <button

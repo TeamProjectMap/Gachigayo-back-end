@@ -1,0 +1,33 @@
+/* 장소 상세 위쪽: 뒤로가기는 검색박스 밖 왼쪽에, 검색박스는 그만큼 짧게 */
+.place-detail-page .detail-top {
+    order: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin: 0 20px 26px 12px;
+}
+
+.place-detail-page .detail-top > .back-button {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.place-detail-page .detail-top > .detail-header {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.place-detail-page .detail-top .selected-summary strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

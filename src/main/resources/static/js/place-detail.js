@@ -62,9 +62,10 @@
 
   $(function () {
     checkSession();
+    // 출발지 고르기 버튼을 없앴으므로 출발은 항상 현재 위치. 예전에 직접 고른 출발지가 남아 있으면 지운다
     var origin = NavigationUI.read("currentOrigin");
     if (origin && origin.manual) {
-      $("#originSelectionName").text(origin.placeName);
+      sessionStorage.removeItem("currentOrigin");
     }
     $("#useCurrentOrigin").on("click", async function () {
       invalidateEndpoints();
