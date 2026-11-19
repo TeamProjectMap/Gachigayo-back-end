@@ -1,3 +1,6 @@
+/* 이용자 화면과 같은 글꼴 (fonts/PretendardVariable.woff2) */
+@font-face { font-family: 'Pretendard'; src: url('/fonts/PretendardVariable.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+
 :root {
     --green: #018B38;
     --text: #363636;
@@ -53,7 +56,7 @@ button {
     flex: 1;
     margin: 0;
     font-size: 22px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .back-button,
@@ -109,7 +112,7 @@ button {
     background: var(--green);
     color: #FFFFFF;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 /* 지금 있는 자리는 눈에 띄게 빨간 점으로 */
@@ -153,7 +156,7 @@ button {
     flex-shrink: 0;
     color: var(--green);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .place-tag.end {

@@ -1,3 +1,6 @@
+/* 이용자 화면과 같은 글꼴 (fonts/PretendardVariable.woff2) */
+@font-face { font-family: 'Pretendard'; src: url('/fonts/PretendardVariable.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+
 :root {
     --green: #018B38;
     --text: #363636;
@@ -54,7 +57,7 @@ ul {
 .page-title {
     margin: 0 0 20px;
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .route-header {
@@ -67,7 +70,7 @@ ul {
 .route-header h1 {
     margin: 0;
     font-size: 20px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .back-button {
@@ -110,7 +113,7 @@ ul {
     display: block;
     color: var(--green);
     font-size: 17px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .route-sub {
@@ -140,7 +143,7 @@ ul {
     display: block;
     margin: 18px 0 8px;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .text-input {
@@ -197,7 +200,7 @@ ul {
 .guide-box strong {
     display: block;
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .guide-box p {
@@ -258,7 +261,7 @@ ul {
     background: var(--green);
     color: #FFFFFF;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .step-card {
@@ -277,7 +280,7 @@ ul {
 .step-card strong {
     display: block;
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .step-card p {
@@ -295,7 +298,7 @@ ul {
     background: var(--green);
     color: #FFFFFF;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 /* ---------------------------- 경로 촬영 화면 ---------------------------- */
@@ -352,7 +355,7 @@ ul {
     background: var(--green);
     color: #FFFFFF;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .photo-head {
@@ -363,14 +366,14 @@ ul {
     display: block;
     margin-top: 6px;
     font-size: 19px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .photo-count {
     margin: 8px 0 0;
     color: var(--green);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .photo-cards {
@@ -434,13 +437,13 @@ ul {
     background: var(--green);
     color: #FFFFFF;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .photo-text strong {
     display: block;
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .photo-text p {
@@ -492,7 +495,7 @@ ul {
     background: var(--bg);
     color: var(--muted);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .photo-action.danger {
@@ -631,7 +634,7 @@ ul {
 .place-item strong {
     display: block;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .place-item span {
@@ -652,7 +655,7 @@ ul {
     background: var(--green);
     color: #FFFFFF;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .main-button:disabled {
@@ -704,7 +707,7 @@ ul {
     background: transparent;
     color: var(--line);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .bottom-nav button svg {
