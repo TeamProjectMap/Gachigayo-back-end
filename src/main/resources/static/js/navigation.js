@@ -40,6 +40,8 @@
   const path = (step) => (step?.pathPoints || []).filter(valid);
   const label = (step) =>
     mode(step) === "BUS" ? "버스" : mode(step) === "SUBWAY" ? "지하철" : "도보";
+  // AI가 쉬운 말로 바꾼 안내가 있으면 그걸, 없으면 카카오 원래 문구를 보여주고 읽어준다
+  const guideText = (step) => step?.easyGuidance || step?.guidance || "";
   const routeKey = () => JourneyState.key(selection);
   const speechText = () =>
     [$("guideTitle").textContent, $("guideSubtitle").textContent]
@@ -87,7 +89,7 @@
       "guideTitle",
       complete
         ? "목적지에 도착했어요"
-        : step.guidance || `${label(step)}로 이동하세요`,
+        : guideText(step) || `${label(step)}로 이동하세요`,
     );
     text(
       "guideSubtitle",
@@ -110,8 +112,8 @@
       text(
         "guideSubtitle",
         boarded.has(index)
-          ? step.guidance || stops.join(" → ")
-          : step.guidance || stops.join(" → "),
+          ? guideText(step) || stops.join(" → ")
+          : guideText(step) || stops.join(" → "),
       );
     }
     $("arrivalActions").classList.toggle("hidden", !complete);
@@ -119,7 +121,7 @@
     text(
       "nextGuide",
       next
-        ? `다음 · ${next.guidance || label(next) + "로 이동하세요"}`
+        ? `다음 · ${guideText(next) || label(next) + "로 이동하세요"}`
         : complete
           ? ""
           : "마지막 구간입니다. 목적지를 확인해주세요.",
@@ -138,7 +140,7 @@
       row.className =
         "journey-step" + (i === index ? " current" : i < index ? " done" : "");
       if (i === index) row.setAttribute("aria-current", "step");
-      row.textContent = `${i + 1}. ${s.guidance || label(s) + "로 이동하세요"}`;
+      row.textContent = `${i + 1}. ${guideText(s) || label(s) + "로 이동하세요"}`;
       const meta = document.createElement("small");
       meta.textContent = `${label(s)} · 약 ${Math.ceil(Number(s.time || 0) / 60)}분 · ${Number(s.distance || 0)}m`;
       row.append(meta);

@@ -20,7 +20,7 @@
     if (ready) {
       const progress = state.progress(selection, saved);
       $("activeJourneyTitle").textContent = `${selection.destination?.placeName || "목적지"} 가는 길`;
-      $("activeJourneyDescription").textContent = selection.route.steps[progress.stepIndex]?.guidance || "누르면 길안내로 돌아가요";
+      $("activeJourneyDescription").textContent = (selection.route.steps[progress.stepIndex]?.easyGuidance || selection.route.steps[progress.stepIndex]?.guidance) || "누르면 길안내로 돌아가요";
     }
   }
   $("dismissJourneyButton").addEventListener("click", () => {

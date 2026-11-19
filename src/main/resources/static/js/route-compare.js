@@ -1069,6 +1069,8 @@
         return {
           type: step.type || routeType || "WALKING",
           guidance: step.guidance || "",
+          // AI가 쉬운 말로 바꾼 안내 (없으면 길안내 화면이 guidance를 쓴다)
+          easyGuidance: step.easyGuidance || "",
           distance: safeNumber(step.distance),
           time: safeNumber(step.time),
           longitude: step.longitude != null ? step.longitude : null,
