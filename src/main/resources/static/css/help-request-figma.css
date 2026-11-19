@@ -1,6 +1,7 @@
 /*
- * 도움요청 화면을 피그마(도움요청 634:555)와 같게: 위치·크기·글씨 크기.
- * figma-skin.css 다음에 불러와 덮어쓴다. 피그마 프레임 너비 402px 기준.
+ * 도움요청 화면을 피그마(도움요청 634:555, 402×874)와 같게.
+ * 숫자는 피그마 요소 좌표에서 옮긴 것 (주석의 y는 피그마 위쪽부터 거리).
+ * figma-skin.css 다음에 불러와 덮어쓴다.
  */
 
 /* 피그마에 없는 것: 오른쪽 위 '카드 편집', 버튼 아래 작은 안내 문구 */
@@ -9,108 +10,136 @@
     display: none !important;
 }
 
-/* 뒤로가기 ~ 제목 */
+/* 화면 좌우 18px, 뒤로가기 y=69 */
 body > main.help-page {
-    padding: calc(70px + env(safe-area-inset-top, 0px)) 19px 40px;
+    padding: calc(69px + env(safe-area-inset-top, 0px)) 18px 40px;
 }
 
 .help-page .help-header {
-    padding: 0 9px;
+    height: 30px;
+    padding: 0 0 0 26px;
 }
 
+/* 경고 아이콘 y=143 (63×63) */
 .help-page .help-hero {
     margin-top: 44px;
 }
 
+.help-page .alert-icon {
+    width: 63px;
+    height: 63px;
+    background-size: 63px 63px;
+}
+
+/* 제목 y=217, 25px */
 .help-page .help-hero h1 {
-    margin: 18px 0 22px;
+    margin: 11px 0 0;
     font-size: 25px;
     font-weight: 600;
     line-height: 30px;
 }
 
-/* 빨간 카드: 문구 15px, 목적지 13px */
+/* 빨간 카드 y=266, 363×171 */
 .help-page .request-card {
-    padding: 22px 16px 20px;
+    box-sizing: border-box;
+    min-height: 171px;
+    margin-top: 19px;
+    padding: 29px 14px 16px;
     border: 1px solid #FF363B;
     border-radius: 20px;
     background: #FFEDED;
 }
 
+/* 카드 문구: 3줄 높이 75 → 18px / 줄 25px */
 .help-page #helpMessage {
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 21px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 25px;
     color: #363636;
 }
 
+/* 목적지 y=395 */
 .help-page .destination-box {
-    padding: 18px 0 0;
+    padding: 25px 0 0;
 }
 
 .help-page .destination-box strong {
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
+    line-height: 20px;
 }
 
+/* 안내 문구 y=446 */
 .help-page .show-guide {
-    margin-top: 12px;
+    margin: 9px 0 0;
     font-size: 11px;
     font-weight: 400;
+    line-height: 20px;
     color: #8D8D8D;
 }
 
-/* 초록 상태 상자: 제목 13px, 설명 10px */
+/* 초록 상태 상자 y=538, 363×62 */
 .help-page .status-card {
-    min-height: 58px;
-    margin: 100px 0 15px;
-    padding: 12px 17px;
+    box-sizing: border-box;
+    min-height: 62px;
+    margin: 72px 1px 0;
+    padding: 10px 21px;
     border-radius: 15px;
     background: #EEF5EB;
 }
 
 .help-page .status-card strong {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 21px;
 }
 
 .help-page .status-card span {
-    margin-top: 3px;
-    font-size: 10px;
+    margin-top: 0;
+    font-size: 11px;
+    line-height: 21px;
 }
 
-/* 버튼: 글씨 15px */
-.help-page .primary-call-button,
-.help-page .secondary-call-button {
-    width: calc(100% - 18px);
-    margin: 0 9px;
-    font-size: 15px;
-    font-weight: 500;
-}
-
+/* 보호자에게 전화 y=612, 345×56 */
 .help-page .primary-call-button {
+    display: block;
+    width: 345px;
+    max-width: calc(100% - 20px);
     height: 56px;
     min-height: 56px;
+    margin: 12px auto 0;
+    border: 0;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.help-page .secondary-call-button {
-    height: 52px;
-    min-height: 52px;
-}
-
+/* 구분선 y=680 */
 .help-page .divider {
-    margin: 12px 7px 18px;
+    margin: 12px 8px 0;
 }
 
+/* '보호자와 연락이 안 닿나요?' y=695 */
 .help-page .safety-section > p:first-child {
-    margin-bottom: 9px;
+    margin: 15px 0 0;
     font-size: 11px;
+    line-height: 20px;
     color: #8D8D8D;
 }
 
-/* 피그마의 '안전센터 연결'은 테두리 없는 회색 버튼 */
+/* 안전센터 연결 y=715, 345×56, 테두리 없는 회색 */
 .help-page .secondary-call-button,
 .help-page .secondary-call-button:disabled {
+    display: block;
+    width: 345px;
+    max-width: calc(100% - 16px);
+    height: 56px;
+    min-height: 56px;
+    margin: 0 auto;
     border: 0 !important;
     box-shadow: none !important;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
 }
