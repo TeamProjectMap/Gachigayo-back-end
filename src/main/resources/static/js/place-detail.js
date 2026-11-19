@@ -1,5 +1,14 @@
 (function ($) {
   var selectedDestination = null;
+  // 자주 가는 곳 추가에서 들어오면 길안내 대신 '등록하기'를 한다
+  var favoriteMode = new URLSearchParams(location.search).get("mode") === "favorite";
+  var destinationKey = favoriteMode ? "favoriteCandidate" : "selectedDestination";
+  var searchPage = favoriteMode ? "/route-search.html?select=favorite" : "/route-search.html";
+  // 자주 가는 곳(목록·홈)에서 열면 검색창·즐겨찾기 없이 지도·이름·이곳으로 가기만
+  var fromParam = new URLSearchParams(location.search).get("from");
+  var savedPlaceMode = fromParam === "favorites" || fromParam === "home";
+  var backPage = fromParam === "favorites" ? "/route-search.html?view=favorites"
+      : fromParam === "home" ? "/user-home.html" : searchPage;
   var favorite = false;
   var placeMap = null;
   var endpointRevision = 0;
@@ -62,10 +71,8 @@
 
   $(function () {
     checkSession();
-    var origin = NavigationUI.read("currentOrigin");
-    if (origin && origin.manual) {
-      $("#originSelectionName").text(origin.placeName);
-    }
+    // 직접 고른 출발지는 지도의 '출발' 핀으로 보이므로 따로 글씨로 알리지 않는다
+    // (목적지를 새로 고르면 검색·홈 화면에서 지운다)
     $("#useCurrentOrigin").on("click", async function () {
       invalidateEndpoints();
       var version = endpointRevision;
@@ -88,14 +95,28 @@
     $("#swapEndpoints").on("click", swapEndpoints);
 
     $("#backButton").on("click", function () {
-      window.location.href = "/route-search.html";
+      window.location.href = backPage;
     });
+
+    if (savedPlaceMode) {
+      $("#placeDetailPage").addClass("is-saved-place");
+      $("#favoriteButton").remove();
+    }
+
+    if (favoriteMode) {
+      $("#favoriteButton").remove();
+      $("#confirmDestinationButton").text("등록하기");
+    }
 
     $("#favoriteButton").on("click", function () {
       toggleFavorite();
     });
 
     $("#confirmDestinationButton").on("click", function () {
+      if (favoriteMode) {
+        registerFavorite();
+        return;
+      }
       requestCurrentOrigin();
     });
   });
@@ -125,23 +146,23 @@
   }
 
   function loadSelectedDestination() {
-    var rawDestination = sessionStorage.getItem("selectedDestination");
+    var rawDestination = sessionStorage.getItem(destinationKey);
 
     if (!rawDestination) {
-      window.location.replace("/route-search.html");
+      window.location.replace(searchPage);
       return;
     }
 
     try {
       selectedDestination = JSON.parse(rawDestination);
     } catch (e) {
-      sessionStorage.removeItem("selectedDestination");
-      window.location.replace("/route-search.html");
+      sessionStorage.removeItem(destinationKey);
+      window.location.replace(searchPage);
       return;
     }
 
     if (!selectedDestination || !selectedDestination.placeName) {
-      window.location.replace("/route-search.html");
+      window.location.replace(searchPage);
       return;
     }
 
@@ -239,6 +260,44 @@
     });
   }
 
+  /** 자주 가는 곳 등록하기: 저장하고 자주 가는 곳 목록으로 돌아간다 */
+  function registerFavorite() {
+    if (!selectedDestination || !selectedDestination.id) {
+      setMessage("선택한 장소 정보를 확인할 수 없습니다.");
+      return;
+    }
+
+    if (favorite) {
+      setMessage("이미 자주 가는 곳에 있어요.");
+      return;
+    }
+
+    var $button = $("#confirmDestinationButton").prop("disabled", true);
+    $.ajax({
+      url: "/place/favorites",
+      type: "POST",
+      dataType: "JSON",
+      data: toPlaceRequest(selectedDestination),
+      success: function (json) {
+        if (!json.success) {
+          $button.prop("disabled", false);
+          setMessage(json.message || "자주 가는 곳을 등록하지 못했습니다.");
+          return;
+        }
+
+        sessionStorage.removeItem(destinationKey);
+        setMessage("자주 가는 곳에 등록했어요.");
+        window.setTimeout(function () {
+          window.location.href = "/route-search.html?view=favorites";
+        }, 500);
+      },
+      error: function () {
+        $button.prop("disabled", false);
+        setMessage("자주 가는 곳 등록 중 오류가 발생했습니다.");
+      },
+    });
+  }
+
   function deleteFavorite() {
     $.ajax({
       url: "/place/favorites/delete",
@@ -327,6 +386,8 @@
       function (error) {
         if (version !== endpointRevision) return;
         setMessage(getGeolocationErrorMessage(error));
+        // 위치 권한이 없거나 못 찾으면 출발지를 직접 고를 수 있게 한다
+        $("#originSearchLink").removeClass("hidden");
         setLoading(false);
       },
       {
@@ -443,7 +504,7 @@
     }
 
     if (error.code === error.PERMISSION_DENIED) {
-      return "현재 위치 권한이 필요합니다. 브라우저에서 위치 권한을 허용해주세요.";
+      return "현재 위치를 확인할 수 없어요. 위치 권한을 허용하거나 출발지를 직접 검색해주세요.";
     }
 
     if (error.code === error.POSITION_UNAVAILABLE) {

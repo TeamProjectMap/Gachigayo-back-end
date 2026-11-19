@@ -12,9 +12,16 @@
       <link rel="stylesheet" href="/css/bottom-nav.css?v=20261118-search">
       <link rel="stylesheet" href="/css/figma-skin.css?v=20261118-1">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
+    <link rel="stylesheet" href="/css/route-search-map.css">
 </head>
   <body>
     <main class="map-layout" id="routeSearchPage" hidden>
+      <!-- 검색하면 화면 전체에 깔리는 지도 (카카오맵처럼) -->
+      <div class="search-bg-map">
+        <section id="searchMap" class="experience-map" aria-label="검색 결과 지도">
+          지도를 불러오는 중입니다.
+        </section>
+      </div>
       <aside class="map-sidebar">
         <header class="map-header">
           <a id="searchBackButton" href="/user-home.html" aria-label="뒤로 가기"
@@ -42,7 +49,7 @@
               aria-expanded="false"
               aria-describedby="autocompleteStatus"
               enterkeyhint="search"
-            /><button type="submit" aria-label="검색">검색</button>
+            />
           </div>
         </form>
         <p
@@ -60,34 +67,11 @@
           hidden
         ></ul>
 
-        <div class="search-tools">
-          <button type="button" id="locateButton">◎ 내 위치</button
-          ><label
-            >정렬
-            <select id="searchSort">
-              <option value="accuracy">정확도순</option>
-              <option value="distance">거리순</option>
-            </select></label
-          >
-        </div>
         <nav class="saved-tabs" aria-label="장소 목록">
-          <button type="button" data-list="results" aria-pressed="true">
-            검색 결과</button
-          ><button type="button" data-list="recent" aria-pressed="false">
-            최근 검색</button
-          ><button type="button" data-list="favorites" aria-pressed="false">
-            즐겨찾기
-          </button>
+          <button type="button" data-list="favorites" aria-pressed="false">자주 가는 곳</button
+          ><button type="button" data-list="recent" aria-pressed="false">최근 검색</button>
         </nav>
-        <details class="search-map-panel" id="searchMapPanel"><summary>지도 보기</summary>
-      <section
-        id="searchMap"
-        class="experience-map"
-        aria-label="검색 결과 지도"
-      >
-        지도를 불러오는 중입니다.
-      </section>
-        </details>
+        <div class="result-sheet" id="resultSheet">
         <p id="searchMessage" class="map-status" role="status">
           장소 이름이나 주소를 입력해주세요.
         </p>
@@ -99,6 +83,7 @@
         <button type="button" id="moreResults" class="secondary-action" hidden>
           결과 더 보기
         </button>
+        </div>
         <div class="search-nav-space" aria-hidden="true"></div>
         <nav class="bottom-nav" aria-label="하단 메뉴"><a href="/user-home.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M13.45 2.53295C13.0442 2.19098 12.5307 2.00342 12 2.00342C11.4693 2.00342 10.9558 2.19098 10.55 2.53295L3.8 8.22795C3.54946 8.43911 3.34806 8.70243 3.20988 8.99952C3.0717 9.29661 3.00007 9.6203 3 9.94795V19.253C3 20.219 3.784 21.003 4.75 21.003H7.75C8.21413 21.003 8.65925 20.8186 8.98744 20.4904C9.31563 20.1622 9.5 19.7171 9.5 19.253V15.25C9.5 14.57 10.042 14.018 10.717 14H13.283C13.6088 14.0086 13.9183 14.144 14.1456 14.3775C14.373 14.611 14.5001 14.9241 14.5 15.25V19.253C14.5 20.219 15.284 21.003 16.25 21.003H19.25C19.7141 21.003 20.1592 20.8186 20.4874 20.4904C20.8156 20.1622 21 19.7171 21 19.253V9.94695C20.9999 9.6193 20.9283 9.29561 20.7901 8.99852C20.6519 8.70143 20.4505 8.43811 20.2 8.22695L13.45 2.53295Z"/>
@@ -117,9 +102,12 @@
       >
         이 지도 중심으로 검색
       </button>
+      <button type="button" id="locateButton" class="locate-button" aria-label="내 위치로 이동">
+        ◎
+      </button>
     </main>
     <script src="/js/navigation-map.js?v=20261106-relevance"></script>
     <script src="/js/place-proximity.js?v=20261106-relevance"></script>
-    <script src="/js/route-search.js?v=20261106-relevance"></script>
+    <script src="/js/route-search.js?v=20261119-nocount"></script>
   </body>
 </html>

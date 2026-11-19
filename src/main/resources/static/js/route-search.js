@@ -39,8 +39,6 @@
         currentLocation = point;
         center = point;
         locationState = "ready";
-        $("searchSort").value = "accuracy";
-        $("locateButton").textContent = "◎ 내 위치 기준";
         suggestionCache.clear();
         mapView?.center(point);
         return point;
@@ -49,7 +47,6 @@
         if (center === currentLocation) center = undefined;
         currentLocation = undefined;
         locationState = "unavailable";
-        $("locateButton").textContent = "◎ 내 위치";
         return null;
       })
       .finally(() => {
@@ -255,13 +252,18 @@
     const p = new URLSearchParams({
       query: keyword,
       page: nextPage,
-      sort: $("searchSort").value,
+      sort: "accuracy",
     });
     if (coordinate(center)) {
       p.set("longitude", center.longitude);
       p.set("latitude", center.latitude);
     }
     return p;
+  }
+  /** 검색하면 지도를 배경에 깔고 장소는 아래 시트로 보여준다 (카카오맵처럼) */
+  function setSearching(on) {
+    $("routeSearchPage").classList.toggle("is-searching", on);
+    if (!on) $("searchThisArea").hidden = true;
   }
   function selectMode(next) {
     mode = next;
@@ -278,11 +280,8 @@
       message("장소 이름이나 주소를 입력해주세요.");
       return;
     }
-    if ($("searchSort").value === "distance" && !center) {
-      message("거리순 검색을 위해 내 위치를 먼저 선택해주세요.");
-      return;
-    }
     selectMode("results");
+    setSearching(true);
     searchController?.abort();
     searchController = new AbortController();
     const currentRevision = ++revision,
@@ -307,7 +306,7 @@
       render();
       message(
         places.length
-          ? `${query} · ${result.totalCount ?? places.length}개 중 ${places.length}개 표시`
+          ? "" // 개수 안내('190개 중 15개 표시')는 띄우지 않는다
           : "검색 결과가 없습니다. 다른 장소 이름이나 주소로 검색해주세요.",
       );
       $("moreResults").hidden = result.end !== false || page >= 45;
@@ -396,6 +395,12 @@
       }),
     );
     mapView.fit(places);
+    // 아래 시트가 지도 아래쪽을 가리므로, 핀들이 시트 위 보이는 곳에 오게 지도를 내린다
+    if ($("routeSearchPage").classList.contains("is-searching") && places.length) {
+      const sheet = $("resultSheet").getBoundingClientRect().height;
+      mapView.map.setLevel(mapView.map.getLevel() + (places.length > 1 ? 1 : 0));
+      mapView.map.panBy(0, Math.round(sheet / 2));
+    }
   }
   async function openPlace(place) {
     if (!coordinate(place)) {
@@ -405,6 +410,12 @@
       return;
     }
     try {
+      // 자주 가는 곳 추가: 길안내 목적지와 섞이지 않게 따로 담고, 최근 검색에도 남기지 않는다
+      if (new URLSearchParams(location.search).get("select") === "favorite") {
+        sessionStorage.setItem("favoriteCandidate", JSON.stringify(place));
+        location.href = "/place-detail.html?mode=favorite";
+        return;
+      }
       if (new URLSearchParams(location.search).get("select") === "origin") {
         sessionStorage.setItem(
           "currentOrigin",
@@ -414,6 +425,13 @@
         return;
       }
       sessionStorage.setItem("selectedDestination", JSON.stringify(place));
+      // 목적지를 새로 골랐으니 예전에 직접 고른 출발지는 지운다 (기본은 현재 위치)
+      if (NavigationUI.read("currentOrigin")?.manual) sessionStorage.removeItem("currentOrigin");
+      // 자주 가는 곳 목록에서 고르면 최근 검색에 남기지 않고, 상세에서 뒤로가기는 이 목록으로
+      if (new URLSearchParams(location.search).get("view") === "favorites") {
+        location.href = "/place-detail.html?from=favorites";
+        return;
+      }
       const data = { ...place, placeId: place.id };
       delete data.id;
       await api("/place/recent", {
@@ -433,6 +451,7 @@
     searchController?.abort();
     const currentRevision = ++revision;
     selectMode(next);
+    setSearching(false);
     message("목록을 불러오고 있습니다…");
     $("moreResults").hidden = true;
     try {
@@ -442,7 +461,7 @@
       render();
       message(
         places.length
-          ? `${next === "recent" ? "최근 검색" : "즐겨찾기"} ${places.length}개`
+          ? "" // 개수 안내('최근 검색 5개')는 띄우지 않는다
           : "아직 저장된 장소가 없습니다.",
       );
     } catch (error) {
@@ -460,6 +479,13 @@
   // Korean input can keep the final full syllable in composition until blur.
   // Query complete syllables while typing; only isolated jamo are deferred.
   input.addEventListener("input", requestSuggestions);
+  // 검색어를 다 지우면 지도를 닫고 장소 목록으로 돌아간다
+  input.addEventListener("input", () => {
+    if (!input.value && $("routeSearchPage").classList.contains("is-searching")) {
+      sessionStorage.removeItem("navigationSearchQuery");
+      saved("recent");
+    }
+  });
   input.addEventListener("focus", () => {
     if (input.value.trim().length >= 2) requestSuggestions();
   });
@@ -519,19 +545,13 @@
     if (!composing) search();
   });
   $("moreResults").addEventListener("click", () => search(true));
-  $("searchSort").addEventListener("change", () => {
-    if (input.value.trim()) search();
-  });
+  // 지도 위 내 위치 버튼: 지도만 내 위치로 옮긴다
   $("locateButton").addEventListener("click", async () => {
     $("locateButton").disabled = true;
     const location = await ensureCurrentLocation(true);
-    message(
-      location
-        ? "검색어 일치도와 현재 위치를 함께 고려해 검색합니다."
-        : "현재 위치를 확인하지 못했습니다. 브라우저 위치 권한을 확인해주세요.",
-    );
+    if (location) mapView?.center(location);
+    else message("현재 위치를 확인하지 못했습니다. 브라우저 위치 권한을 확인해주세요.");
     $("locateButton").disabled = false;
-    if (location && input.value.trim()) search();
   });
   $("searchThisArea").addEventListener("click", () => {
     const p = mapView.map.getCenter();
@@ -542,7 +562,7 @@
     .querySelectorAll("[data-list]")
     .forEach((b) =>
       b.addEventListener("click", () =>
-        b.dataset.list === "results" ? search() : saved(b.dataset.list),
+        saved(b.dataset.list),
       ),
     );
   window.addEventListener("pagehide", () => {
@@ -562,12 +582,24 @@
     }
     $("routeSearchPage").hidden = false;
     ensureCurrentLocation();
-    if (new URLSearchParams(location.search).get("select") === "origin")
+    const selectParam = new URLSearchParams(location.search).get("select");
+    if (selectParam === "origin")
       $("searchTitle").textContent = "출발지를 선택해주세요";
+    if (selectParam === "favorite") {
+      // 장소 상세 위쪽처럼: 뒤로가기는 왼쪽, 검색창은 오른쪽 한 줄 (제목·칩 없음)
+      $("routeSearchPage").classList.add("is-favorite-add");
+      input.placeholder = "등록할 장소를 검색해주세요";
+      const top = document.createElement("div");
+      top.className = "favorite-add-top";
+      $("searchForm").before(top);
+      top.append($("searchBackButton"), $("searchForm"));
+    }
     document.getElementById("searchBackButton").href =
-      new URLSearchParams(location.search).get("select") === "origin"
+      selectParam === "origin"
         ? "/place-detail.html"
-        : "/user-home.html";
+        : selectParam === "favorite"
+          ? "/route-search.html?view=favorites"
+          : "/user-home.html";
     create($("searchMap"))
       .then((view) => {
         mapView = view;
@@ -582,6 +614,7 @@
         new URLSearchParams(location.search).get("view") === "favorites",
       previous = sessionStorage.getItem("navigationSearchQuery");
     if (favorite) saved("favorites");
+    else if (selectParam === "favorite") saved("recent");
     else if (previous) {
       input.value = previous;
       search();

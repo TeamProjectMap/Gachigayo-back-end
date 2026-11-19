@@ -2,7 +2,7 @@
   --ink: #182b3b;
   --muted: #6c7d89;
   --line: #e4eaf0;
-  --accent: #1769ed;
+  --accent: #018b38;
   --green: #169c61;
   --panel: #fff;
   font-family:
@@ -43,7 +43,7 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 3px solid #72b4ff;
+  outline: 3px solid #7cc49a;
   outline-offset: 3px;
 }
 [hidden],
@@ -156,7 +156,7 @@ select:focus-visible {
 }
 .suggestions li:hover,
 .suggestions [aria-selected="true"] {
-  background: #edf5ff;
+  background: #eef5eb;
   border-radius: 8px;
 }
 .search-tools {
@@ -210,7 +210,7 @@ select:focus-visible {
   align-items: center;
 }
 .map-place-row.highlighted {
-  background: #eaf3ff;
+  background: #eef5eb;
 }
 .place-select {
   border: 0;
@@ -225,7 +225,7 @@ select:focus-visible {
   color: var(--ink);
 }
 .place-select:hover {
-  background: #f5f9ff;
+  background: #eef5eb;
 }
 .place-number {
   display: grid;
@@ -233,7 +233,7 @@ select:focus-visible {
   min-width: 25px;
   height: 25px;
   border-radius: 9px;
-  background: #edf3ff;
+  background: #eef5eb;
   color: var(--accent);
   font-size: 12px;
   font-weight: 800;
@@ -293,7 +293,7 @@ select:focus-visible {
   top: 24px;
   left: calc(50% + 110px);
   z-index: 4;
-  border: 1px solid #d4e2f3;
+  border: 1px solid #cfe5d5;
   border-radius: 24px;
   background: white;
   color: var(--accent);
@@ -336,7 +336,7 @@ select:focus-visible {
   border: 0;
   border-radius: 6px;
   padding: 8px;
-  background: #eef4ff;
+  background: #eef5eb;
   color: var(--accent);
   text-decoration: none;
   font-size: 12px;
@@ -470,7 +470,7 @@ select:focus-visible {
   font-size: 13px;
 }
 .journey-toolbar button {
-  background: #edf4ff;
+  background: #eef5eb;
   border: 0;
   border-radius: 8px;
   padding: 10px;

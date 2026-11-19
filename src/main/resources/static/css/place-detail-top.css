@@ -1,0 +1,55 @@
+/* 장소 상세 위쪽: 뒤로가기는 검색박스 밖 왼쪽에, 검색박스는 그만큼 짧게 */
+.place-detail-page .detail-top {
+    order: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin: 0 20px 26px 12px;
+}
+
+.place-detail-page .detail-top > .back-button {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.place-detail-page .detail-top > .detail-header {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.place-detail-page .detail-top .selected-summary strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 자주 가는 곳에서 연 장소: 검색창은 숨기고 뒤로가기만 */
+.place-detail-page.is-saved-place .detail-top > .detail-header {
+    display: none;
+}
+
+/* 현재 위치를 못 가져올 때 나오는 '출발지 직접 검색하기' */
+.place-detail-page .origin-fallback {
+    order: 5;
+    align-self: center;
+    margin: 8px 20px 48px;
+    padding: 8px 16px;
+    border: 0.7px solid #018B38;
+    border-radius: 20px;
+    color: #018B38;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.place-detail-page .origin-fallback.hidden {
+    display: none;
+}

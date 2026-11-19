@@ -7,6 +7,12 @@
         $(".preset-card").on("click", function () {
             selectPreset($(this));
         });
+        // 직접입력 칸은 키보드로 들어와도 선택되게 한다
+        $("#customMessage").on("focus", function () {
+            if (!customSelected) {
+                selectPreset($("#customPresetButton"));
+            }
+        });
         $("#saveButton").on("click", saveHelpCard);
 
         checkSession();
@@ -63,6 +69,7 @@
                 if (!matched) {
                     $("#customMessage").val(savedMessage);
                     selectPreset($("#customPresetButton"));
+                    fitCustomInput();
                 }
             }
         });
@@ -73,20 +80,30 @@
         $button.addClass("selected").attr("aria-checked", "true");
 
         customSelected = $button.attr("id") === "customPresetButton";
-        $("#customBox").toggleClass("hidden", !customSelected);
         selectedMessage = customSelected ? $("#customMessage").val() : ($button.data("message") || "");
         $("#editMessage").text("");
 
-        if (customSelected) {
+        if (customSelected && document.activeElement !== $("#customMessage")[0]) {
             $("#customMessage").trigger("focus");
         }
     }
 
-    $("#customMessage").on("input", function () {
+    $(document).on("input", "#customMessage", function () {
         if (customSelected) {
             selectedMessage = $(this).val();
         }
+        fitCustomInput();
     });
+
+    /** 적는 만큼 칸이 늘어나게 한다 */
+    function fitCustomInput() {
+        var input = document.getElementById("customMessage");
+        if (!input) {
+            return;
+        }
+        input.style.height = "auto";
+        input.style.height = input.scrollHeight + "px";
+    }
 
     function saveHelpCard() {
         var message = customSelected ? $("#customMessage").val() : selectedMessage;

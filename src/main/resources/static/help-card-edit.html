@@ -24,15 +24,12 @@
             <button type="button" class="preset-card" data-message="저는 혼자 이동 중 도움이 필요합니다" role="radio" aria-checked="false">
                 저는 혼자 이동 중 도움이 필요합니다
             </button>
-            <button type="button" class="preset-card" id="customPresetButton" role="radio" aria-checked="false">
-                직접입력
-            </button>
+            <!-- 직접입력: 카드를 누르면 그 자리에서 바로 적는다 -->
+            <div class="preset-card custom-card" id="customPresetButton" role="radio" aria-checked="false">
+                <textarea id="customMessage" class="custom-input" maxlength="500" rows="1"
+                          placeholder="직접입력" aria-label="도움요청 문구 직접 입력"></textarea>
+            </div>
         </div>
-
-        <label class="custom-box hidden" id="customBox" for="customMessage">
-            <span>직접 입력</span>
-            <textarea id="customMessage" maxlength="500" rows="6" placeholder="도움이 필요한 상황을 적어주세요"></textarea>
-        </label>
     </section>
 
     <p class="edit-message" id="editMessage"></p>
