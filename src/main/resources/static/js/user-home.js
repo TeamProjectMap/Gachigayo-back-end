@@ -62,7 +62,9 @@
       remove.setAttribute("aria-label", `${place.placeName} 즐겨찾기 삭제`);
       remove.disabled = !id || deletingFavorites.has(id);
       remove.addEventListener("click", async () => {
-        if (deletingFavorites.size || !window.confirm(`‘${place.placeName}’을 즐겨찾기에서 삭제할까요?`)) return;
+        if (deletingFavorites.size) return;
+        // window.confirm은 앱 화면에서 바로 '취소'가 되어 삭제가 안 됐다 → 화면 안 확인창
+        if (!(await AppConfirm(`‘${place.placeName}’을 자주 가는 곳에서 삭제할까요?`, "삭제", true))) return;
         deletingFavorites.add(id);
         document.querySelectorAll("#homeFavorites .favorite-delete").forEach(button => { button.disabled = true; });
         try {
