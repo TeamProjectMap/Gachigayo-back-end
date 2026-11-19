@@ -1,0 +1,114 @@
+/*
+ * 도움요청 화면을 피그마(도움요청 634:555)와 같게: 위치·크기·글씨 크기.
+ * figma-skin.css 다음에 불러와 덮어쓴다. 피그마 프레임 너비 402px 기준.
+ */
+
+/* 피그마에 없는 것: 오른쪽 위 '카드 편집', 버튼 아래 작은 안내 문구 */
+.help-page .help-header .edit-link,
+.help-page .contact-message {
+    display: none !important;
+}
+
+/* 뒤로가기 ~ 제목 */
+body > main.help-page {
+    padding: calc(70px + env(safe-area-inset-top, 0px)) 19px 40px;
+}
+
+.help-page .help-header {
+    padding: 0 9px;
+}
+
+.help-page .help-hero {
+    margin-top: 44px;
+}
+
+.help-page .help-hero h1 {
+    margin: 18px 0 22px;
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 30px;
+}
+
+/* 빨간 카드: 문구 15px, 목적지 13px */
+.help-page .request-card {
+    padding: 22px 16px 20px;
+    border: 1px solid #FF363B;
+    border-radius: 20px;
+    background: #FFEDED;
+}
+
+.help-page #helpMessage {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 21px;
+    color: #363636;
+}
+
+.help-page .destination-box {
+    padding: 18px 0 0;
+}
+
+.help-page .destination-box strong {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.help-page .show-guide {
+    margin-top: 12px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #8D8D8D;
+}
+
+/* 초록 상태 상자: 제목 13px, 설명 10px */
+.help-page .status-card {
+    min-height: 58px;
+    margin: 100px 0 15px;
+    padding: 12px 17px;
+    border-radius: 15px;
+    background: #EEF5EB;
+}
+
+.help-page .status-card strong {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.help-page .status-card span {
+    margin-top: 3px;
+    font-size: 10px;
+}
+
+/* 버튼: 글씨 15px */
+.help-page .primary-call-button,
+.help-page .secondary-call-button {
+    width: calc(100% - 18px);
+    margin: 0 9px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.help-page .primary-call-button {
+    height: 56px;
+    min-height: 56px;
+}
+
+.help-page .secondary-call-button {
+    height: 52px;
+    min-height: 52px;
+}
+
+.help-page .divider {
+    margin: 12px 7px 18px;
+}
+
+.help-page .safety-section > p:first-child {
+    margin-bottom: 9px;
+    font-size: 11px;
+    color: #8D8D8D;
+}
+
+/* 피그마의 '안전센터 연결'은 테두리 없는 회색 버튼 */
+.help-page .secondary-call-button {
+    border: 0;
+}
