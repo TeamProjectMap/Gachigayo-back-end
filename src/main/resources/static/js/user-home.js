@@ -36,7 +36,6 @@
   function renderFavorites() {
     const list = $("homeFavorites");
     list.replaceChildren();
-    $("allFavoritesLink").textContent = `전체 보기 (${favoritePlaces.length})`;
     favoritePlaces.slice(0, 4).forEach((place) => {
       const tile = document.createElement("div"), button = document.createElement("button"),
         title = document.createElement("strong"), address = document.createElement("span"),
@@ -53,7 +52,9 @@
       button.addEventListener("click", () => {
         try {
           sessionStorage.setItem("selectedDestination", JSON.stringify({ ...place, id }));
-          go("/place-detail.html");
+          // 목적지를 새로 골랐으니 예전에 직접 고른 출발지는 지운다 (기본은 현재 위치)
+          try { if (JSON.parse(sessionStorage.getItem("currentOrigin") || "null")?.manual) sessionStorage.removeItem("currentOrigin"); } catch {}
+          go("/place-detail.html?from=home");
         } catch { message("장소를 저장하지 못했습니다. 브라우저 저장 공간을 확인해주세요."); }
       });
       remove.type = "button";
@@ -63,15 +64,16 @@
       remove.setAttribute("aria-label", `${place.placeName} 즐겨찾기 삭제`);
       remove.disabled = !id || deletingFavorites.has(id);
       remove.addEventListener("click", async () => {
-        if (deletingFavorites.size || !window.confirm(`‘${place.placeName}’을 즐겨찾기에서 삭제할까요?`)) return;
+        // 확인창 없이 ×를 누르면 바로 삭제한다
+        if (deletingFavorites.size) return;
         deletingFavorites.add(id);
         document.querySelectorAll("#homeFavorites .favorite-delete").forEach(button => { button.disabled = true; });
         try {
           await api("/place/favorites/delete", { method: "POST", body: new URLSearchParams({ placeId: id }) });
           favoritePlaces = favoritePlaces.filter(item => favoriteId(item) !== id);
-          message(`${place.placeName}을 즐겨찾기에서 삭제했습니다.`);
+          message(""); // 삭제되면 칸이 바로 사라지므로 아래 안내 문구는 띄우지 않는다
           renderFavorites();
-          $("allFavoritesLink").focus({ preventScroll: true });
+          $("homeFavorites").querySelector("button")?.focus({ preventScroll: true });
         } catch (error) { message(error.message); remove.disabled = false; }
         finally {
           deletingFavorites.delete(id);
@@ -86,7 +88,7 @@
       add.type = "button";
       add.className = "feature-card favorite-add";
       add.textContent = "＋ 자주 가는 곳 추가";
-      add.addEventListener("click", () => go("/route-search.html?view=favorites"));
+      add.addEventListener("click", () => go("/route-search.html?select=favorite"));
       list.append(add);
     }
   }
@@ -118,24 +120,6 @@
   $("resumeJourneyButton").addEventListener("click", () =>
     go("/navigation.html"),
   );
-  document.querySelectorAll(".help-request-link").forEach((button) =>
-    button.addEventListener("click", () => {
-      sessionStorage.removeItem("helpRequestEntryFromNavigation");
-      sessionStorage.removeItem("currentHelpRequestState");
-      go("/help-request.html");
-    }),
-  );
-  document
-    .querySelector(".logout-button")
-    .addEventListener("click", async () => {
-      try {
-        await api("/user/logout", { method: "POST" });
-        state.clear(sessionStorage);
-        location.replace("/login.html");
-      } catch (error) {
-        message(error.message);
-      }
-    });
   (async () => {
     let session;
     try {

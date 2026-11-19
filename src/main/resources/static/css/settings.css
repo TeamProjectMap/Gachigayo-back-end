@@ -285,3 +285,21 @@ button {
     outline: 0;
     border-bottom-color: var(--green);
 }
+
+/* 이용자 "연결코드 다시 받기": 큰 버튼 대신 카드 안의 한 줄 (피그마 설정 화면) */
+.card > .link-row-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.link-row-button .row-arrow {
+    color: #C8C8C8;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.card > .link-row-button.hidden {
+    display: none;
+}

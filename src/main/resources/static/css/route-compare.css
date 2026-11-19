@@ -397,3 +397,17 @@ button {
         width: calc(100% - 40px);
     }
 }
+
+/* 화면 전체가 스크롤되게. app-frame.css의 .route-compare-page { overflow: hidden }이
+   figma-skin의 overflow: auto를 이겨서 경로 목록이 아래로 안 내려갔다 */
+body > main.route-compare-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* '같이가요 추천' 배지도 같이가요 초록 톤으로 */
+body > main.route-compare-page .route-card-label {
+    color: #018B38;
+    background: #EEF5EB;
+}

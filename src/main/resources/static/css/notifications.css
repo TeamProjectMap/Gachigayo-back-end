@@ -1,3 +1,6 @@
+/* 이용자 화면과 같은 글꼴 (fonts/PretendardVariable.woff2) */
+@font-face { font-family: 'Pretendard'; src: url('/fonts/PretendardVariable.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+
 :root {
     --green: #018B38;
     --text: #363636;
@@ -59,7 +62,7 @@ ul {
 .noti-header h1 {
     margin: 0;
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .back-button {
@@ -111,7 +114,7 @@ ul {
 .noti-title {
     display: block;
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .noti-sub {
@@ -158,7 +161,7 @@ ul {
 .detail-title {
     display: block;
     font-size: 21px;
-    font-weight: 800;
+    font-weight: 600;
     line-height: 1.35;
     text-align: center;
 }
@@ -189,7 +192,7 @@ ul {
     display: block;
     margin-top: 6px;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.4;
 }
 
@@ -224,7 +227,7 @@ ul {
     background: var(--green);
     color: #FFFFFF;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .page-message {

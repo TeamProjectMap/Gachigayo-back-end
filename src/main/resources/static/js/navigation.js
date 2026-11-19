@@ -226,10 +226,7 @@
       view = await create(canvas, selection.origin || selection.destination);
       if (!live) return;
       view.route(steps);
-      view.map.addControl(
-        new kakao.maps.ZoomControl(),
-        kakao.maps.ControlPosition.RIGHT,
-      );
+      // 피그마에 없는 +/− 확대 버튼은 달지 않는다 (손가락으로 확대·축소)
       const button = document.createElement("button");
       button.type = "button";
       button.id = "myLocationButton";

@@ -409,9 +409,9 @@ main.navigation-page {
   white-space: nowrap;
 }
 .transit-filters button[aria-pressed="true"] {
-  background: #edf4ff;
-  border-color: #2379f5;
-  color: #1769ed;
+  background: #eef5eb;
+  border-color: #018b38;
+  color: #018b38;
 }
 .live-transit-card {
   margin: 0 12px 10px;
@@ -424,7 +424,7 @@ main.navigation-page {
   padding: 12px;
   border: 1px solid #dce8f2;
   border-radius: 10px;
-  background: #f5f9ff;
+  background: #eef5eb;
   margin-top: 8px;
   text-align: left;
   white-space: normal;
@@ -448,7 +448,7 @@ main.navigation-page {
   gap: 2px;
 }
 .live-arrival strong {
-  color: #1769ed;
+  color: #018b38;
   font-size: 14px;
 }
 .live-arrival small {
@@ -469,10 +469,10 @@ main.navigation-page {
   width: 100%;
   margin: 12px 0;
   padding: 14px;
-  border: 1px solid #1769ed;
+  border: 1px solid #018b38;
   border-radius: 10px;
-  background: #edf4ff;
-  color: #1769ed;
+  background: #eef5eb;
+  color: #018b38;
   font-weight: 700;
 }
 /* Suggestion list occupies the app's list area instead of a clipped floating popup. */
@@ -524,7 +524,7 @@ main.navigation-page {
   height: 30px;
   margin-top: 2px;
   border-radius: 10px;
-  background: #f0f5fb;
+  background: #eef5eb;
   color: #7b91a4;
   font-size: 18px;
 }
@@ -548,25 +548,25 @@ main.navigation-page {
 }
 .suggestion-copy mark {
   background: transparent;
-  color: #1769ed;
+  color: #018b38;
   font-weight: 800;
 }
 .map-sidebar > .suggestions li:hover,
 .map-sidebar > .suggestions li[aria-selected="true"] {
-  background: #eff6ff;
+  background: #eef5eb;
   border-radius: 8px;
 }
 .map-sidebar > .suggestions li[aria-selected="true"] .suggestion-icon {
-  color: #1769ed;
-  background: #dceaff;
+  color: #018b38;
+  background: #eef5eb;
 }
 .suggestion-distance {
-  color: #1769ed;
+  color: #018b38;
   font-size: 11px;
   font-weight: 600;
 }
 .suggestions a {
-  color: #1769ed;
+  color: #018b38;
   font-size: 14px;
   padding: 12px;
   display: block;

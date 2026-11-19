@@ -99,6 +99,37 @@ button {
     background: #F2FBF5;
 }
 
+/* 직접입력 카드 안의 입력칸. 카드처럼 보이고 누르면 바로 적는다 */
+.custom-card {
+    display: flex;
+    align-items: center;
+    cursor: text;
+}
+
+.custom-input {
+    display: block;
+    width: 100%;
+    min-height: 22px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+}
+
+.custom-input::placeholder {
+    color: inherit;
+    opacity: 1;
+}
+
+.custom-card.selected .custom-input::placeholder {
+    color: #8D8D8D;
+}
+
 .custom-box {
     display: block;
     margin-top: 16px;
