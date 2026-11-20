@@ -88,7 +88,8 @@
       add.type = "button";
       add.className = "feature-card favorite-add";
       add.textContent = "＋ 자주 가는 곳 추가";
-      add.addEventListener("click", () => go("/route-search.html?select=favorite"));
+      // 자주 가는 곳 목록으로 간다 (거기서 '+ 추가'로 등록, 삭제도 할 수 있다)
+      add.addEventListener("click", () => go("/route-search.html?view=favorites"));
       list.append(add);
     }
   }
