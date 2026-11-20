@@ -84,3 +84,15 @@
 .saved-card .card-actions {
     margin-right: -17px;
 }
+
+/* 수정할 때도 상자 없이 카드 글자 그대로 그 자리에서 고친다 (직접입력 칸과 같은 방식) */
+.saved-card .card-edit-input {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.saved-card.editing .card-edit-actions {
+    margin-right: -17px;
+}
