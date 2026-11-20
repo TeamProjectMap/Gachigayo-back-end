@@ -303,3 +303,31 @@ button {
 .card > .link-row-button.hidden {
     display: none;
 }
+
+/* 프로필: 이름(왼쪽)과 아이디(오른쪽)를 한 줄로 */
+.profile-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 10px;
+}
+
+.profile-head .profile-name {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.profile-id {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* 아래에 줄(관계·휴대폰)이 붙을 때만 간격을 둔다 */
+.profile-head + .row:not(.hidden),
+.profile-head ~ .row:not(.hidden) {
+    margin-top: 6px;
+}

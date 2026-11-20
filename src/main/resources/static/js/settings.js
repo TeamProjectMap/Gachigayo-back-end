@@ -86,7 +86,7 @@
                 userRole = json.userRole;
                 sessionUserId = json.userId;
                 $("#profileLoginId").text(json.loginId || "-");
-                $("#loginIdRow").toggleClass("hidden", userRole !== "USER");
+                $("#profileLoginId").toggleClass("hidden", userRole !== "USER");
                 $("#userSettingsSection").toggleClass("hidden", userRole !== "USER");
                 $("#guardianAlarmSection").toggleClass("hidden", userRole === "USER");
                 $("#routeButton span").text(userRole === "USER" ? "길안내" : "경로");

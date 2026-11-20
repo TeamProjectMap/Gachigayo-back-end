@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>같이가요 설정</title>
-    <link rel="stylesheet" href="/css/settings.css">
+    <link rel="stylesheet" href="/css/settings.css?v=20261120-oneline">
     <link rel="stylesheet" href="/css/menu-flow.css?v=20261117">
     <link rel="stylesheet" href="/css/bottom-nav.css?v=20261118">
     <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-border2">
@@ -16,9 +16,11 @@
 
     <!-- 내 프로필 -->
     <section class="card profile">
-        <strong class="profile-name" id="profileName">-</strong>
-
-        <div class="row hidden" id="loginIdRow"><span class="row-label">아이디</span><span class="row-value" id="profileLoginId">-</span></div>
+        <!-- 이름과 아이디를 한 줄로: 이름은 왼쪽, 아이디는 오른쪽 (아이디는 이용자만) -->
+        <div class="profile-head">
+            <strong class="profile-name" id="profileName">-</strong>
+            <span class="profile-id hidden" id="profileLoginId" aria-label="아이디">-</span>
+        </div>
         <div class="row hidden" id="relationRow">
             <span class="row-label">사용자와의 관계</span>
             <input type="text" class="row-input" id="relationInput"
@@ -134,6 +136,6 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/js/journey-state.js?v=20261117"></script>
 <script src="/js/confirm-dialog.js"></script>
-<script src="/js/settings.js?v=20261120-phone"></script>
+<script src="/js/settings.js?v=20261120-oneline"></script>
 </body>
 </html>
