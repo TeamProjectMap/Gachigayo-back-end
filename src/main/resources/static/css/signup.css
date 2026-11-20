@@ -299,8 +299,20 @@ button:disabled {
     }
 }
 
-/* 체크 표시를 원 정가운데에: 테두리를 돌려 그린 체크는 모양이 한쪽으로 쏠려 보여서 SVG로 가운데에 그린다 */
+/* 완료 체크 (아이디 찾기·비밀번호 재설정·회원가입·보호자 연결 모두 같은 모양)
+   초록 원 정가운데에 흰 체크. 테두리를 돌려 그린 체크는 한쪽으로 쏠려 보여서 SVG로 그린다.
+   find-account.css와 signup.css에 똑같이 들어 있다 */
+.check-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #018B38;
+    position: relative;
+}
+
 .check-icon::after {
+    content: "";
+    position: absolute;
     left: 0;
     top: 0;
     width: 100%;
@@ -308,5 +320,5 @@ button:disabled {
     border: 0;
     border-radius: 0;
     transform: none;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 44px 44px no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 58px 58px no-repeat;
 }
