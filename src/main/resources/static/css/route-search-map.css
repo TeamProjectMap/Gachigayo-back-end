@@ -307,3 +307,21 @@
 #routeSearchPage.is-favorite-add.is-searching .map-sidebar.is-suggesting > .suggestions {
     margin-top: 0;
 }
+
+/* ---------- '자주 가는 곳 / 최근 검색' 칩: 경로 선택 화면의 '버스/지하철 / 걷기'와 같은 모양 ---------- */
+#routeSearchPage .saved-tabs button {
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    background: #E9E9E9;
+    color: #363636;
+    font-size: 11px;
+    font-weight: 500;
+    box-shadow: none;
+}
+
+#routeSearchPage .saved-tabs button[aria-pressed="true"] {
+    border-color: #018B38;
+    background: #EEF5EB;
+    color: #363636;
+}
