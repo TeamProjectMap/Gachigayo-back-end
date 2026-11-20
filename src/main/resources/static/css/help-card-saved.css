@@ -79,3 +79,8 @@
 .edit-message.error {
     color: #E5484D;
 }
+
+/* 카드 안쪽 여백(좌우 29px)보다 오른쪽 끝에 붙인다 */
+.saved-card .card-actions {
+    margin-right: -17px;
+}
