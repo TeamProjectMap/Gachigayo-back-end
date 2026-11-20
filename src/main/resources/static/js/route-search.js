@@ -593,6 +593,11 @@
       top.className = "favorite-add-top";
       $("searchForm").before(top);
       top.append($("searchBackButton"), $("searchForm"));
+      // 무엇을 하는 화면인지 위에 제목으로 알려준다
+      const title = document.createElement("h1");
+      title.className = "favorite-add-title";
+      title.textContent = "자주 가는 곳 등록";
+      top.before(title);
     }
     document.getElementById("searchBackButton").href =
       selectParam === "origin"

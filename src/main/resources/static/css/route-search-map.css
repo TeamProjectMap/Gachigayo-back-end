@@ -325,3 +325,32 @@
     background: #EEF5EB;
     color: #363636;
 }
+
+/* 자주 가는 곳 등록: 위쪽 제목 (검색 화면 '어디로 갈까요?'와 같은 크기) */
+#routeSearchPage.is-favorite-add .favorite-add-title {
+    flex-shrink: 0;
+    margin: calc(76px + env(safe-area-inset-top, 0px)) 29px 18px;
+    color: #363636;
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 30px;
+}
+
+#routeSearchPage.is-favorite-add .favorite-add-title + .favorite-add-top {
+    margin-top: 0;
+}
+
+@media (max-height: 740px) {
+    #routeSearchPage.is-favorite-add .favorite-add-title {
+        margin-top: calc(40px + env(safe-area-inset-top, 0px));
+    }
+}
+
+/* 검색해서 지도가 깔리면 제목은 숨기고 검색줄을 지도 위로 */
+#routeSearchPage.is-favorite-add.is-searching .favorite-add-title {
+    display: none;
+}
+
+#routeSearchPage.is-favorite-add.is-searching .favorite-add-title + .favorite-add-top {
+    margin-top: calc(env(safe-area-inset-top, 0px) + 16px);
+}
