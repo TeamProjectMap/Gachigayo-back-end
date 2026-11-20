@@ -10,7 +10,9 @@
   var savedPlaceMode = fromParam === "favorites" || fromParam === "home" || fromParam === "guardian-routes";
   var backPage = fromParam === "favorites" ? "/route-search.html?view=favorites"
       : fromParam === "home" ? "/user-home.html"
-      : fromParam === "guardian-routes" ? "/guardian-routes.html" : searchPage;
+      : fromParam === "guardian-routes" ? "/guardian-routes.html"
+      // 검색 결과에서 들어왔으면 뒤로 갈 때 그 검색 결과를 다시 보여준다 (back=1)
+      : favoriteMode ? searchPage : "/route-search.html?back=1";
   var favorite = false;
   var placeMap = null;
   var endpointRevision = 0;

@@ -618,9 +618,12 @@
     const favorite =
         new URLSearchParams(location.search).get("view") === "favorites",
       previous = sessionStorage.getItem("navigationSearchQuery");
+    // 직전 검색 결과는 장소 화면에서 '뒤로'로 돌아왔을 때만 다시 보여준다.
+    // 홈·하단 메뉴에서 길안내를 새로 열면 늘 처음 화면(최근 검색)부터.
+    const cameBack = new URLSearchParams(location.search).get("back") === "1";
     if (favorite) saved("favorites");
     else if (selectParam === "favorite") saved("recent");
-    else if (previous) {
+    else if (previous && cameBack) {
       input.value = previous;
       search();
     } else saved("recent");
