@@ -616,32 +616,140 @@ ul {
     overflow-y: auto;
 }
 
+/* 이용자 길안내 검색창과 같은 모양: 둥근 검색창 + 바로 아래 붙는 장소 목록 */
+.place-search {
+    margin-top: 6px;
+}
+
+.place-search-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 53px;
+    padding: 0 18px 0 20px;
+    border: 0.7px solid #E5E5E5;
+    border-radius: 28px;
+    background: var(--bg);
+    box-shadow: 0 1px 18px rgba(0, 0, 0, 0.012);
+}
+
+.place-search-icon {
+    display: flex;
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    color: var(--text);
+}
+
+.place-search-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.place-search-row input {
+    flex: 1;
+    min-width: 0;
+    height: 51px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 16px;
+}
+
+.place-search-row input::placeholder {
+    color: var(--text);
+}
+
+/* 브라우저 기본 지우기(×)는 숨긴다 */
+.place-search-row input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* 목록이 열리면 검색창 아래 모서리를 펴고 목록을 틈 없이 붙인다 */
+.place-search.is-open .place-search-row {
+    border-bottom-color: transparent;
+    border-radius: 26px 26px 0 0;
+    box-shadow: none;
+}
+
 .place-list {
-    display: grid;
-    gap: 10px;
-    margin-top: 18px;
+    display: none;
+    max-height: calc(100dvh - 220px);
+    margin: 0;
+    padding: 0 8px 8px;
+    overflow-y: auto;
+    border: 0.7px solid #E5E5E5;
+    border-top: 0;
+    border-radius: 0 0 20px 20px;
+    background: var(--bg);
+    list-style: none;
+}
+
+.place-search.is-open .place-list {
+    display: block;
+}
+
+.place-list li + li {
+    border-top: 0.7px solid #F0F0F0;
 }
 
 .place-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     width: 100%;
-    padding: 14px 16px;
-    border: 1px solid #ECECEC;
-    border-radius: 12px;
-    background: var(--bg);
+    padding: 14px 8px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
     text-align: left;
+}
+
+.place-item:hover,
+.place-item:focus-visible {
+    background: var(--soft-green);
+}
+
+.place-item-icon {
+    display: flex;
+    flex: 0 0 32px;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--soft-green);
+    color: var(--green);
+    font-size: 15px;
+}
+
+.place-item-copy {
+    min-width: 0;
 }
 
 .place-item strong {
     display: block;
-    font-size: 15px;
-    font-weight: 500;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
 }
 
-.place-item span {
+.place-item strong mark {
+    background: transparent;
+    color: var(--green);
+}
+
+.place-item-copy > span {
     display: block;
-    margin-top: 4px;
+    margin-top: 2px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 16px;
 }
 
 /* ---------------------------- 공통 ---------------------------- */

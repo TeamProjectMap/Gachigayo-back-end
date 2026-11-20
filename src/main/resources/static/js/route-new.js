@@ -9,6 +9,10 @@
     // 지금 검색창이 어느 쪽을 고르는 중인지
     var searchTarget = null;
 
+    // 글자 칠 때마다 바로 찾지 않고 잠깐 멈추면 찾는다. 늦게 온 예전 결과는 버린다
+    var searchTimer = null;
+    var searchRevision = 0;
+
     $(function () {
         checkSession();
 
@@ -24,13 +28,18 @@
             closeSearch();
         });
 
-        $("#searchButton").on("click", function () {
-            searchPlaces();
+        // 이용자 길안내 검색창처럼 글자를 치면 바로 아래에 장소가 뜬다 (엔터는 바로 찾기)
+        $("#searchInput").on("input", function () {
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(function () {
+                searchPlaces(true);
+            }, 250);
         });
 
         $("#searchInput").on("keydown", function (event) {
-            if (event.key === "Enter") {
-                searchPlaces();
+            if (event.key === "Enter" && !event.originalEvent.isComposing) {
+                window.clearTimeout(searchTimer);
+                searchPlaces(false);
             }
         });
 
@@ -85,7 +94,7 @@
 
         $("#searchTitle").text(target === "start" ? "출발지 검색" : "도착지 검색");
         $("#searchInput").val("");
-        $("#placeList").empty();
+        renderPlaces([], "");
         setSearchMessage("");
         $("#searchLayer").removeClass("hidden");
         $("#searchInput").trigger("focus");
@@ -96,11 +105,14 @@
         searchTarget = null;
     }
 
-    function searchPlaces() {
+    /** @param typing 글자를 치는 중이면 true: 두 글자 미만이거나 자음·모음만 있으면 아직 찾지 않는다 */
+    function searchPlaces(typing) {
         var query = $("#searchInput").val().trim();
+        var revision = ++searchRevision;
 
-        if (!query) {
-            setSearchMessage("검색어를 입력해주세요.");
+        if (!query || (typing && (query.length < 2 || /[ㄱ-ㅎㅏ-ㅣ]/.test(query)))) {
+            renderPlaces([], query);
+            setSearchMessage(!query && !typing ? "검색어를 입력해주세요." : "");
             return;
         }
 
@@ -110,39 +122,59 @@
             dataType: "JSON",
             data: { query: query },
             success: function (json) {
+                if (revision !== searchRevision) {
+                    return;
+                }
                 if (!json.success) {
+                    renderPlaces([], query);
                     setSearchMessage(json.message || "검색에 실패했습니다.");
                     return;
                 }
 
-                renderPlaces(json.places);
+                renderPlaces(json.places, query);
+                setSearchMessage(json.places && json.places.length ? "" : "검색 결과가 없습니다.");
             },
             error: function () {
-                setSearchMessage("장소 검색 중 오류가 발생했습니다.");
+                if (revision === searchRevision) {
+                    setSearchMessage("장소 검색 중 오류가 발생했습니다.");
+                }
             }
         });
     }
 
-    function renderPlaces(places) {
+    function renderPlaces(places, query) {
         var $list = $("#placeList").empty();
+        var open = !!(places && places.length);
 
-        if (!places || !places.length) {
-            setSearchMessage("검색 결과가 없습니다.");
-            return;
-        }
+        // 목록이 열리면 검색창과 한 칸처럼 붙여 보인다
+        $("#placeSearch").toggleClass("is-open", open);
 
-        setSearchMessage("");
-
-        $.each(places, function (index, place) {
+        $.each(places || [], function (index, place) {
             $list.append($("<li>").append($("<button>")
                     .attr("type", "button")
+                    .attr("role", "option")
                     .addClass("place-item")
-                    .append($("<strong>").text(place.placeName))
-                    .append($("<span>").text(place.roadAddressName || place.addressName || ""))
+                    .append($("<span>").addClass("place-item-icon").attr("aria-hidden", "true").text("↗"))
+                    .append($("<span>").addClass("place-item-copy")
+                            .append(highlight($("<strong>"), place.placeName, query))
+                            .append($("<span>").text(place.roadAddressName || place.addressName || "")))
                     .on("click", function () {
                         pickPlace(place);
                     })));
         });
+    }
+
+    /** 이름에서 검색어 부분만 초록색으로 */
+    function highlight($element, text, query) {
+        text = text || "";
+        var index = query ? text.indexOf(query) : -1;
+        if (index < 0) {
+            return $element.text(text);
+        }
+        return $element
+                .append(document.createTextNode(text.slice(0, index)))
+                .append($("<mark>").text(text.slice(index, index + query.length)))
+                .append(document.createTextNode(text.slice(index + query.length)));
     }
 
     function pickPlace(place) {
