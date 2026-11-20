@@ -355,30 +355,23 @@
     margin-top: calc(env(safe-area-inset-top, 0px) + 16px);
 }
 
-/* 출발지 고르기: 검색창 아래 '현재 위치로 설정' (연한 초록 칩) */
+/* 출발지 고르기: 검색칸 안 오른쪽 '현재 위치' (회색 아이콘만) */
 #routeSearchPage .origin-here-button {
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    align-self: flex-start;
-    gap: 4px;
-    flex-shrink: 0;
-    margin: 12px 29px 4px;
-    padding: 7px 12px 7px 10px;
-    border: 2px solid #018B38;
-    border-radius: 20px;
-    background: #EEF5EB;
-    color: #363636;
-    font-size: 13px;
-    font-weight: 500;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: -4px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #8D8D8D;
 }
 
 #routeSearchPage .origin-here-button svg {
-    width: 16px;
-    height: 16px;
-    color: #018B38;
-}
-
-/* 검색해서 지도가 깔리면 숨긴다 */
-#routeSearchPage.is-searching .origin-here-button {
-    display: none;
+    width: 22px;
+    height: 22px;
 }

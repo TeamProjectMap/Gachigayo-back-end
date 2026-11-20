@@ -589,14 +589,15 @@
       const here = document.createElement("button");
       here.type = "button";
       here.className = "origin-here-button";
+      here.setAttribute("aria-label", "현재 위치를 출발지로");
       here.innerHTML =
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
-        '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>현재 위치로 설정';
+        '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
       here.addEventListener("click", () => {
         sessionStorage.removeItem("currentOrigin");
         location.href = "/place-detail.html";
       });
-      $("searchForm").after(here);
+      $("searchForm").querySelector(".search-input-row").append(here);
     }
     if (selectParam === "favorite") {
       // 장소 상세 위쪽처럼: 뒤로가기는 왼쪽, 검색창은 오른쪽 한 줄 (제목·칩 없음)
