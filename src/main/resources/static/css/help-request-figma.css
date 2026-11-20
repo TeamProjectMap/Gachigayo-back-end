@@ -12,7 +12,7 @@
 
 /* 화면 좌우 18px, 뒤로가기 y=69 */
 body > main.help-page {
-    padding: calc(69px + env(safe-area-inset-top, 0px)) 18px 40px;
+    padding: calc(63px + env(safe-area-inset-top, 0px)) 18px 40px;   /* 머리줄 안 여백 6px을 빼서 뒤로가기 y=69 */
 }
 
 .help-page .help-header {
@@ -22,7 +22,7 @@ body > main.help-page {
 
 /* 경고 아이콘 y=143 (63×63) */
 .help-page .help-hero {
-    margin-top: 44px;
+    margin-top: 14px;   /* 아이콘 위에 원래 30px 여백이 있어 합쳐서 y=143 */
 }
 
 .help-page .alert-icon {
@@ -61,7 +61,7 @@ body > main.help-page {
 
 /* 목적지 y=395 */
 .help-page .destination-box {
-    padding: 25px 0 0;
+    padding: 0;   /* 위치 아이콘 줄 여백이 있어 이것만으로 문구와 25px 떨어진다 */
 }
 
 .help-page .destination-box strong {
