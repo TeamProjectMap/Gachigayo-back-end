@@ -17,7 +17,7 @@ body > main.help-page {
 
 .help-page .help-header {
     height: 30px;
-    padding: 0 0 0 26px;
+    padding: 0 0 0 11px;   /* 뒤로가기 버튼 x=29: 길안내 화면 등 다른 화면의 뒤로가기와 같은 자리 */
 }
 
 /* 경고 아이콘 y=143 (63×63) */
