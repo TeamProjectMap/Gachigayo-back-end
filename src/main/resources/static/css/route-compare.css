@@ -447,3 +447,8 @@ body > main.route-compare-page .segment-label {
     line-height: 1;
     white-space: nowrap;
 }
+
+/* 선택한 경로 아래 '전체 이동 순서 · N단계' 칸은 쓰지 않아 숨긴다 */
+body > main.route-compare-page .selected-itinerary {
+    display: none !important;
+}
