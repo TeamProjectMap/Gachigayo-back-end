@@ -238,19 +238,19 @@
     display: none;
 }
 
-/* ---------- 자동완성 목록 너비 = 검색창 너비 ---------- */
+/* ---------- 자동완성 목록 너비 = 검색창 너비, 검색창과 8px 띄움 (목록은 top 위치가 정해져 있어 margin 20px = 실제 틈 8px) ---------- */
 /* 목록은 화면에 떠 있는 칸(position: absolute)이라 여백 대신 왼쪽·오른쪽 위치로 검색창 가장자리에 맞춘다 */
 #routeSearchPage .map-sidebar > .suggestions {
     box-sizing: border-box;
     left: 29px;
     right: 29px;
     width: auto;
-    margin: 6px 0 0;
+    margin: 20px 0 0;
     padding: 0;
 }
 
 #routeSearchPage .autocomplete-status {
-    margin: 6px 29px 0;
+    margin: 12px 29px 0;
     padding: 5px 4px;
 }
 
@@ -258,20 +258,28 @@
 #routeSearchPage.is-searching .map-sidebar > .suggestions {
     left: 16px;
     right: 16px;
-    margin: 8px 0 0;
+    margin: 20px 0 0;
 }
 
 #routeSearchPage.is-searching .autocomplete-status {
-    margin: 8px 16px 0;
+    margin: 12px 16px 0;
 }
 
 /* 자주 가는 곳 추가: 검색창이 뒤로가기 오른쪽(왼쪽 54px, 오른쪽 20px)에 있다 */
 #routeSearchPage.is-favorite-add .map-sidebar > .suggestions {
     left: 54px;
     right: 20px;
-    margin: 6px 0 0;
+    margin: 20px 0 0;
 }
 
 #routeSearchPage.is-favorite-add .autocomplete-status {
-    margin: 6px 20px 0 54px;
+    margin: 12px 20px 0 54px;
+}
+
+/* 지도가 깔린 검색 중에는 제목이 없어 검색창이 맨 위(16px, 높이 53px)에 있다.
+   목록 위치(top)를 검색창 바로 아래로 다시 잡고 8px 띄운다 */
+#routeSearchPage.is-searching .map-sidebar > .suggestions,
+#routeSearchPage.is-favorite-add.is-searching .map-sidebar > .suggestions {
+    top: calc(env(safe-area-inset-top, 0px) + 69px);
+    margin-top: 8px;
 }
