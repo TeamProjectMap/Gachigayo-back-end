@@ -30,6 +30,8 @@
     var lastFix = null;
     var hereOverlay = null;
     var centeredOnHere = false;
+    // 지도가 내 위치를 따라가는 중인지. 지도를 손으로 끌면 멈추고, '내 위치'를 누르면 다시 따라간다.
+    var following = true;
     var wakeLock = null;
 
     $(function () {
@@ -55,6 +57,10 @@
 
             // 같은 사진을 다시 고를 수 있게 비워둔다
             this.value = "";
+        });
+
+        $("#followButton").on("click", function () {
+            setFollowing(true);
         });
 
         // 걷다가 헷갈릴 만한 곳에서 바로 누르는 큰 버튼
@@ -118,11 +124,35 @@
             hereOverlay.setPosition(here);
         }
 
-        // 아직 찍은 사진이 없으면 처음 한 번 지금 위치로 지도를 옮긴다
-        if (!centeredOnHere && !photos.some(hasLocation)) {
+        followHere();
+    }
+
+    /**
+     * 걷는 동안 지도가 내 위치를 따라간다 (파란 점이 늘 지도 가운데).
+     * 지도를 끌어 다른 곳을 보는 중이거나 사진 위치를 고르는 중이면 움직이지 않는다.
+     */
+    function followHere() {
+        if (!map || !lastFix || !following || pickingPhotoId !== null) {
+            return;
+        }
+
+        var here = new window.kakao.maps.LatLng(lastFix.latitude, lastFix.longitude);
+
+        if (!centeredOnHere) {
+            // 처음에는 골목이 보이게 가까이 확대해서 맞춘다
             centeredOnHere = true;
-            map.setCenter(here);
             map.setLevel(3);
+            map.setCenter(here);
+            return;
+        }
+        map.panTo(here);
+    }
+
+    function setFollowing(on) {
+        following = on;
+        $("#followButton").toggleClass("hidden", on);
+        if (on) {
+            followHere();
         }
     }
 
@@ -450,6 +480,7 @@
     function stopPickingLocation() {
         pickingPhotoId = null;
         $("#photoPage").removeClass("picking");
+        followHere();
     }
 
     function savePickedLocation(latlng) {
@@ -569,6 +600,11 @@
                     savePickedLocation(mouseEvent.latLng);
                 }
             });
+
+            // 손으로 지도를 끌면 따라가기를 멈추고 '내 위치' 버튼을 보여준다
+            window.kakao.maps.event.addListener(map, "dragstart", function () {
+                setFollowing(false);
+            });
         }
 
         $.each(markers, function (index, marker) {
@@ -602,6 +638,11 @@
             bounds.extend(position);
         });
 
+        // 따라가는 중이면 사진을 새로 올린 뒤에도 내 위치에 머문다
+        if (following && lastFix && centeredOnHere) {
+            followHere();
+            return;
+        }
         map.setBounds(bounds);
     }
 

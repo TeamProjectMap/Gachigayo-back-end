@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 경로 촬영</title>
-    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-checkpoint">
+    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-follow">
 </head>
 <body>
 <main class="photo-page hidden" id="photoPage">
@@ -16,6 +16,15 @@
             </svg>
         </button>
         <p class="map-message" id="mapMessage">지도를 불러오는 중이에요</p>
+        <!-- 지도를 손으로 끌어 다른 곳을 볼 때만 나온다. 누르면 다시 내 위치를 따라간다 -->
+        <button type="button" class="map-follow hidden" id="followButton" aria-label="내 위치로 돌아가기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+            </svg>
+            내 위치
+        </button>
     </div>
 
     <section class="photo-head">
@@ -40,6 +49,6 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/js/confirm-dialog.js?v=20261120"></script>
-<script src="/js/route-photo.js?v=20261120-checkpoint"></script>
+<script src="/js/route-photo.js?v=20261120-follow"></script>
 </body>
 </html>

@@ -938,3 +938,33 @@ ul {
 .photo-page.picking .checkpoint-bar {
     display: none;
 }
+
+/* 지도를 끌어 다른 곳을 보는 중일 때 나오는 '내 위치' (누르면 다시 따라간다) */
+.map-follow {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 34px;
+    padding: 0 12px 0 10px;
+    border: 2px solid var(--green);
+    border-radius: 20px;
+    background: var(--soft-green);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.map-follow svg {
+    width: 16px;
+    height: 16px;
+    color: var(--green);
+}
+
+.photo-page.picking .map-follow {
+    display: none;
+}
