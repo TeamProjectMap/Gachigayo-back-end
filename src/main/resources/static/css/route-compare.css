@@ -411,3 +411,44 @@ body > main.route-compare-page .route-card-label {
     color: #018B38;
     background: #EEF5EB;
 }
+
+/* 경로 막대: 범례와 같은 색 (도보 초록, 버스 파랑, 지하철 보라)
+   figma-skin.css가 버스를 초록, 도보를 회색으로 덮어써서 범례와 달랐다 */
+body > main.route-compare-page .segment-bar {
+    gap: 2px;
+    background: transparent;
+}
+
+body > main.route-compare-page .segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 6px;
+    overflow: hidden;
+}
+
+body > main.route-compare-page .segment.walking {
+    background: #018B38 !important;
+}
+
+body > main.route-compare-page .segment.bus {
+    background: #2878EF !important;
+}
+
+body > main.route-compare-page .segment.subway {
+    background: #8555D9 !important;
+}
+
+/* 구간 시간: 막대 안에 흰 글씨 */
+body > main.route-compare-page .segment-label {
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* 선택한 경로 아래 '전체 이동 순서 · N단계' 칸은 쓰지 않아 숨긴다 */
+body > main.route-compare-page .selected-itinerary {
+    display: none !important;
+}

@@ -29,3 +29,9 @@
 .navigation-page #guideCard .step-fallback.hidden {
     display: none;
 }
+
+/* 도착 후 '보호자에게 도착 알림을 보냈어요 / 홈으로 돌아가기 / 다른 목적지 찾기' 창은 피그마에 없어 숨긴다.
+   도착 알림을 보내지 못해 '다시 시도' 버튼이 보일 때만 창을 보여준다. */
+.navigation-page #arrivalActions:not(:has(#retryArrivalButton:not([hidden]))) {
+    display: none !important;
+}

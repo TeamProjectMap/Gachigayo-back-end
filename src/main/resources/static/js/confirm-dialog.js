@@ -11,7 +11,7 @@
     var STYLE = [
         ".app-confirm-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.4)}",
         ".app-confirm-box{width:100%;max-width:320px;padding:24px 20px 16px;border-radius:20px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.18);font-family:Pretendard,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}",
-        ".app-confirm-text{margin:0 0 20px;color:#363636;font-size:16px;font-weight:500;line-height:1.5;text-align:center;word-break:keep-all}",
+        ".app-confirm-text{margin:0 0 20px;color:#363636;font-size:16px;font-weight:500;line-height:1.5;text-align:center;word-break:keep-all;white-space:pre-line}",
         ".app-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
         ".app-confirm-actions button{height:48px;border:0;border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}",
         ".app-confirm-cancel{background:#f0f0f0;color:#363636}",

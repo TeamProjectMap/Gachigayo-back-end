@@ -4,31 +4,46 @@ $(document).ready(function() {
     requestCurrentOrigin();
 });
 
+// 위치를 못 가져올 때 쓰는 곳: 마지막으로 확인한 위치, 그것도 없으면 강서구청 근처
+var WEATHER_DEFAULT_LOCATION = { lat: 37.5509, lon: 126.8495 };
+var WEATHER_LAST_LOCATION_KEY = 'weatherLastLocation';
+
 function requestCurrentOrigin() {
     if (!navigator.geolocation) {
-        console.log("현재 위치를 확인할 수 없는 브라우저입니다.");
-        $('#temperature').text('-°C');
-        $('#weatherMainText').text('날씨 정보를 가져올 수 없어요');
-        $('#weatherSubText').text('잠시 후 다시 시도해 주세요');
+        loadFallbackWeather();
         return;
     }
 
     navigator.geolocation.getCurrentPosition(
         function (position) {
-            loadWeatherData(position.coords.latitude, position.coords.longitude)
+            var lat = position.coords.latitude, lon = position.coords.longitude;
+            try {
+                localStorage.setItem(WEATHER_LAST_LOCATION_KEY, JSON.stringify({ lat: lat, lon: lon }));
+            } catch (e) { /* 저장 못 해도 날씨는 보여준다 */ }
+            loadWeatherData(lat, lon);
         },
         function (error) {
-            console.error("날씨 연동 오류:", error);
-            $('#temperature').text('-°C');
-            $('#weatherMainText').text('날씨 정보를 가져올 수 없어요');
-            $('#weatherSubText').text('잠시 후 다시 시도해 주세요');
+            // 위치 권한이 꺼져 있거나 못 찾아도 날씨 칸이 비지 않게 대신 위치로 보여준다
+            console.warn("현재 위치를 몰라 대신 위치로 날씨를 보여줍니다:", error && error.message);
+            loadFallbackWeather();
         },
         {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
+            enableHighAccuracy: false,
+            timeout: 8000,
+            maximumAge: 10 * 60 * 1000
         }
     );
+}
+
+function loadFallbackWeather() {
+    var location = WEATHER_DEFAULT_LOCATION;
+    try {
+        var saved = JSON.parse(localStorage.getItem(WEATHER_LAST_LOCATION_KEY) || 'null');
+        if (saved && isFinite(saved.lat) && isFinite(saved.lon)) {
+            location = saved;
+        }
+    } catch (e) { /* 기본 위치 사용 */ }
+    loadWeatherData(location.lat, location.lon);
 }
 
 function loadWeatherData(lat, lon) {

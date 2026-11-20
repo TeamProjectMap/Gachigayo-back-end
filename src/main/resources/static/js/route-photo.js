@@ -215,9 +215,12 @@
                         .addClass("photo-action danger")
                         .text("삭제")
                         .on("click", function () {
-                            if (window.confirm("이 사진을 지울까요?")) {
-                                deletePhoto(photo.routePhotoId);
-                            }
+                            // window.confirm은 앱 화면(WebView)에서 바로 '취소'가 돼서 화면 안 확인창을 쓴다
+                            AppConfirm("이 사진을 지울까요?", "삭제", true).then(function (ok) {
+                                if (ok) {
+                                    deletePhoto(photo.routePhotoId);
+                                }
+                            });
                         }));
 
         $text.append($buttons);

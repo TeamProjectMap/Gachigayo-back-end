@@ -44,16 +44,23 @@
             connect($(this));
         });
 
+        // window.confirm은 앱 화면(WebView) 등에서 창 없이 바로 '취소'가 돼서 버튼이 안 먹었다 → 화면 안 확인창
         $("#reissueButton").on("click", function () {
-            if (window.confirm("연결코드를 다시 받으면 이전 코드는 쓸 수 없습니다. 계속할까요?")) {
-                request($(this), { url: "/link/code/reissue" });
-            }
+            var $button = $(this);
+            AppConfirm("연결코드를 다시 받으면 이전 코드는 쓸 수 없어요. 계속할까요?", "다시 받기").then(function (ok) {
+                if (ok) {
+                    request($button, { url: "/link/code/reissue" });
+                }
+            });
         });
 
         $("#disconnectButton").on("click", function () {
-            if (window.confirm("연결을 해제할까요?")) {
-                request($(this), { url: "/link/disconnect" });
-            }
+            var $button = $(this);
+            AppConfirm("연결을 해제할까요?", "해제", true).then(function (ok) {
+                if (ok) {
+                    request($button, { url: "/link/disconnect" });
+                }
+            });
         });
 
         $("#logoutButton").on("click", function () {

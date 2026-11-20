@@ -114,12 +114,14 @@
                 .addClass("route-delete")
                 .html(TRASH_ICON)
                 .on("click", function () {
-                    var ok = window.confirm(
-                            "'" + route.routeName + "' 경로를 삭제할까요?\n기록한 구간도 함께 지워집니다.");
-
-                    if (ok) {
-                        deleteRoute(route.routeId, $(this));
-                    }
+                    // window.confirm은 앱 화면(WebView)에서 바로 '취소'가 돼서 화면 안 확인창을 쓴다
+                    var $button = $(this);
+                    AppConfirm("'" + route.routeName + "' 경로를 삭제할까요?\n기록한 구간도 함께 지워져요.", "삭제", true)
+                            .then(function (ok) {
+                                if (ok) {
+                                    deleteRoute(route.routeId, $button);
+                                }
+                            });
                 });
 
         return $("<li>").addClass("route-row").append($open).append($delete);

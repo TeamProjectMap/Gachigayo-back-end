@@ -785,11 +785,17 @@
 
     $.each(steps, function (_, step) {
       var percent = Math.max(4, (safeNumber(step.time) / total) * 100);
-      $bar.append(
-        $("<span>")
-          .addClass("segment " + getSegmentClass(step))
-          .css("width", percent + "%"),
-      );
+      var minutes = Math.max(secondsToMinutes(step.time), 1);
+      var $segment = $("<span>")
+        .addClass("segment " + getSegmentClass(step))
+        .css("width", percent + "%")
+        .attr("title", minutes + "분");
+
+      // 구간마다 걸리는 시간. 칸이 너무 좁으면 글씨가 안 들어가서 생략한다
+      if (percent >= 12) {
+        $segment.append($("<span>").addClass("segment-label").text(minutes + "분"));
+      }
+      $bar.append($segment);
     });
 
     return $bar;
@@ -1069,6 +1075,8 @@
         return {
           type: step.type || routeType || "WALKING",
           guidance: step.guidance || "",
+          // AI가 쉬운 말로 바꾼 안내 (없으면 길안내 화면이 guidance를 쓴다)
+          easyGuidance: step.easyGuidance || "",
           distance: safeNumber(step.distance),
           time: safeNumber(step.time),
           longitude: step.longitude != null ? step.longitude : null,

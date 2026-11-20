@@ -2,6 +2,7 @@ package com.baegopa.onestep.controller;
 
 import com.baegopa.onestep.dto.KakaoPlaceDTO;
 import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
+import com.baegopa.onestep.service.IEasyGuideService;
 import com.baegopa.onestep.service.IKakaoMapService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class MapController {
     private static final String ROLE_USER = "USER";
 
     private final IKakaoMapService kakaoMapService;
+    private final IEasyGuideService easyGuideService;
     private final com.baegopa.onestep.service.impl.PlaceSearchService placeSearchService;
 
     @ResponseBody
@@ -106,6 +108,9 @@ public class MapController {
                     endLongitude.trim(),
                     endLatitude.trim(),
                     destinationName == null ? null : destinationName.trim());
+
+            // 안내 문구를 AI로 쉬운 말로 바꿔 easyGuidance에 채운다. 실패하면 원래 문구 그대로
+            easyGuideService.applyEasyGuidance(routes);
 
             boolean hasPublicTransit = routes.getPublicTransit() != null && routes.getPublicTransit().isAvailable();
             boolean hasWalking = routes.getWalking() != null && routes.getWalking().isAvailable();
