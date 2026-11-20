@@ -298,3 +298,15 @@ button:disabled {
         max-width: none;
     }
 }
+
+/* 체크 표시를 원 정가운데에: 테두리를 돌려 그린 체크는 모양이 한쪽으로 쏠려 보여서 SVG로 가운데에 그린다 */
+.check-icon::after {
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    transform: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 44px 44px no-repeat;
+}
