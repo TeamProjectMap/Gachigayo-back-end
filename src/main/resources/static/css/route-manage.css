@@ -617,8 +617,14 @@ ul {
 }
 
 /* 이용자 길안내 검색창과 같은 모양: 둥근 검색창 + 바로 아래 붙는 장소 목록 */
+/* 경로 등록 화면 안의 출발지·도착지 칸. 목록은 아래 내용을 밀지 않고 그 위에 떠서 보인다 */
 .place-search {
+    position: relative;
     margin-top: 6px;
+}
+
+.place-search.is-open {
+    z-index: 30;
 }
 
 .place-search-row {
@@ -678,7 +684,12 @@ ul {
 
 .place-list {
     display: none;
-    max-height: calc(100dvh - 220px);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    max-height: 340px;
     margin: 0;
     padding: 0 8px 8px;
     overflow-y: auto;
