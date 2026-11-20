@@ -42,6 +42,10 @@ public interface IUserMapper {
 
     int upsertUserSettings(UserSettingsDTO userSettingsDTO);
 
+    /** 직접 쓴 도움요청 문구 모음 저장 (JSON 배열 문자열) */
+    int upsertCustomHelpMessages(@Param("userId") Long userId,
+                                 @Param("customHelpMessages") String customHelpMessages);
+
     int insertUser(UserDTO userDTO);
 
     int insertGuardianLink(@Param("userId") Long userId, @Param("guardianId") Long guardianId);

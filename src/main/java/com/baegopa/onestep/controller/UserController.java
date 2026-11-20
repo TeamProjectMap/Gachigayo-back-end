@@ -98,6 +98,7 @@ public class UserController {
 
         Map<String, Object> response = createResponse(true, "도움요청 문구를 조회했습니다.");
         response.put("helpRequestMessage", userService.getHelpRequestMessage(sessionUser.userId()));
+        response.put("customMessages", userService.getCustomHelpMessages(sessionUser.userId()));
 
         return response;
     }
@@ -120,6 +121,28 @@ public class UserController {
         } catch (Exception e) {
             log.error("Help card save failed. userId={}", sessionUser.userId(), e);
             return createResponse(false, "도움요청 문구 저장 중 오류가 발생했습니다.");
+        }
+    }
+
+    /** 직접 쓴 도움요청 문구 모음 저장 (추가·수정·삭제 후 목록 전체를 보낸다) */
+    @ResponseBody
+    @PostMapping("/help-card/messages")
+    public Map<String, Object> saveCustomHelpMessages(HttpServletRequest request, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            Map<String, Object> response = createResponse(true, "직접 쓴 문구를 저장했습니다.");
+            response.put("customMessages",
+                    userService.saveCustomHelpMessages(sessionUser.userId(), request.getParameter("messages")));
+            return response;
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("Custom help messages save failed. userId={}", sessionUser.userId(), e);
+            return createResponse(false, "문구 저장 중 오류가 발생했습니다.");
         }
     }
 

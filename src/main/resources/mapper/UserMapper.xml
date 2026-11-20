@@ -27,6 +27,7 @@
         <result property="voiceGuideYn" column="voiceGuideYn"/>
         <result property="checkpointAlarmYn" column="checkpointAlarmYn"/>
         <result property="helpRequestMessage" column="helpRequestMessage"/>
+        <result property="customHelpMessages" column="customHelpMessages"/>
         <result property="regDt" column="regDt"/>
         <result property="updDt" column="updDt"/>
     </resultMap>
@@ -166,6 +167,7 @@
             voiceGuideYn,
             checkpointAlarmYn,
             helpRequestMessage,
+            customHelpMessages,
             regDt,
             updDt
         FROM USER_SETTINGS
@@ -182,6 +184,19 @@
         )
         ON DUPLICATE KEY UPDATE
             helpRequestMessage = VALUES(helpRequestMessage)
+    </insert>
+
+    <!-- 직접 쓴 도움요청 문구 모음만 바꾼다 (고른 문구는 그대로) -->
+    <insert id="upsertCustomHelpMessages">
+        INSERT INTO USER_SETTINGS (
+            userId,
+            customHelpMessages
+        ) VALUES (
+            #{userId},
+            #{customHelpMessages}
+        )
+        ON DUPLICATE KEY UPDATE
+            customHelpMessages = VALUES(customHelpMessages)
     </insert>
 
     <insert id="insertUser" parameterType="com.baegopa.onestep.dto.UserDTO"

@@ -36,6 +36,7 @@ CREATE TABLE USER_SETTINGS (
     voiceGuideYn      CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '음성 안내 사용 여부',
     checkpointAlarmYn CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '체크포인트 알림 여부',
     helpRequestMessage TEXT    NULL     COMMENT 'Help request card message',
+    customHelpMessages TEXT    NULL     COMMENT '직접 쓴 도움요청 문구 모음 (JSON 배열)',
     regDt              DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT 'Created datetime',
     updDt              DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT 'Updated datetime',
     PRIMARY KEY (userId),

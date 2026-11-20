@@ -2,6 +2,7 @@ package com.baegopa.onestep.service;
 
 import com.baegopa.onestep.dto.UserDTO;
 
+import java.util.List;
 import java.util.Map;
 
 public interface IUserService {
@@ -31,6 +32,12 @@ public interface IUserService {
     String getHelpRequestMessage(Long userId);
 
     int saveHelpRequestMessage(Long userId, String helpRequestMessage);
+
+    /** 직접 쓴 도움요청 문구 모음 (없으면 빈 목록) */
+    List<String> getCustomHelpMessages(Long userId);
+
+    /** 직접 쓴 도움요청 문구 모음을 통째로 바꾼다 (추가·수정·삭제 모두 이걸로) */
+    List<String> saveCustomHelpMessages(Long userId, String messagesJson);
 
     int registerUser(UserDTO userDTO);
 

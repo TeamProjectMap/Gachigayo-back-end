@@ -22,6 +22,7 @@ public class UserSettingsDTO {
     private String voiceGuideYn;
     private String checkpointAlarmYn;
     private String helpRequestMessage;
+    private String customHelpMessages;  // 직접 쓴 문구 모음 (JSON 배열)
     private LocalDateTime regDt;
     private LocalDateTime updDt;
 }

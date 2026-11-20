@@ -1,0 +1,79 @@
+/* 도움요청 카드 편집: 직접 쓴 문구 카드 (기본 문구 카드와 같은 모양 + 안에 수정·삭제) */
+.hidden {
+    display: none !important;
+}
+
+.saved-card {
+    display: block;
+    cursor: pointer;
+}
+
+.saved-card .saved-text {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+/* 카드 안 오른쪽 아래 작은 버튼 */
+.card-actions,
+.card-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.card-action {
+    min-width: 52px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #C8C8C8;
+    border-radius: 15px;
+    background: #FFFFFF;
+    color: #363636;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.card-action.danger {
+    border-color: #FFB3B5;
+    color: #E5484D;
+}
+
+.card-action.primary {
+    border-color: #018B38;
+    background: #018B38;
+    color: #FFFFFF;
+}
+
+/* 수정 중: 카드 안에서 바로 고친다 */
+.card-edit-input {
+    display: block;
+    width: 100%;
+    min-height: 22px;
+    padding: 8px 10px;
+    border: 1px solid #018B38;
+    border-radius: 10px;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    background: #FFFFFF;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    box-sizing: border-box;
+}
+
+.custom-full-note {
+    margin: 0;
+    color: #8D8D8D;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.edit-message.error {
+    color: #E5484D;
+}
