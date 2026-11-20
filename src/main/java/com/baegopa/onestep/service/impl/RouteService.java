@@ -143,6 +143,26 @@ public class RouteService implements IRouteService {
     }
 
     @Override
+    public List<Map<String, Object>> getRoutesForUser(Long userId) {
+        List<Map<String, Object>> routes = new ArrayList<>();
+
+        for (RouteDTO route : routeMapper.getRoutes(userId)) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("routeId", route.getRouteId());
+            item.put("routeName", route.getRouteName());
+            item.put("startName", route.getStartName());
+            item.put("endName", route.getEndName());
+            // 예전에 등록한 경로는 좌표가 없다. 화면이 이름으로 장소를 다시 찾는다.
+            item.put("endLatitude", route.getEndLat());
+            item.put("endLongitude", route.getEndLng());
+            item.put("photoCount", routePhotoMapper.getPhotosByRoute(route.getRouteId()).size());
+            routes.add(item);
+        }
+
+        return routes;
+    }
+
+    @Override
     public KakaoRouteSearchResultDTO searchRouteOptions(String startLongitude, String startLatitude,
                                                         String endLongitude, String endLatitude,
                                                         String endName) {

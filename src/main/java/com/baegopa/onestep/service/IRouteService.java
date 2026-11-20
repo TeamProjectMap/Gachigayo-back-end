@@ -55,4 +55,12 @@ public interface IRouteService {
 
     /** 출발지·도착지를 고르기 위한 장소 검색 */
     List<KakaoPlaceDTO> searchPlaces(String query);
+
+    /**
+     * 이용자 홈: 보호자가 이 이용자에게 등록해 준 경로 목록
+     * <p>
+     * 이용자가 하나를 고르면 그 도착지로 길안내를 시작하고,
+     * 길안내가 같은 목적지의 보호자 경로를 찾아 체크포인트 사진을 띄운다.
+     */
+    List<Map<String, Object>> getRoutesForUser(Long userId);
 }

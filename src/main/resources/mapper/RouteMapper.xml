@@ -17,6 +17,8 @@
                routeType,
                startName,
                endName,
+               endLat,
+               endLng,
                totalDistance,
                totalDuration,
                riskLevel,

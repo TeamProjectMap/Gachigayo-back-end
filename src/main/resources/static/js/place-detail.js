@@ -6,9 +6,11 @@
   var searchPage = favoriteMode ? "/route-search.html?select=favorite" : "/route-search.html";
   // 자주 가는 곳(목록·홈)에서 열면 검색창·즐겨찾기 없이 지도·이름·이곳으로 가기만
   var fromParam = new URLSearchParams(location.search).get("from");
-  var savedPlaceMode = fromParam === "favorites" || fromParam === "home";
+  // 보호자 경로 목록(guardian-routes)에서 열어도 같은 모양
+  var savedPlaceMode = fromParam === "favorites" || fromParam === "home" || fromParam === "guardian-routes";
   var backPage = fromParam === "favorites" ? "/route-search.html?view=favorites"
-      : fromParam === "home" ? "/user-home.html" : searchPage;
+      : fromParam === "home" ? "/user-home.html"
+      : fromParam === "guardian-routes" ? "/guardian-routes.html" : searchPage;
   var favorite = false;
   var placeMap = null;
   var endpointRevision = 0;

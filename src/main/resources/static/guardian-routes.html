@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>같이가요 보호자 경로</title>
+    <link rel="stylesheet" href="/css/guardian-routes.css?v=20261120">
+</head>
+<body>
+<!-- 이용자: 보호자가 같이 걸으며 등록해 준 경로 모음 (홈의 '보호자 경로' 카드) -->
+<main class="guardian-routes-page hidden" id="guardianRoutesPage">
+    <header class="routes-header">
+        <button type="button" class="routes-back" id="backButton" aria-label="홈으로">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <h1>보호자 경로</h1>
+    </header>
+
+    <p class="routes-intro" id="routesIntro">보호자가 같이 걸으며 등록한 길이에요.<br>고르면 그곳까지 길안내를 해요.</p>
+
+    <ul class="routes-list" id="routesList" aria-label="보호자가 등록한 경로"></ul>
+
+    <p class="routes-message" id="routesMessage" role="status"></p>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/js/guardian-routes.js?v=20261120"></script>
+</body>
+</html>
