@@ -27,6 +27,7 @@
     live = true;
   let landmarks = [],
     shownLandmark = null,
+    announcedLandmarkId = null,
     dismissedLandmarks = [];
   let sessionUserId = null,
     shareLocation = true,
@@ -356,6 +357,8 @@
           longitude: p.coords.longitude,
           latitude: p.coords.latitude,
           accuracy: p.coords.accuracy,
+          // 버스·지하철로 빠르게 지나갈 때 보호자 사진을 띄우지 않으려고 (m/s, 없으면 null)
+          speed: p.coords.speed,
           capturedAt: p.timestamp,
         }),
       (e) => {
@@ -396,6 +399,9 @@
         body: new URLSearchParams({
           startName: selection.origin?.placeName || "현재 위치",
           endName: selection.destination?.placeName || "목적지",
+          // 보호자가 같은 목적지로 등록한 경로를 이름이 조금 달라도 좌표로 찾게
+          endLatitude: selection.destination?.latitude ?? "",
+          endLongitude: selection.destination?.longitude ?? "",
           totalDistance: selection.route.totalDistance || 0,
           totalDuration: selection.route.totalTime || 0,
         }),
@@ -442,7 +448,17 @@
           )
         : null;
     $("landmarkCard").hidden = !shownLandmark;
-    if (!shownLandmark) return;
+    if (!shownLandmark) {
+      announcedLandmarkId = null;
+      return;
+    }
+    // 새 사진이 뜰 때 한 번 진동해서 화면을 안 보고 걷던 이용자도 알게 한다
+    if (announcedLandmarkId !== shownLandmark.id) {
+      announcedLandmarkId = shownLandmark.id;
+      try {
+        navigator.vibrate?.([200, 100, 200]);
+      } catch {}
+    }
     text("landmarkTitle", shownLandmark.title || "주변 장소를 확인해주세요");
     text(
       "landmarkDescription",

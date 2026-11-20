@@ -903,3 +903,38 @@ ul {
     box-shadow: 0 0 0 6px rgba(35, 121, 245, 0.2);
 }
 
+
+/* ---------------------------- 구간 기록: 체크포인트 찍기 ---------------------------- */
+
+/* 걷는 중에 엄지로 바로 누를 수 있게 화면 아래에 붙여 둔다 */
+.photo-page {
+    padding-bottom: 150px;
+}
+
+.checkpoint-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    z-index: 20;
+    width: 100%;
+    max-width: 402px;
+    padding: 10px 0 calc(18px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #FFFFFF 22%);
+    transform: translateX(-50%);
+}
+
+.checkpoint-bar .main-button {
+    margin-top: 6px;
+}
+
+.here-status {
+    margin: 0 24px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+/* 위치를 옮기는 중에는 지도를 눌러야 해서 숨긴다 */
+.photo-page.picking .checkpoint-bar {
+    display: none;
+}

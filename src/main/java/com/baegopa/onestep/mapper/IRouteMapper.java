@@ -55,6 +55,11 @@ public interface IRouteMapper {
      */
     RouteDTO getGuardianRouteByEndName(@Param("userId") Long userId, @Param("endName") String endName);
 
+    /** 목적지 좌표가 가장 가까운 보호자 경로 (좌표가 없는 예전 경로는 빼고) */
+    RouteDTO getNearestGuardianRoute(@Param("userId") Long userId,
+                                     @Param("lat") java.math.BigDecimal lat,
+                                     @Param("lng") java.math.BigDecimal lng);
+
     /** 이 경로로 지금 이동 중인 이동 수 (이동 중에는 경로를 지우지 못하게 한다) */
     int getMovingTripCount(@Param("routeId") Long routeId);
 }

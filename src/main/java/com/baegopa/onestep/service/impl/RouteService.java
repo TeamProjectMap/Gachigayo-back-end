@@ -127,6 +127,8 @@ public class RouteService implements IRouteService {
 
         routeDTO.setUserId(linkedUser.getUserId());
         routeDTO.setRouteType(ROUTE_TYPE_GUARDIAN);
+        routeDTO.setEndLat(toCoordinate(endLatitude, "도착지 위도"));
+        routeDTO.setEndLng(toCoordinate(endLongitude, "도착지 경도"));
         routeDTO.setRiskLevel(DEFAULT_RISK_LEVEL);
         putTotals(routeDTO, searchResult, transitRoute);
 

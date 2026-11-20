@@ -21,6 +21,7 @@ public class TripEventDTO {
     private Long userId;
     private Long tripId;
     private Long routeStepId;
+    private Long routePhotoId;      // 사진 지점 체크포인트를 지났을 때 그 사진
     private String eventType;       // CHECKPOINT 등
     private String eventMessage;    // 체크포인트 이름 등
     private BigDecimal lat;

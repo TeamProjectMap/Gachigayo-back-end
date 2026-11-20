@@ -68,6 +68,8 @@ public class TripController {
         RouteDTO routeDTO = new RouteDTO();
         routeDTO.setStartName(getParameter(request, "startName"));
         routeDTO.setEndName(getParameter(request, "endName"));
+        routeDTO.setEndLat(toDecimal(getParameter(request, "endLatitude")));
+        routeDTO.setEndLng(toDecimal(getParameter(request, "endLongitude")));
         routeDTO.setTotalDistance(toInteger(getParameter(request, "totalDistance")));
         routeDTO.setTotalDuration(toInteger(getParameter(request, "totalDuration")));
 
@@ -142,6 +144,19 @@ public class TripController {
     private Long toLong(String value) {
         try {
             return isBlank(value) ? null : Long.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 좌표 같은 소수. 숫자가 아니거나 범위를 벗어나면 null (없으면 이름으로 찾는다) */
+    private java.math.BigDecimal toDecimal(String value) {
+        try {
+            if (isBlank(value)) {
+                return null;
+            }
+            java.math.BigDecimal number = new java.math.BigDecimal(value.trim());
+            return number.abs().compareTo(java.math.BigDecimal.valueOf(180)) > 0 ? null : number;
         } catch (NumberFormatException e) {
             return null;
         }

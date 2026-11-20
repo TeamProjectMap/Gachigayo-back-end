@@ -75,6 +75,8 @@ CREATE TABLE ROUTES (
     routeType     VARCHAR(20)  NOT NULL COMMENT '경로 유형 (RECOMMENDED, LEARNING, GUARDIAN)',
     startName     VARCHAR(100) NOT NULL COMMENT '출발지 이름',
     endName       VARCHAR(100) NOT NULL COMMENT '목적지 이름',
+    endLat        DECIMAL(10,7) NULL     COMMENT '목적지 위도',
+    endLng        DECIMAL(10,7) NULL     COMMENT '목적지 경도',
     totalDistance INT          NOT NULL COMMENT '총 이동 거리(m)',
     totalDuration INT          NOT NULL COMMENT '총 예상 시간(초)',
     riskLevel     VARCHAR(20)  NOT NULL COMMENT '위험 등급 (LOW, MEDIUM, HIGH)',
@@ -156,6 +158,7 @@ CREATE TABLE TRIP_EVENTS (
     userId       BIGINT        NOT NULL COMMENT '이벤트를 발생시킨 이용자',
     tripId       BIGINT        NULL     COMMENT '관련 이동 (없을 수 있음)',
     routeStepId  BIGINT        NULL     COMMENT '관련 단계 (없을 수 있음)',
+    routePhotoId BIGINT        NULL     COMMENT '지나간 사진 지점 (사진 체크포인트일 때)',
     eventType    VARCHAR(30)   NOT NULL COMMENT '이벤트 종류 (HELP_REQUEST, DEVIATION, SOS 등)',
     eventMessage VARCHAR(255)  NULL     COMMENT '이벤트 상세 내용',
     lat          DECIMAL(10,7) NOT NULL COMMENT '이벤트 발생 위치 위도',
@@ -165,6 +168,7 @@ CREATE TABLE TRIP_EVENTS (
     PRIMARY KEY (tripEventId),
     KEY IDX_TRIP_EVENTS_userId (userId),
     KEY IDX_TRIP_EVENTS_tripId (tripId),
+    KEY IDX_TRIP_EVENTS_photo (tripId, routePhotoId),
     CONSTRAINT FK_TRIP_EVENTS_user
         FOREIGN KEY (userId) REFERENCES USERS (userId) ON DELETE CASCADE,
     CONSTRAINT FK_TRIP_EVENTS_trip

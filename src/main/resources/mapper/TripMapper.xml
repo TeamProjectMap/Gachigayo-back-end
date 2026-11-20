@@ -91,12 +91,22 @@
           AND eventType = 'CHECKPOINT'
     </select>
 
+    <!-- 이 이동에서 이 사진 지점을 이미 지났는지 -->
+    <select id="getPhotoCheckpointEventCount" resultType="int">
+        SELECT COUNT(*)
+        FROM TRIP_EVENTS
+        WHERE tripId = #{tripId}
+          AND routePhotoId = #{routePhotoId}
+          AND eventType = 'CHECKPOINT'
+    </select>
+
     <insert id="insertTripEvent" parameterType="com.baegopa.onestep.dto.TripEventDTO"
             useGeneratedKeys="true" keyProperty="tripEventId">
         INSERT INTO TRIP_EVENTS (
             userId,
             tripId,
             routeStepId,
+            routePhotoId,
             eventType,
             eventMessage,
             lat,
@@ -106,6 +116,7 @@
             #{userId},
             #{tripId},
             #{routeStepId},
+            #{routePhotoId},
             #{eventType},
             #{eventMessage},
             #{lat},

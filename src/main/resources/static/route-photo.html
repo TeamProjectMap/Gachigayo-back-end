@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 경로 촬영</title>
-    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-map">
+    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-checkpoint">
 </head>
 <body>
 <main class="photo-page hidden" id="photoPage">
@@ -29,10 +29,17 @@
     <input type="file" id="photoInput" class="photo-input" accept="image/jpeg,image/png,image/webp" capture="environment">
 
     <p class="page-message" id="photoMessage"></p>
+
+    <!-- 걷다가 이용자가 헷갈릴 만한 곳에서 바로 누른다. 찍은 자리가 체크포인트가 되고,
+         이용자가 길안내로 그 자리를 지나면 이 사진이 뜬다. 이름·설명은 나중에 채워도 된다. -->
+    <div class="checkpoint-bar">
+        <p class="here-status" id="hereStatus" role="status">지금 위치를 찾는 중이에요</p>
+        <button type="button" class="main-button" id="checkpointButton">여기 체크포인트로 찍기</button>
+    </div>
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/js/confirm-dialog.js?v=20261120"></script>
-<script src="/js/route-photo.js?v=20261120-map"></script>
+<script src="/js/route-photo.js?v=20261120-checkpoint"></script>
 </body>
 </html>

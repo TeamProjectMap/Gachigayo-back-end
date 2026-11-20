@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,8 @@ public class RouteDTO {
     private String routeType;       // GUARDIAN : 보호자가 등록한 경로
     private String startName;
     private String endName;
+    private BigDecimal endLat;      // 목적지 좌표: 이용자 길안내와 같은 목적지인지 볼 때 쓴다
+    private BigDecimal endLng;
     private Integer totalDistance;  // m
     private Integer totalDuration;  // 초
     private String riskLevel;
