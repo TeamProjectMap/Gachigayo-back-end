@@ -889,3 +889,14 @@ ul {
     color: var(--line);
     cursor: default;
 }
+
+/* 구간 기록 지도: 보호자의 지금 위치 */
+.map-here {
+    display: block;
+    width: 16px;
+    height: 16px;
+    border: 3px solid #FFFFFF;
+    border-radius: 50%;
+    background: #2379F5;
+    box-shadow: 0 0 0 6px rgba(35, 121, 245, 0.2);
+}

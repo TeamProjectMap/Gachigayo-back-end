@@ -469,6 +469,10 @@
         markers = [];
 
         if (!located.length) {
+            // 사진도 구간 위치도 없으면(아직 기록 전) 시청 대신 실제 있을 만한 곳으로 옮긴다
+            if (!(stepLat && stepLng)) {
+                centerOnLikelyPlace();
+            }
             return;
         }
 
@@ -506,6 +510,66 @@
         }
 
         return new window.kakao.maps.LatLng(37.5665, 126.9780);
+    }
+
+    /**
+     * 기록 전 구간: 보호자는 그 자리를 걸으며 기록하므로 지금 위치를 먼저 쓰고,
+     * 위치를 못 받으면 구간 제목의 출발 장소('A → B (도보)'의 A, 아니면 B)를 검색해 그곳으로 옮긴다.
+     */
+    function centerOnLikelyPlace() {
+        if (!navigator.geolocation) {
+            centerOnStepPlace();
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+            var here = new window.kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
+            map.setCenter(here);
+            map.setLevel(3);
+            markers.push(new window.kakao.maps.CustomOverlay({
+                map: map,
+                position: here,
+                content: '<span class="map-here" aria-label="지금 위치"></span>',
+                yAnchor: 0.5
+            }));
+        }, function () {
+            centerOnStepPlace();
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+    }
+
+    function centerOnStepPlace() {
+        var title = $("#stepTitle").text() || "";
+        var walk = title.match(/^(.+?)\s*→\s*(.+?)\s*\(도보\)\s*$/);
+        var names = walk ? [walk[1], walk[2]] : [title.replace(/\s*\(.*\)\s*$/, "")];
+
+        searchFirst(names);
+    }
+
+    /** 이름들을 차례로 찾아 처음 나온 장소로 지도를 옮긴다 */
+    function searchFirst(names) {
+        var name = $.trim(names.shift() || "");
+        if (!name) {
+            return;
+        }
+
+        $.ajax({
+            url: "/route/places",
+            type: "get",
+            dataType: "JSON",
+            data: { query: name },
+            success: function (json) {
+                var place = json && json.success && json.places && json.places[0];
+                if (place && place.latitude && place.longitude) {
+                    map.setCenter(new window.kakao.maps.LatLng(place.latitude, place.longitude));
+                    map.setLevel(3);
+                    return;
+                }
+                searchFirst(names);
+            },
+            error: function () {
+                searchFirst(names);
+            }
+        });
     }
 
     function setMapMessage(message) {
