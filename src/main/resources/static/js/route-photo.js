@@ -429,19 +429,36 @@
         });
     }
 
+    /**
+     * 지점 이름과 할 일을 한 창에서 적는다.
+     * window.prompt는 앱 화면(WebView)에서 창이 안 뜨고 바로 취소가 돼서 화면 안 입력창을 쓴다.
+     * 여기 적은 글이 이용자 길안내 사진 팝업에 그대로 나온다.
+     */
     function editText(photo) {
-        var title = window.prompt("이 지점의 이름을 적어주세요", photo.title || "");
+        AppForm("체크포인트 설명", [
+            {
+                name: "title",
+                label: "지점 이름",
+                value: photo.title || "",
+                placeholder: "예) 편의점 앞 횡단보도",
+                maxLength: 100
+            },
+            {
+                name: "description",
+                label: "여기서 무엇을 하면 되나요?",
+                value: photo.description || "",
+                placeholder: "예) 초록불이 켜지면 건너서 오른쪽으로 가요",
+                maxLength: 255,
+                multiline: true
+            }
+        ], "저장").then(function (values) {
+            if (values) {
+                saveText(photo, values.title, values.description);
+            }
+        });
+    }
 
-        if (title === null) {
-            return;
-        }
-
-        var description = window.prompt("여기서 무엇을 하면 되나요?", photo.description || "");
-
-        if (description === null) {
-            return;
-        }
-
+    function saveText(photo, title, description) {
         $.ajax({
             url: "/route/photos/" + photo.routePhotoId + "/text",
             type: "post",
