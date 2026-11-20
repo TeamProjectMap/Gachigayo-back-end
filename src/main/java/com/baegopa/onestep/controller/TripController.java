@@ -55,6 +55,27 @@ public class TripController {
         }
     }
 
+    /** 이용자: 보호자가 고른 경로 그대로 (이 경로로 바로 길안내) */
+    @ResponseBody
+    @GetMapping("/guardian-routes/{routeId}")
+    public Map<String, Object> guardianRouteGuide(@PathVariable Long routeId, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            Map<String, Object> response = createResponse(true, "보호자 경로를 불러왔습니다.");
+            response.putAll(routeService.getRouteGuideForUser(sessionUser.userId(), routeId));
+            return response;
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("보호자 경로 불러오기 실패 userId={}, routeId={}", sessionUser.userId(), routeId, e);
+            return createResponse(false, "경로를 불러오는 중 오류가 발생했습니다.");
+        }
+    }
+
     @ResponseBody
     @GetMapping("/{tripId}/landmarks")
     public Map<String, Object> landmarks(@PathVariable Long tripId, HttpSession session) {
@@ -89,6 +110,8 @@ public class TripController {
         RouteDTO routeDTO = new RouteDTO();
         routeDTO.setStartName(getParameter(request, "startName"));
         routeDTO.setEndName(getParameter(request, "endName"));
+        // '보호자 경로'에서 고른 길안내면 그 경로 번호 (서버가 주인·종류를 다시 확인한다)
+        routeDTO.setRouteId(toLong(getParameter(request, "guardianRouteId")));
         routeDTO.setEndLat(toDecimal(getParameter(request, "endLatitude")));
         routeDTO.setEndLng(toDecimal(getParameter(request, "endLongitude")));
         routeDTO.setTotalDistance(toInteger(getParameter(request, "totalDistance")));

@@ -22,6 +22,7 @@
                totalDistance,
                totalDuration,
                riskLevel,
+               routeJson IS NOT NULL AS guideReady,
                regDt,
                updDt
         FROM ROUTES
@@ -37,9 +38,12 @@
                routeType,
                startName,
                endName,
+               endLat,
+               endLng,
                totalDistance,
                totalDuration,
                riskLevel,
+               routeJson,
                regDt,
                updDt
         FROM ROUTES
@@ -80,7 +84,8 @@
             endLng,
             totalDistance,
             totalDuration,
-            riskLevel
+            riskLevel,
+            routeJson
         ) VALUES (
             #{userId},
             #{routeName},
@@ -91,7 +96,8 @@
             #{endLng},
             #{totalDistance},
             #{totalDuration},
-            #{riskLevel}
+            #{riskLevel},
+            #{routeJson}
         )
     </insert>
 

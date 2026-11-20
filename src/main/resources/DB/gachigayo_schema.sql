@@ -80,6 +80,7 @@ CREATE TABLE ROUTES (
     totalDistance INT          NOT NULL COMMENT '총 이동 거리(m)',
     totalDuration INT          NOT NULL COMMENT '총 예상 시간(초)',
     riskLevel     VARCHAR(20)  NOT NULL COMMENT '위험 등급 (LOW, MEDIUM, HIGH)',
+    routeJson     LONGTEXT     NULL     COMMENT '보호자가 고른 경로 전체 (길안내용 JSON)',
     regDt         DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '등록일시',
     updDt         DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일시',
     PRIMARY KEY (routeId),

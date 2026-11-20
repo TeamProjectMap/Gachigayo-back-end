@@ -3,6 +3,7 @@ package com.baegopa.onestep.service.impl;
 import com.baegopa.onestep.dto.KakaoPlaceDTO;
 import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
 import com.baegopa.onestep.dto.PublicTransitRouteDTO;
+import com.baegopa.onestep.dto.PublicTransitRouteResultDTO;
 import com.baegopa.onestep.dto.PublicTransitStepDTO;
 import com.baegopa.onestep.dto.RouteDTO;
 import com.baegopa.onestep.dto.RoutePhotoDTO;
@@ -14,6 +15,7 @@ import com.baegopa.onestep.dto.WalkingStepDTO;
 import com.baegopa.onestep.mapper.ILinkMapper;
 import com.baegopa.onestep.mapper.IRouteMapper;
 import com.baegopa.onestep.mapper.IRoutePhotoMapper;
+import com.baegopa.onestep.service.IEasyGuideService;
 import com.baegopa.onestep.service.IKakaoMapService;
 import com.baegopa.onestep.service.IRouteService;
 import com.baegopa.onestep.util.StepTextUtil;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -52,6 +55,8 @@ public class RouteService implements IRouteService {
     private final IRoutePhotoMapper routePhotoMapper;
     private final ILinkMapper linkMapper;
     private final IKakaoMapService kakaoMapService;
+    private final IEasyGuideService easyGuideService;
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     @Override
     public Map<String, Object> getRoutes(Long guardianId) {
@@ -131,6 +136,8 @@ public class RouteService implements IRouteService {
         routeDTO.setEndLng(toCoordinate(endLongitude, "도착지 경도"));
         routeDTO.setRiskLevel(DEFAULT_RISK_LEVEL);
         putTotals(routeDTO, searchResult, transitRoute);
+        routeDTO.setRouteJson(buildRouteJson(searchResult, transitRoute, routeDTO.getStartName(),
+                startLongitude, startLatitude, routeDTO.getEndName(), endLongitude, endLatitude));
 
         routeMapper.insertRoute(routeDTO);
         routeMapper.insertRouteSteps(routeDTO.getRouteId(), steps);
@@ -140,6 +147,77 @@ public class RouteService implements IRouteService {
                 guardianId, linkedUser.getUserId(), routeDTO.getRouteId(), steps.size());
 
         return routeDTO;
+    }
+
+    /**
+     * 보호자가 고른 경로를 길안내에 그대로 쓸 수 있게 JSON으로 남긴다.
+     * <p>
+     * 이용자가 '보호자 경로'에서 이 경로를 고르면 다시 검색하지 않고 이것으로 안내한다.
+     * 안내 문구는 이용자 길안내와 같이 AI 쉬운 말(easyGuidance)을 미리 채워 둔다. 실패해도 저장은 한다.
+     */
+    private String buildRouteJson(KakaoRouteSearchResultDTO searchResult, PublicTransitRouteDTO transitRoute,
+                                  String startName, String startLongitude, String startLatitude,
+                                  String endName, String endLongitude, String endLatitude) {
+        KakaoRouteSearchResultDTO chosen = new KakaoRouteSearchResultDTO();
+        Object route;
+
+        if (transitRoute != null) {
+            PublicTransitRouteResultDTO transit = new PublicTransitRouteResultDTO();
+            transit.setAvailable(true);
+            transit.setRoutes(new ArrayList<>(List.of(transitRoute)));
+            chosen.setPublicTransit(transit);
+            route = transitRoute;
+        } else {
+            chosen.setWalking(searchResult.getWalking());
+            route = searchResult.getWalking();
+        }
+
+        try {
+            easyGuideService.applyEasyGuidance(chosen);
+        } catch (Exception e) {
+            log.warn("보호자 경로 쉬운 말 안내 실패 - 원래 문구로 저장", e);
+        }
+
+        Map<String, Object> json = new LinkedHashMap<>();
+        json.put("mode", transitRoute != null ? "PUBLIC_TRANSIT" : "WALKING");
+        json.put("start", place(startName, startLongitude, startLatitude));
+        json.put("end", place(endName, endLongitude, endLatitude));
+        json.put("route", route);
+
+        try {
+            return jsonMapper.writeValueAsString(json);
+        } catch (Exception e) {
+            log.warn("보호자 경로 JSON 저장 실패", e);
+            return null;
+        }
+    }
+
+    private Map<String, Object> place(String name, String longitude, String latitude) {
+        Map<String, Object> place = new LinkedHashMap<>();
+        place.put("placeName", name);
+        place.put("longitude", longitude);
+        place.put("latitude", latitude);
+        return place;
+    }
+
+    @Override
+    public Map<String, Object> getRouteGuideForUser(Long userId, Long routeId) {
+        RouteDTO route = routeId == null ? null : routeMapper.getRoute(routeId);
+
+        if (route == null || !userId.equals(route.getUserId()) || !ROUTE_TYPE_GUARDIAN.equals(route.getRouteType())) {
+            throw new IllegalArgumentException("경로를 찾을 수 없습니다.");
+        }
+
+        if (isBlank(route.getRouteJson())) {
+            throw new IllegalArgumentException(
+                    "예전에 등록한 경로라 그대로 안내할 수 없어요. 보호자에게 경로를 다시 등록해 달라고 해주세요.");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("routeId", route.getRouteId());
+        result.put("routeName", route.getRouteName());
+        result.put("guide", jsonMapper.readValue(route.getRouteJson(), Map.class));
+        return result;
     }
 
     @Override
@@ -156,6 +234,7 @@ public class RouteService implements IRouteService {
             item.put("endLatitude", route.getEndLat());
             item.put("endLongitude", route.getEndLng());
             item.put("photoCount", routePhotoMapper.getPhotosByRoute(route.getRouteId()).size());
+            item.put("guideReady", Boolean.TRUE.equals(route.getGuideReady()));
             routes.add(item);
         }
 

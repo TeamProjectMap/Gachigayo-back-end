@@ -63,4 +63,10 @@ public interface IRouteService {
      * 길안내가 같은 목적지의 보호자 경로를 찾아 체크포인트 사진을 띄운다.
      */
     List<Map<String, Object>> getRoutesForUser(Long userId);
+
+    /**
+     * 이용자: 보호자가 고른 경로 그대로 (출발지·도착지·경로 전체)
+     * 이 경로로 다시 검색 없이 길안내를 시작한다.
+     */
+    Map<String, Object> getRouteGuideForUser(Long userId, Long routeId);
 }

@@ -28,6 +28,8 @@ public class RouteDTO {
     private Integer totalDistance;  // m
     private Integer totalDuration;  // 초
     private String riskLevel;
+    private String routeJson;       // 보호자가 고른 경로 전체 (이용자가 그대로 길안내 받는다)
+    private Boolean guideReady;     // 목록용: routeJson이 있는지
     private LocalDateTime regDt;
     private LocalDateTime updDt;
 

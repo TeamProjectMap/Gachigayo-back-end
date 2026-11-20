@@ -92,6 +92,15 @@ public class TripService implements ITripService {
      * 좌표가 없으면(예전 경로, 좌표를 안 보낸 화면) 이름이 같은 경로를 찾는다.
      */
     private RouteDTO findGuardianRoute(Long userId, RouteDTO routeDTO) {
+        // '보호자 경로'에서 고른 경로면 그 경로를 그대로 쓴다 (같은 목적지 경로가 여러 개여도)
+        if (routeDTO.getRouteId() != null) {
+            RouteDTO picked = routeMapper.getRoute(routeDTO.getRouteId());
+            routeDTO.setRouteId(null);
+            if (picked != null && userId.equals(picked.getUserId()) && "GUARDIAN".equals(picked.getRouteType())) {
+                return picked;
+            }
+        }
+
         if (routeDTO.getEndLat() != null && routeDTO.getEndLng() != null) {
             RouteDTO nearest = routeMapper.getNearestGuardianRoute(
                     userId, routeDTO.getEndLat(), routeDTO.getEndLng());

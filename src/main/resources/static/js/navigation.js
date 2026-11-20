@@ -402,6 +402,8 @@
           // 보호자가 같은 목적지로 등록한 경로를 이름이 조금 달라도 좌표로 찾게
           endLatitude: selection.destination?.latitude ?? "",
           endLongitude: selection.destination?.longitude ?? "",
+          // '보호자 경로'에서 고른 길안내면 그 경로로 이동을 잇는다 (체크포인트 사진·알림)
+          guardianRouteId: selection.guardianRouteId ?? "",
           totalDistance: selection.route.totalDistance || 0,
           totalDuration: selection.route.totalTime || 0,
         }),
