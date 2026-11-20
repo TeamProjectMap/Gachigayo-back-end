@@ -39,6 +39,8 @@ public class RouteService implements IRouteService {
     private static final String ROUTE_TYPE_GUARDIAN = "GUARDIAN";
     private static final String DEFAULT_RISK_LEVEL = "LOW";
     private static final String STEP_TYPE_WALK = "WALK";
+    /** 경로 후보 중 걷기를 골랐을 때 */
+    private static final String MODE_WALKING = "WALKING";
 
     /** 카카오 대중교통 응답은 걷는 구간을 WALKING 으로 준다. 둘을 같은 것으로 본다. */
     private static final String STEP_TYPE_WALKING = "WALKING";
@@ -88,7 +90,9 @@ public class RouteService implements IRouteService {
     @Transactional
     public RouteDTO createRoute(Long guardianId, RouteDTO routeDTO,
                                 String startLongitude, String startLatitude,
-                                String endLongitude, String endLatitude) {
+                                String endLongitude, String endLatitude,
+                                String mode, int routeIndex,
+                                KakaoRouteSearchResultDTO searched) {
 
         UserDTO linkedUser = linkMapper.getUserByGuardianId(guardianId);
 
@@ -102,10 +106,19 @@ public class RouteService implements IRouteService {
             throw new IllegalArgumentException("같은 이름의 경로가 이미 있습니다.");
         }
 
-        KakaoRouteSearchResultDTO searchResult = kakaoMapService.searchRoutes(
+        // 후보를 보여줄 때 찾아 둔 결과가 있으면 그대로 써야 보호자가 고른 경로와 같다
+        KakaoRouteSearchResultDTO searchResult = searched != null ? searched
+                : kakaoMapService.searchRoutes(
                 startLongitude, startLatitude, endLongitude, endLatitude, routeDTO.getEndName());
 
-        List<RouteStepDTO> steps = toSteps(searchResult,
+        PublicTransitRouteDTO transitRoute = MODE_WALKING.equalsIgnoreCase(mode)
+                ? null : pickTransitRoute(searchResult, routeIndex);
+
+        if (!MODE_WALKING.equalsIgnoreCase(mode) && transitRoute == null) {
+            throw new IllegalArgumentException("고른 경로를 찾지 못했습니다. 경로를 다시 골라주세요.");
+        }
+
+        List<RouteStepDTO> steps = toSteps(searchResult, transitRoute,
                 routeDTO.getStartName(), routeDTO.getEndName());
 
         if (steps.isEmpty()) {
@@ -115,7 +128,7 @@ public class RouteService implements IRouteService {
         routeDTO.setUserId(linkedUser.getUserId());
         routeDTO.setRouteType(ROUTE_TYPE_GUARDIAN);
         routeDTO.setRiskLevel(DEFAULT_RISK_LEVEL);
-        putTotals(routeDTO, searchResult);
+        putTotals(routeDTO, searchResult, transitRoute);
 
         routeMapper.insertRoute(routeDTO);
         routeMapper.insertRouteSteps(routeDTO.getRouteId(), steps);
@@ -125,6 +138,19 @@ public class RouteService implements IRouteService {
                 guardianId, linkedUser.getUserId(), routeDTO.getRouteId(), steps.size());
 
         return routeDTO;
+    }
+
+    @Override
+    public KakaoRouteSearchResultDTO searchRouteOptions(String startLongitude, String startLatitude,
+                                                        String endLongitude, String endLatitude,
+                                                        String endName) {
+        if (isBlank(startLongitude) || isBlank(startLatitude)) {
+            throw new IllegalArgumentException("출발지를 선택해주세요.");
+        }
+        if (isBlank(endLongitude) || isBlank(endLatitude)) {
+            throw new IllegalArgumentException("도착지를 선택해주세요.");
+        }
+        return kakaoMapService.searchRoutes(startLongitude, startLatitude, endLongitude, endLatitude, endName);
     }
 
     @Override
@@ -273,6 +299,7 @@ public class RouteService implements IRouteService {
      * 좌표는 보호자가 실제로 걸으며 기록할 때 채워진다.
      */
     private List<RouteStepDTO> toSteps(KakaoRouteSearchResultDTO searchResult,
+                                       PublicTransitRouteDTO route,
                                        String startName, String endName) {
         List<RouteStepDTO> steps = new ArrayList<>();
 
@@ -280,12 +307,7 @@ public class RouteService implements IRouteService {
             return steps;
         }
 
-        if (searchResult.getPublicTransit() != null
-                && searchResult.getPublicTransit().isAvailable()
-                && !searchResult.getPublicTransit().getRoutes().isEmpty()) {
-
-            PublicTransitRouteDTO route = searchResult.getPublicTransit().getRoutes().get(0);
-
+        if (route != null) {
             for (PublicTransitStepDTO step : route.getSteps()) {
                 steps.add(toStep(0, step));
             }
@@ -390,12 +412,23 @@ public class RouteService implements IRouteService {
         return stepDTO;
     }
 
-    private void putTotals(RouteDTO routeDTO, KakaoRouteSearchResultDTO searchResult) {
-        if (searchResult.getPublicTransit() != null
-                && searchResult.getPublicTransit().isAvailable()
-                && !searchResult.getPublicTransit().getRoutes().isEmpty()) {
+    /** 보호자가 고른 버스·지하철 경로 (몇 번째 후보인지) */
+    private PublicTransitRouteDTO pickTransitRoute(KakaoRouteSearchResultDTO searchResult, int routeIndex) {
+        if (searchResult == null || searchResult.getPublicTransit() == null
+                || !searchResult.getPublicTransit().isAvailable()) {
+            return null;
+        }
 
-            PublicTransitRouteDTO route = searchResult.getPublicTransit().getRoutes().get(0);
+        List<PublicTransitRouteDTO> routes = searchResult.getPublicTransit().getRoutes();
+        if (routeIndex < 0 || routeIndex >= routes.size()) {
+            return null;
+        }
+        return routes.get(routeIndex);
+    }
+
+    private void putTotals(RouteDTO routeDTO, KakaoRouteSearchResultDTO searchResult,
+                           PublicTransitRouteDTO route) {
+        if (route != null) {
             routeDTO.setTotalDistance(route.getTotalDistance() == null ? 0 : route.getTotalDistance());
             routeDTO.setTotalDuration(route.getTotalTime() == null ? 0 : route.getTotalTime());
             return;

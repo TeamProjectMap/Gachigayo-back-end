@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 새 경로 등록</title>
-    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-inline">
+    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-choice">
 </head>
 <body>
 <main class="route-page new-route hidden" id="newRoutePage">
+  <!-- 1단계: 이름과 출발지·도착지 -->
+  <div id="formView">
     <header class="route-header">
         <button type="button" class="back-button" id="backButton" aria-label="뒤로">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -61,9 +63,38 @@
     <p class="page-message" id="newRouteMessage"></p>
 
     <button type="button" class="main-button" id="saveButton">경로 보기</button>
+  </div>
+
+  <!-- 2단계: 경로 후보 중에서 하나를 고른다. 고르면 구간 기록 화면으로 간다 -->
+  <div id="choiceView" class="hidden">
+    <header class="route-header">
+        <button type="button" class="back-button" id="choiceBackButton" aria-label="출발지·도착지 다시 고르기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <h1>경로 선택</h1>
+    </header>
+
+    <div class="choice-points">
+        <p><span>출발</span><strong id="choiceStart"></strong></p>
+        <p><span>도착</span><strong id="choiceEnd"></strong></p>
+    </div>
+
+    <div class="choice-legend" aria-hidden="true">
+        <span class="walking">도보</span><span class="bus">버스</span><span class="subway">지하철</span>
+    </div>
+
+    <ul class="choice-list" id="choiceList" aria-label="경로 후보"></ul>
+
+    <p class="page-message" id="choiceMessage" role="status"></p>
+
+    <button type="button" class="main-button" id="chooseButton" disabled>이 경로로 기록하기</button>
+  </div>
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/route-new.js?v=20261120-inline"></script>
+<script src="/js/route-new.js?v=20261120-choice"></script>
 </body>
 </html>

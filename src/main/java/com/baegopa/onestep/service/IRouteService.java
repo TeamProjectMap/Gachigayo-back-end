@@ -1,5 +1,6 @@
 package com.baegopa.onestep.service;
 
+import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
 import com.baegopa.onestep.dto.KakaoPlaceDTO;
 import com.baegopa.onestep.dto.RouteDTO;
 
@@ -22,7 +23,18 @@ public interface IRouteService {
      */
     RouteDTO createRoute(Long guardianId, RouteDTO routeDTO,
                          String startLongitude, String startLatitude,
-                         String endLongitude, String endLatitude);
+                         String endLongitude, String endLatitude,
+                         String mode, int routeIndex,
+                         KakaoRouteSearchResultDTO searched);
+
+    /**
+     * 새 경로를 등록하기 전에 보여줄 경로 후보 (버스·지하철 여러 개 + 걷기)
+     * <p>
+     * 보호자가 이 중에서 하나를 고르면 그 경로로 구간을 나눈다.
+     */
+    KakaoRouteSearchResultDTO searchRouteOptions(String startLongitude, String startLatitude,
+                                                 String endLongitude, String endLatitude,
+                                                 String endName);
 
     /**
      * 경로 한 건 + 구간 목록 (경로 기록 화면)
