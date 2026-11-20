@@ -311,7 +311,7 @@
 /* ---------- '자주 가는 곳 / 최근 검색' 칩: 경로 선택 화면의 '버스/지하철 / 걷기'와 같은 모양 ---------- */
 #routeSearchPage .saved-tabs button {
     padding: 6px 10px;
-    border: 1px solid transparent;
+    border: 2px solid transparent;
     border-radius: 20px;
     background: #E9E9E9;
     color: #363636;

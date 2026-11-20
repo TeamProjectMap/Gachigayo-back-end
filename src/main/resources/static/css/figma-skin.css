@@ -126,7 +126,7 @@ body > main.route-compare-page { display: block; padding: calc(93px + env(safe-a
 .route-points .point-row.destination span { color: #2c87ff; }
 .route-points .point-row strong { margin-top: 3px; font-size: 15px; font-weight: 500; }
 .route-tabs { display: flex; width: auto; margin: 0 8px 12px; padding: 0; border: 0; background: transparent; border-radius: 0; gap: 6px; }
-.route-tab { flex: 0 0 auto; padding: 6px 10px; border: 1px solid transparent; border-radius: 20px; font-size: 11px; font-weight: 500; color: #363636; background: #e9e9e9; }
+.route-tab { flex: 0 0 auto; padding: 6px 10px; border: 2px solid transparent; border-radius: 20px; font-size: 11px; font-weight: 500; color: #363636; background: #e9e9e9; }
 .route-tab[aria-selected=true] { color: #363636; border-color: #018b38; background: #eef5eb; box-shadow: none; }
 .route-compare-page .compare-map { height: 150px; min-height: 150px; margin: 0 0 8px; border-radius: 12px; }
 .route-filter-toolbar { margin: 0 0 10px; padding: 3px 0; }

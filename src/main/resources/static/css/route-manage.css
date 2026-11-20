@@ -258,7 +258,7 @@ ul {
     align-items: center;
     justify-content: center;
     /* 이용자 경로 선택의 '버스/지하철' 칩처럼: 연한 초록 바탕 + 초록 테두리 + 진한 글씨 */
-    border: 1px solid var(--green);
+    border: 2px solid var(--green);
     border-radius: 50%;
     background: var(--soft-green);
     color: var(--text);

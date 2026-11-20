@@ -400,7 +400,7 @@ main.navigation-page {
   min-width: 0;
 }
 .route-filter-toolbar button {
-  border: 1px solid #e2e9ef;
+  border: 2px solid #e2e9ef;
   background: white;
   color: #536c7c;
   border-radius: 7px;
@@ -469,7 +469,7 @@ main.navigation-page {
   width: 100%;
   margin: 12px 0;
   padding: 14px;
-  border: 1px solid #018b38;
+  border: 2px solid #018b38;
   border-radius: 10px;
   background: #eef5eb;
   color: #018b38;
