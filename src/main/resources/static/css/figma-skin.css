@@ -294,8 +294,9 @@ body > main.signup-page { padding: 95px 29px 70px; }
 .inline-control { align-items: center; gap: 7px; }
 .agreement-section,.agreements { margin-top: 26px; }
 .submit-button { border-radius: 10px; background: #018b38; min-height: 56px; font-size: 17px; font-weight: 600; }
-body > main.find-page { padding-left: 29px; padding-right: 29px; }
-.find-panel { padding: 0; background: white; }
+/* 아이디·비밀번호 찾기: 로그인 화면처럼 가운데 흰 판 하나에 좌우 29px 여백 (판 바깥에 여백을 주면 흰 판이 줄고 글자가 붙었다) */
+body > main.find-page { display: flex; justify-content: center; padding: 0; background: #f5f5f5; }
+.find-panel { width: 100%; max-width: 402px; min-height: 100dvh; margin: 0 auto; padding: 80px 29px 40px; background: white; }
 .find-form { gap: 25px; }
 .find-panel .page-header p { font-size: 13px; color: #8d8d8d; }
 @media (max-width: 360px) {
