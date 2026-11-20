@@ -55,6 +55,12 @@ public class PlaceSearchService {
             return fetch(query, kakaoPage, longitude, latitude, distance);
         }
 
+        // 역은 자주 가는 목적지인데, '발산'처럼 역 이름만 치면 카카오 상위 45개에 '발산역'이 없을 때가 있다.
+        // 검색어가 '역'으로 끝나지 않으면 '검색어+역'도 동시에 찾아 이름이 맞는 것만 섞는다.
+        CompletableFuture<Result> stationSearch = query.trim().endsWith("역") || query.trim().contains(" ")
+                ? null
+                : CompletableFuture.supplyAsync(() -> fetch(query.trim() + "역", 1, longitude, latitude, distance));
+
         Result first = fetch(query, 1, longitude, latitude, distance);
         List<Result> pages = new ArrayList<>(List.of(first));
         if (!first.end()) {
@@ -77,6 +83,20 @@ public class PlaceSearchService {
             for (KakaoPlaceDTO place : result.places()) {
                 String id = place.getId() == null ? place.getPlaceName() + "|" + place.getRoadAddressName() : place.getId();
                 merged.putIfAbsent(id, place);
+            }
+        }
+
+        if (stationSearch != null) {
+            try {
+                for (KakaoPlaceDTO place : stationSearch.join().places()) {
+                    // '검색어+역' 결과 중 이름에 원래 검색어가 들어 있는 것만 (주변 가게 등은 빼고)
+                    if (nameRank(place.getPlaceName(), query) <= 2) {
+                        String id = place.getId() == null ? place.getPlaceName() + "|" + place.getRoadAddressName() : place.getId();
+                        merged.putIfAbsent(id, place);
+                    }
+                }
+            } catch (Exception ignored) {
+                // 보조 검색이 실패해도 원래 검색 결과는 그대로 보여준다
             }
         }
 
