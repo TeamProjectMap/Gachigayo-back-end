@@ -357,9 +357,9 @@
 
     /**
      * 도움요청 화면에 보일 문구 저장
-     * @param goBackAfter true면 저장 후 도움요청 화면으로 돌아간다
+     * @param showSaved true면 '저장했어요'를 보여준다
      */
-    function saveSelected(message, goBackAfter, done) {
+    function saveSelected(message, showSaved, done) {
         $("#saveButton").prop("disabled", true);
         $.ajax({
             url: "/user/help-card",
@@ -377,11 +377,9 @@
                 if (done) {
                     done();
                 }
-                if (goBackAfter) {
+                // 저장해도 이 화면에 그대로 남는다 (도움요청 화면으로 넘어가지 않음)
+                if (showSaved) {
                     setMessage("저장했어요.", true);
-                    window.setTimeout(function () {
-                        window.location.href = "/help-request.html";
-                    }, 450);
                 }
             },
             error: function () {
