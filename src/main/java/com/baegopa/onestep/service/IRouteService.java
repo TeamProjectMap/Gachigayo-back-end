@@ -56,6 +56,9 @@ public interface IRouteService {
     /** 출발지·도착지를 고르기 위한 장소 검색 */
     List<KakaoPlaceDTO> searchPlaces(String query);
 
+    /** 좌표 → 주소. 못 찾으면 빈 문자열 (출발지 '현재 위치'용) */
+    String findAddress(String longitude, String latitude);
+
     /**
      * 이용자 홈: 보호자가 이 이용자에게 등록해 준 경로 목록
      * <p>

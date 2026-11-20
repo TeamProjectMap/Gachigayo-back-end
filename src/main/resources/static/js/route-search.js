@@ -583,8 +583,21 @@
     $("routeSearchPage").hidden = false;
     ensureCurrentLocation();
     const selectParam = new URLSearchParams(location.search).get("select");
-    if (selectParam === "origin")
+    if (selectParam === "origin") {
       $("searchTitle").textContent = "출발지를 선택해주세요";
+      // 직접 고른 출발지를 지우면 길안내가 다시 지금 위치에서 출발한다
+      const here = document.createElement("button");
+      here.type = "button";
+      here.className = "origin-here-button";
+      here.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>현재 위치로 설정';
+      here.addEventListener("click", () => {
+        sessionStorage.removeItem("currentOrigin");
+        location.href = "/place-detail.html";
+      });
+      $("searchForm").after(here);
+    }
     if (selectParam === "favorite") {
       // 장소 상세 위쪽처럼: 뒤로가기는 왼쪽, 검색창은 오른쪽 한 줄 (제목·칩 없음)
       $("routeSearchPage").classList.add("is-favorite-add");

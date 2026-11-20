@@ -31,4 +31,14 @@
           AND regDt &gt;= DATE_SUB(NOW(), INTERVAL #{withinMinutes} MINUTE)
     </select>
 
+    <!-- 지난 알림 정리 (NotificationCleanupScheduler): 종류별 보관 기간이 지난 알림 -->
+    <delete id="deleteOldNotifications">
+        DELETE FROM NOTIFICATIONS
+        WHERE notifyType IN
+        <foreach collection="notifyTypes" item="type" open="(" separator="," close=")">
+            #{type}
+        </foreach>
+          AND regDt &lt; DATE_SUB(NOW(), INTERVAL #{keepDays} DAY)
+    </delete>
+
 </mapper>

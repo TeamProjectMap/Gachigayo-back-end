@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 알림</title>
-    <link rel="stylesheet" href="/css/notifications.css?v=20261120">
+    <link rel="stylesheet" href="/css/notifications.css?v=20261120-keep">
 </head>
 <body>
 <main class="noti-page hidden" id="notiPage">
@@ -22,6 +22,9 @@
 
     <p class="empty-text hidden" id="notiEmpty">받은 알림이 없습니다.</p>
     <p class="page-message" id="notiMessage"></p>
+
+    <!-- 알림 보관 기간 (NotificationCleanupScheduler와 같은 기간) -->
+    <p class="noti-keep-note">도착·체크포인트 알림은 7일, 경로 이탈·도움요청 알림은 30일 동안 보관돼요.</p>
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

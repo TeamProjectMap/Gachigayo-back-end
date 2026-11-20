@@ -968,3 +968,31 @@ ul {
 .photo-page.picking .map-follow {
     display: none;
 }
+
+/* 출발지 검색칸 오른쪽 '현재 위치' (연한 초록 칩: 2px 초록 테두리) */
+.here-button {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 30px;
+    margin-right: -8px;
+    padding: 0 10px 0 8px;
+    border: 2px solid var(--green);
+    border-radius: 15px;
+    background: var(--soft-green);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.here-button svg {
+    width: 15px;
+    height: 15px;
+    color: var(--green);
+}
+
+.here-button.is-loading {
+    opacity: 0.6;
+}

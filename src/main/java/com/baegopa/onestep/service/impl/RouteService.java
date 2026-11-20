@@ -221,6 +221,19 @@ public class RouteService implements IRouteService {
     }
 
     @Override
+    public String findAddress(String longitude, String latitude) {
+        try {
+            toCoordinate(longitude, "경도");
+            toCoordinate(latitude, "위도");
+            String address = kakaoMapService.searchAddressByCoordinate(longitude.trim(), latitude.trim());
+            return isBlank(address) ? "" : address;
+        } catch (Exception e) {
+            log.warn("현재 위치 주소 찾기 실패", e);
+            return "";
+        }
+    }
+
+    @Override
     public List<Map<String, Object>> getRoutesForUser(Long userId) {
         List<Map<String, Object>> routes = new ArrayList<>();
 

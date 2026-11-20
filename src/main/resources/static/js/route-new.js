@@ -69,6 +69,8 @@
             showOptions();
         });
 
+        $("#startHereButton").on("click", useCurrentLocation);
+
         restoreDraft();
     });
 
@@ -233,6 +235,63 @@
         }
 
         window.location.href = "/route-choose.html";
+    }
+
+    /**
+     * 출발지를 지금 서 있는 곳으로. 좌표를 주소로 바꿔 출발지 이름으로 쓴다.
+     * (주소를 못 찾으면 '현재 위치'라는 이름으로 좌표만 쓴다)
+     */
+    function useCurrentLocation() {
+        var $button = $("#startHereButton");
+
+        if (!navigator.geolocation) {
+            setMessage("이 기기에서는 현재 위치를 쓸 수 없어요. 출발지를 검색해주세요.", false);
+            return;
+        }
+
+        $button.prop("disabled", true).addClass("is-loading");
+        setMessage("현재 위치를 찾는 중이에요...", true);
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+            var longitude = String(position.coords.longitude);
+            var latitude = String(position.coords.latitude);
+
+            $.ajax({
+                url: "/route/here",
+                type: "get",
+                dataType: "JSON",
+                data: { longitude: longitude, latitude: latitude },
+                complete: function () {
+                    $button.prop("disabled", false).removeClass("is-loading");
+                },
+                success: function (json) {
+                    setStartHere(longitude, latitude, json && json.success ? json.addressName : "");
+                },
+                error: function () {
+                    setStartHere(longitude, latitude, "");
+                }
+            });
+        }, function (error) {
+            $button.prop("disabled", false).removeClass("is-loading");
+            setMessage(error.code === 1
+                    ? "위치 권한을 허용해야 현재 위치를 쓸 수 있어요."
+                    : "현재 위치를 찾지 못했어요. 다시 눌러주세요.", false);
+        }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
+    }
+
+    function setStartHere(longitude, latitude, address) {
+        var place = {
+            placeName: address || "현재 위치",
+            roadAddressName: address || "",
+            addressName: address || "",
+            longitude: longitude,
+            latitude: latitude
+        };
+        // input 이벤트가 아니라 picked는 지워지지 않는다
+        $("#startInput").val(place.placeName);
+        picked.start = place;
+        closeList("start");
+        setMessage("출발지를 현재 위치로 정했어요.", true);
     }
 
     /** 경로 선택 화면에서 뒤로 왔을 때 입력했던 내용을 다시 채운다 */

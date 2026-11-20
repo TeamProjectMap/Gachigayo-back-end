@@ -58,6 +58,22 @@ public class RouteController {
         }
     }
 
+    /** 출발지를 '현재 위치'로 정할 때: 좌표 → 주소 (보호자용) */
+    @ResponseBody
+    @GetMapping("/here")
+    public Map<String, Object> here(@RequestParam(value = "longitude", required = false) String longitude,
+                                    @RequestParam(value = "latitude", required = false) String latitude,
+                                    HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        Map<String, Object> response = createResponse(true, "현재 위치를 확인했습니다.");
+        response.put("addressName", routeService.findAddress(longitude, latitude));
+        return response;
+    }
+
     /** 출발지·도착지 검색 (보호자용) */
     @ResponseBody
     @GetMapping("/places")

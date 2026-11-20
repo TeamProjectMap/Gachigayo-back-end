@@ -251,3 +251,13 @@ ul {
         background: #FFFFFF;
     }
 }
+
+/* 알림 보관 기간 안내 (목록 맨 아래 작은 회색 글씨) */
+.noti-keep-note {
+    margin: 18px 16px 0;
+    color: #8D8D8D;
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: center;
+    word-break: keep-all;
+}

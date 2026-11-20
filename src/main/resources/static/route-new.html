@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 새 경로 등록</title>
-    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-inline">
+    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-here">
 </head>
 <body>
 <main class="route-page new-route hidden" id="newRoutePage">
@@ -34,6 +34,15 @@
             </span>
             <input type="search" id="startInput" class="place-search-input" placeholder="장소를 검색해주세요"
                    autocomplete="off" enterkeyhint="search" aria-controls="startList">
+            <!-- 지금 서 있는 곳을 출발지로 (같이 걸으며 등록할 때 바로 쓰도록) -->
+            <button type="button" class="here-button" id="startHereButton" aria-label="현재 위치를 출발지로">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                </svg>
+                현재 위치
+            </button>
         </div>
         <ul class="place-list" id="startList" role="listbox" aria-label="출발지 검색 결과"></ul>
     </div>
@@ -64,6 +73,6 @@
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/route-new.js?v=20261120-choose"></script>
+<script src="/js/route-new.js?v=20261120-here"></script>
 </body>
 </html>
