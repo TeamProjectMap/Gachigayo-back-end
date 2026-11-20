@@ -110,18 +110,6 @@
   $("guardianRoutesCard").addEventListener("click", () =>
     go("/guardian-routes.html"),
   );
-  /** 카드 아래 글: 등록된 경로 수 */
-  async function guardianRouteSummary() {
-    try {
-      const json = await api("/trip/guardian-routes");
-      const count = (json.routes || []).length;
-      $("guardianRoutesSummary").textContent = count
-        ? `보호자가 등록한 길 ${count}개`
-        : "아직 등록한 길이 없어요";
-    } catch {
-      /* 글만 못 바꿀 뿐 카드는 그대로 누를 수 있다 */
-    }
-  }
   $("homeNavButton").addEventListener("click", () => go("/user-home.html"));
   $("settingNavButton").addEventListener("click", () => go("/settings.html"));
   $("connectionManageButton").addEventListener("click", () =>
@@ -149,7 +137,6 @@
     $("userHomePage").classList.remove("hidden");
     renderJourney();
     favorites();
-    guardianRouteSummary();
     try {
       const json = await api("/user/home-info");
       $("linkedGuardianText").textContent = json.linkedName
