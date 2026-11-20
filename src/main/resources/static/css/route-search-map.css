@@ -237,3 +237,41 @@
 #routeSearchPage #searchMessage:empty {
     display: none;
 }
+
+/* ---------- 자동완성 목록 너비 = 검색창 너비 ---------- */
+/* 목록은 화면에 떠 있는 칸(position: absolute)이라 여백 대신 왼쪽·오른쪽 위치로 검색창 가장자리에 맞춘다 */
+#routeSearchPage .map-sidebar > .suggestions {
+    box-sizing: border-box;
+    left: 29px;
+    right: 29px;
+    width: auto;
+    margin: 6px 0 0;
+    padding: 0;
+}
+
+#routeSearchPage .autocomplete-status {
+    margin: 6px 29px 0;
+    padding: 5px 4px;
+}
+
+/* 검색해서 지도가 깔렸을 때 검색창은 좌우 16px */
+#routeSearchPage.is-searching .map-sidebar > .suggestions {
+    left: 16px;
+    right: 16px;
+    margin: 8px 0 0;
+}
+
+#routeSearchPage.is-searching .autocomplete-status {
+    margin: 8px 16px 0;
+}
+
+/* 자주 가는 곳 추가: 검색창이 뒤로가기 오른쪽(왼쪽 54px, 오른쪽 20px)에 있다 */
+#routeSearchPage.is-favorite-add .map-sidebar > .suggestions {
+    left: 54px;
+    right: 20px;
+    margin: 6px 0 0;
+}
+
+#routeSearchPage.is-favorite-add .autocomplete-status {
+    margin: 6px 20px 0 54px;
+}
