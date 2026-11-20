@@ -1,0 +1,69 @@
+/* 이용자 홈 '이렇게 해요' 배너: 왼쪽 그림 + 오른쪽 문구 (figma-skin.css 뒤에 불러서 덮어쓴다) */
+#userHomePage .safety-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 84px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #EEF5EB;
+}
+
+#userHomePage .safety-illust {
+    flex: 0 0 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: #FFFFFF;
+}
+
+#userHomePage .safety-illust svg {
+    width: 44px;
+    height: 44px;
+}
+
+#userHomePage .safety-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+#userHomePage .safety-card strong {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #518342;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* 문구는 크고 진하게: 한 눈에 읽히도록 */
+#userHomePage .safety-card .safety-tip {
+    margin: 4px 0 0;
+    color: #363636;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: keep-all;
+}
+
+/* 바뀔 때 살짝 사라졌다 나타난다 */
+#userHomePage .safety-illust,
+#userHomePage .safety-tip {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+#userHomePage .safety-card.is-changing .safety-illust,
+#userHomePage .safety-card.is-changing .safety-tip {
+    opacity: 0;
+    transform: translateY(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #userHomePage .safety-illust,
+    #userHomePage .safety-tip {
+        transition: none;
+    }
+}
