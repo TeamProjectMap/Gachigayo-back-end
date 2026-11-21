@@ -993,23 +993,3 @@ ul {
 .here-button.is-loading {
     opacity: 0.4;
 }
-
-/* 출발지·도착지 칸: 돋보기 대신 뒤로가기 (이용자 길안내 검색창과 같은 자리: 칸 왼쪽에서 7px) */
-.field-back {
-    flex: 0 0 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    margin-left: -14px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--text);
-}
-
-.field-back svg {
-    width: 24px;
-    height: 24px;
-}

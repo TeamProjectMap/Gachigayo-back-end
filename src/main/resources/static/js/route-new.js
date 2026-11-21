@@ -71,21 +71,6 @@
 
         $("#startHereButton").on("click", useCurrentLocation);
 
-        // 칸 안 뒤로가기: 적은 글자가 있으면 지우고, 비어 있으면 이전 화면(경로 관리)으로
-        $(".field-back").on("click", function () {
-            var $box = $(this).closest(".place-search");
-            var target = $box.data("target");
-            var $input = $box.find(".place-search-input");
-
-            if ($input.val()) {
-                $input.val("").trigger("focus");
-                picked[target] = null;
-                closeList(target);
-                return;
-            }
-            $("#backButton").trigger("click");
-        });
-
         restoreDraft();
     });
 
