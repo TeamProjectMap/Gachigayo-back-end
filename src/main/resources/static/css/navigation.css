@@ -340,11 +340,6 @@ button {
     color: #FFFFFF;
 }
 
-.replay-button {
-    border: 1px solid var(--gray);
-    background: #FFFFFF;
-    color: var(--text);
-}
 
 .empty-panel {
     position: absolute;

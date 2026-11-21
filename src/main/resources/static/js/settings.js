@@ -92,11 +92,9 @@
                 $("#routeButton span").text(userRole === "USER" ? "길안내" : "경로");
                 var prefs = JourneyState.preferences(sessionUserId, localStorage);
                 $("#shareLocationToggle").prop("checked", prefs.shareLocation);
-                $("#voiceGuideToggle").prop("checked", prefs.voice);
-                $("#shareLocationToggle, #voiceGuideToggle").on("change", function () {
-                    var name = this.id === "shareLocationToggle" ? "shareLocation" : "voice";
+                $("#shareLocationToggle").on("change", function () {
                     try {
-                        JourneyState.savePreference(sessionUserId, name, this.checked, localStorage);
+                        JourneyState.savePreference(sessionUserId, "shareLocation", this.checked, localStorage);
                         setMessage("이 기기의 설정을 저장했습니다.", true);
                     } catch (error) {
                         this.checked = !this.checked;

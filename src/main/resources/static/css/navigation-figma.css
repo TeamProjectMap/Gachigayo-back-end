@@ -1,10 +1,10 @@
 /*
  * 길안내 화면을 피그마(길안내 - 도보/지하철/버스 이용)처럼:
- * 제목, 출발·도착 카드(진행 막대), 지도, 아래 안내 카드, '도움이 필요해요 / 안내 다시 듣기'만 보인다.
+ * 제목, 출발·도착 카드(진행 막대), 지도, 아래 안내 카드, '도움이 필요해요'만 보인다.
  * 아래 요소들은 JS가 계속 쓰므로 지우지 않고 화면에서만 숨긴다.
  */
 
-/* 전체 이동 단계, 안내 도구·현재 위치(전체 경로·음성 켜기·경로 다시 찾기·GPS 문구) */
+/* 전체 이동 단계, 안내 도구·현재 위치(전체 경로·경로 다시 찾기·GPS 문구) */
 .navigation-page .journey-steps,
 .navigation-page .navigation-options {
     display: none !important;
@@ -35,3 +35,49 @@
 .navigation-page #arrivalActions:not(:has(#retryArrivalButton:not([hidden]))) {
     display: none !important;
 }
+
+/* Keep every transport picture on the same canvas; direction follows the visible guide. */
+.navigation-page #guideCard { padding: 20px 18px 22px; }
+.navigation-page #guideCard .guide-main {
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    min-height: 100px;
+}
+.navigation-page #guideCard .transport-visual {
+    width: 80px;
+    height: 94px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 5px;
+    background: none;
+}
+.navigation-page #guideCard .transport-icon {
+    display: block;
+    flex: none;
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+}
+.navigation-page #guideCard .guide-cue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 20px;
+    color: #018b38;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 600;
+}
+.navigation-page #guideCard .guide-copy { padding: 7px 0 0; min-width: 0; }
+.navigation-page #guideCard #guideSubtitle { overflow-wrap: anywhere; }
+@media (max-width: 350px) {
+    .navigation-page #guideCard .guide-main { grid-template-columns: 72px minmax(0, 1fr); gap: 10px; }
+    .navigation-page #guideCard .transport-visual { width: 72px; }
+    .navigation-page #guideCard .guide-copy h2 { font-size: 20px !important; }
+}
+
+.navigation-page #guideCard .guide-actions { grid-template-columns: minmax(0, 1fr); }

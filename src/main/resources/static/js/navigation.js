@@ -14,8 +14,6 @@
     confirmations = 0,
     lastConfirmation = 0;
   let following = true,
-    voice = false,
-    lastSpoken = -1,
     stepRemaining = null,
     stepProgress = 0,
     tripId = null,
@@ -48,24 +46,9 @@
   const path = (step) => (step?.pathPoints || []).filter(valid);
   const label = (step) =>
     mode(step) === "BUS" ? "버스" : mode(step) === "SUBWAY" ? "지하철" : "도보";
-  // AI가 쉬운 말로 바꾼 안내가 있으면 그걸, 없으면 카카오 원래 문구를 보여주고 읽어준다
+  // AI가 쉬운 말로 바꾼 안내가 있으면 그걸, 없으면 카카오 원래 문구를 보여준다
   const guideText = (step) => step?.easyGuidance || step?.guidance || "";
   const routeKey = () => JourneyState.key(selection);
-  const speechText = () =>
-    [$("guideTitle").textContent, $("guideSubtitle").textContent]
-      .filter(Boolean)
-      .join(". ");
-  function speak() {
-    if (!("speechSynthesis" in window)) {
-      text("gpsStatus", "이 브라우저에서는 음성 안내를 사용할 수 없습니다.");
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(speechText());
-    utterance.lang = "ko-KR";
-    utterance.rate = 0.95;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utterance);
-  }
   function persist() {
     try {
       sessionStorage.setItem(
@@ -125,6 +108,12 @@
           : guideText(step) || stops.join(" → "),
       );
     }
+    const cue = NavigationCue.forStep(step, { complete, boarded: boarded.has(index) });
+    const transport = transit ? mode(step).toLowerCase() : cue.kind;
+    $("transportIcon").src = transport === "subway"
+      ? "/images/figma/13d6c.svg" : `/images/navigation/${transport}.svg`;
+    text("guideCueLabel", transit ? "" : cue.label);
+    $("transportVisual").dataset.cue = cue.kind;
     $("arrivalActions").classList.toggle("hidden", !complete);
     $("rerouteButton").hidden = complete;
     text(
@@ -155,10 +144,6 @@
       row.append(meta);
       $("journeySteps").append(row);
     });
-    if (voice && lastSpoken !== index) {
-      lastSpoken = index;
-      speak();
-    }
     refreshRealtime();
     renderLandmark();
     if (complete) {
@@ -276,7 +261,6 @@
     lastConfirmation = 0;
     boardConfirm = 0;
     stepStartedAt = Date.now();
-    lastSpoken = -1;
     persist();
     render();
     text(
@@ -766,7 +750,6 @@
     live = false;
     stopWatch();
     stopRealtime();
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
   $("backButton").addEventListener(
     "click",
@@ -778,19 +761,6 @@
   );
   $("overviewButton").addEventListener("click", overview);
   $("rerouteButton").addEventListener("click", reroute);
-  $("replayButton").addEventListener("click", speak);
-  $("voiceToggle").addEventListener("click", () => {
-    voice = !voice;
-    try {
-      JourneyState.savePreference(sessionUserId, "voice", voice, localStorage);
-    } catch {}
-    $("voiceToggle").setAttribute("aria-pressed", String(voice));
-    text("voiceToggle", voice ? "음성 안내 끄기" : "음성 안내 켜기");
-    if (voice) {
-      lastSpoken = index;
-      speak();
-    } else if ("speechSynthesis" in window) speechSynthesis.cancel();
-  });
   $("boardingButton").addEventListener("click", () => markBoarded(false));
   // 시간이 지나 '막힘'이 될 수 있어 주기적으로 버튼을 다시 본다
   setInterval(() => {
@@ -807,10 +777,6 @@
   function applyDevicePreferences() {
     const prefs = JourneyState.preferences(sessionUserId, localStorage);
     shareLocation = prefs.shareLocation;
-    voice = prefs.voice;
-    $("voiceToggle").setAttribute("aria-pressed", String(voice));
-    text("voiceToggle", voice ? "음성 안내 끄기" : "음성 안내 켜기");
-    if (!voice && "speechSynthesis" in window) speechSynthesis.cancel();
   }
   window.addEventListener("storage", (event) => {
     if (
@@ -833,9 +799,6 @@
       sessionUserId = s.userId;
       const prefs = JourneyState.preferences(sessionUserId, localStorage);
       shareLocation = prefs.shareLocation;
-      voice = prefs.voice;
-      $("voiceToggle").setAttribute("aria-pressed", String(voice));
-      text("voiceToggle", voice ? "음성 안내 끄기" : "음성 안내 켜기");
       if (s.userRole !== "USER") {
         location.replace("/guardian-home.html");
         return;

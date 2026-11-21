@@ -45,7 +45,7 @@
       Number.isFinite(saved.updatedAt) && saved.updatedAt >= saved.startedAt && saved.updatedAt <= now &&
       now - saved.updatedAt < 6 * 60 * 60 * 1000;
   };
-  const defaults = { voice: false, shareLocation: true };
+  const defaults = { shareLocation: true };
   const preferences = (userId, storage) => ({
     ...defaults,
     ...Object.fromEntries(
