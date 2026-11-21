@@ -105,6 +105,12 @@
     if (savedPlaceMode) {
       $("#placeDetailPage").addClass("is-saved-place");
       $("#favoriteButton").remove();
+    } else {
+      // 길안내 검색창과 같은 모양: 뒤로가기 화살표를 검색박스 안 왼쪽에
+      $("#backButton")
+        .html('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>')
+        .prependTo(".detail-header");
+      $("#placeDetailPage").addClass("back-in-box");
     }
 
     if (favoriteMode) {

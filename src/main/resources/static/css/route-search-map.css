@@ -431,3 +431,19 @@
 #routeSearchPage .search-back-in-box {
     margin-left: -14px;
 }
+
+/* 자주 가는 곳 등록도 같은 모양: 바깥 뒤로가기 대신 검색칸 안 뒤로가기 */
+#routeSearchPage.is-favorite-add .favorite-add-top > a {
+    display: none;
+}
+
+#routeSearchPage.is-favorite-add .favorite-add-top {
+    margin-left: 29px;
+    margin-right: 29px;
+}
+
+#routeSearchPage.is-favorite-add .search-back-in-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
