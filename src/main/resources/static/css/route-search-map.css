@@ -415,3 +415,14 @@
 #routeSearchPage.is-searching .search-input-row::before {
     display: none;
 }
+
+/* 돋보기는 늘 뒤로가기로 (자주 가는 곳 등록은 바깥에 따로 뒤로가기가 있어서 빼고) */
+#routeSearchPage:not(.is-favorite-add) .search-back-in-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#routeSearchPage:not(.is-favorite-add) .search-input-row::before {
+    display: none;
+}

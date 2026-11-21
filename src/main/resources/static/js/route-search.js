@@ -502,8 +502,13 @@
   searchBack.innerHTML =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
   searchBack.addEventListener("click", () => {
-    input.value = "";
-    input.dispatchEvent(new Event("input"));
+    // 검색 결과를 보는 중이면 처음 검색 화면으로, 아니면 이전 화면(홈 등)으로
+    if ($("routeSearchPage").classList.contains("is-searching")) {
+      input.value = "";
+      input.dispatchEvent(new Event("input"));
+      return;
+    }
+    location.href = $("searchBackButton").href;
   });
   $("searchForm").querySelector(".search-input-row").prepend(searchBack);
   // 검색어를 다 지우면 지도를 닫고 장소 목록으로 돌아간다
