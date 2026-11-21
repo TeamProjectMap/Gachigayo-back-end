@@ -1,0 +1,94 @@
+/*
+ * 길안내 중 보호자가 찍어 둔 체크포인트 근처에 오면 뜨는 사진 팝업
+ * (원래는 화면 중간의 작은 카드라 걸으면서 놓치기 쉬웠다)
+ * 뒤를 어둡게 하고 사진을 크게, '확인했어요'를 누르면 닫힌다.
+ */
+.navigation-page .landmark-card:not([hidden]) {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: calc(100% - 40px);
+    max-width: 362px;
+    max-height: calc(100vh - 80px);
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    border: 0;
+    border-radius: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+    transform: translate(-50%, -50%);
+    animation: landmark-pop 0.2s ease-out;
+}
+
+.navigation-page .landmark-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 46vh;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 0;
+}
+
+.navigation-page .landmark-card img[hidden] {
+    display: none;
+}
+
+.navigation-page .landmark-card > div {
+    padding: 18px 20px 20px;
+}
+
+.navigation-page .landmark-card small {
+    display: inline-block;
+    padding: 3px 9px;
+    border: 2px solid #018B38;
+    border-radius: 20px;
+    background: #EEF5EB;
+    color: #363636;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.navigation-page .landmark-card h2 {
+    margin: 10px 0 6px;
+    color: #363636;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.navigation-page .landmark-card p {
+    margin: 0 0 18px;
+    color: #363636;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.navigation-page .landmark-card button {
+    display: block;
+    width: 100%;
+    height: 52px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: #018B38;
+    color: #FFFFFF;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+@keyframes landmark-pop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -46%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}

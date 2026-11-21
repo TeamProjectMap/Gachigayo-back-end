@@ -86,7 +86,7 @@
                 userRole = json.userRole;
                 sessionUserId = json.userId;
                 $("#profileLoginId").text(json.loginId || "-");
-                $("#loginIdRow").toggleClass("hidden", userRole !== "USER");
+                $("#profileLoginId").toggleClass("hidden", userRole !== "USER");
                 $("#userSettingsSection").toggleClass("hidden", userRole !== "USER");
                 $("#guardianAlarmSection").toggleClass("hidden", userRole === "USER");
                 $("#routeButton span").text(userRole === "USER" ? "길안내" : "경로");
@@ -138,6 +138,8 @@
     function renderProfile(json) {
         $("#profileName").text(json.userName || "-");
         $("#profilePhone").text(json.phone || "등록된 번호 없음");
+        // 이용자에게는 자기 번호 줄이 필요 없어 보호자일 때만 보여준다
+        $("#phoneRow").toggleClass("hidden", json.userRole !== "GUARDIAN");
 
         // 관계는 보호자에게만 있는 항목이라 보호자일 때만 줄을 보여준다
         if (json.userRole === "GUARDIAN") {

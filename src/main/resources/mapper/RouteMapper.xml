@@ -17,9 +17,12 @@
                routeType,
                startName,
                endName,
+               endLat,
+               endLng,
                totalDistance,
                totalDuration,
                riskLevel,
+               routeJson IS NOT NULL AS guideReady,
                regDt,
                updDt
         FROM ROUTES
@@ -35,9 +38,12 @@
                routeType,
                startName,
                endName,
+               endLat,
+               endLng,
                totalDistance,
                totalDuration,
                riskLevel,
+               routeJson,
                regDt,
                updDt
         FROM ROUTES
@@ -74,18 +80,24 @@
             routeType,
             startName,
             endName,
+            endLat,
+            endLng,
             totalDistance,
             totalDuration,
-            riskLevel
+            riskLevel,
+            routeJson
         ) VALUES (
             #{userId},
             #{routeName},
             #{routeType},
             #{startName},
             #{endName},
+            #{endLat},
+            #{endLng},
             #{totalDistance},
             #{totalDuration},
-            #{riskLevel}
+            #{riskLevel},
+            #{routeJson}
         )
     </insert>
 
@@ -194,6 +206,35 @@
           AND routeType = 'GUARDIAN'
           AND endName = #{endName}
         ORDER BY updDt DESC, routeId DESC
+        LIMIT 1
+    </select>
+
+    <!--
+        목적지 좌표가 가장 가까운 보호자 경로 (거리 제한은 서비스에서 본다)
+        위도 1도 ≈ 111km, 서울 근처 경도 1도 ≈ 88km 로 어림한 거리 순서
+    -->
+    <select id="getNearestGuardianRoute" resultType="com.baegopa.onestep.dto.RouteDTO">
+        SELECT routeId,
+               userId,
+               routeName,
+               routeType,
+               startName,
+               endName,
+               endLat,
+               endLng,
+               totalDistance,
+               totalDuration,
+               riskLevel,
+               regDt,
+               updDt
+        FROM ROUTES
+        WHERE userId = #{userId}
+          AND routeType = 'GUARDIAN'
+          AND endLat IS NOT NULL
+          AND endLng IS NOT NULL
+        ORDER BY POW((endLat - #{lat}) * 111000, 2) + POW((endLng - #{lng}) * 88000, 2),
+                 updDt DESC,
+                 routeId DESC
         LIMIT 1
     </select>
 

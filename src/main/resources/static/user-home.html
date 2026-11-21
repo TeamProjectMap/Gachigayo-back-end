@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="/css/user-home.css">
     <link rel="stylesheet" href="/css/menu-flow.css?v=20261118-resume">
     <link rel="stylesheet" href="/css/bottom-nav.css?v=20261118">
-    <link rel="stylesheet" href="/css/figma-skin.css?v=20261118-1">
+    <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-find">
+    <link rel="stylesheet" href="/css/safety-tips.css?v=20261120">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
 </head>
 <body class="menu-app">
@@ -23,9 +24,11 @@
             <p>목적지까지<br>안전하게 안내해요</p>
         </button>
 
-        <button type="button" class="small-card favorite-places-link" id="favoritePlaceCard">
-            <img class="favorite-hero-icon" src="/images/figma/18566.svg" alt="" data-figma-asset="18566.svg"><strong>자주 가는 곳 <img src="/images/figma/694e9.svg" alt="" data-figma-asset="694e9.svg"></strong>
-            <p>자주 가는 장소로 이동해요</p>
+        <!-- 보호자가 같이 걸으며 등록해 준 경로 모음. 고르면 그 목적지로 길안내를 하고,
+             보호자가 찍어 둔 체크포인트 사진이 길에서 뜬다 -->
+        <button type="button" class="small-card guardian-routes-link" id="guardianRoutesCard">
+            <img class="favorite-hero-icon" src="/images/figma/18566.svg" alt="" data-figma-asset="18566.svg"><strong>보호자 경로 <img src="/images/figma/694e9.svg" alt="" data-figma-asset="694e9.svg"></strong>
+            <p>보호자가 등록한 길로 안내해요</p>
         </button>
 
         <button type="button" class="linked-card" id="connectionManageButton">
@@ -49,9 +52,13 @@
     <div class="favorites-heading"><strong>즐겨찾기</strong></div>
     <section class="feature-grid" id="homeFavorites" aria-label="자주 가는 곳"></section>
 
-    <section class="safety-card">
-        <strong><img src="/images/figma/8c3ce.svg" alt="" data-figma-asset="8c3ce.svg"> 이렇게 해요</strong>
-        <p>횡단보도를 건널 때는 초록불이 켜졌는지 확인해요!</p>
+    <!-- 교통안전 문구: 12초마다 무작위로 바뀐다 (js/safety-tips.js). 그림은 직접 그린 SVG -->
+    <section class="safety-card" id="safetyCard" aria-label="교통안전 알림">
+        <span class="safety-illust" aria-hidden="true"></span>
+        <div class="safety-copy">
+            <strong><img src="/images/figma/8c3ce.svg" alt="" data-figma-asset="8c3ce.svg"> 이렇게 해요</strong>
+            <p class="safety-tip">초록불이 켜져도 차가 멈췄는지 살펴요.</p>
+        </div>
     </section>
 
     <p id="homeMessage" class="home-message"></p>
@@ -81,7 +88,8 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/js/navigation-map.js"></script>
 <script src="/js/journey-state.js?v=20261118-resume"></script>
-<script src="/js/user-home.js?v=20261119-origin"></script>
+<script src="/js/user-home.js?v=20261120-gtext"></script>
 <script src="/js/weather.js?v=20261120"></script>
+<script src="/js/safety-tips.js?v=20261120"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 새 경로 등록</title>
-    <link rel="stylesheet" href="/css/route-manage.css">
+    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-hereicon">
 </head>
 <body>
 <main class="route-page new-route hidden" id="newRoutePage">
@@ -21,27 +21,46 @@
     <label class="field-label" for="routeName">경로 이름</label>
     <input type="text" id="routeName" class="text-input" placeholder="예) 학교 가는 길" maxlength="100">
 
-    <p class="field-label">출발지</p>
-    <button type="button" class="place-button" id="startButton" data-target="start">
-        <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="7"/>
-                <path d="M20 20l-3.5-3.5"/>
-            </svg>
-        </span>
-        <span class="place-text placeholder" id="startText">장소를 검색해주세요</span>
-    </button>
+    <!-- 출발지·도착지: 다른 화면으로 넘어가지 않고 이 칸에서 바로 검색한다.
+         글자를 치면 칸 바로 아래에 장소 목록이 붙어서 뜬다 (이용자 길안내 검색창과 같은 모양) -->
+    <label class="field-label" for="startInput">출발지</label>
+    <div class="place-search" data-target="start">
+        <div class="place-search-row">
+            <span class="place-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="M20 20L16.5 16.5"/>
+                </svg>
+            </span>
+            <input type="search" id="startInput" class="place-search-input" placeholder="장소를 검색해주세요"
+                   autocomplete="off" enterkeyhint="search" aria-controls="startList">
+            <!-- 지금 서 있는 곳을 출발지로 (같이 걸으며 등록할 때 바로 쓰도록) -->
+            <button type="button" class="here-button" id="startHereButton" aria-label="현재 위치를 출발지로">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="7"/>
+                    <circle cx="12" cy="12" r="2.6"/>
+                    <path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5"/>
+                </svg>
+            </button>
+        </div>
+        <ul class="place-list" id="startList" role="listbox" aria-label="출발지 검색 결과"></ul>
+    </div>
 
-    <p class="field-label">도착지</p>
-    <button type="button" class="place-button" id="endButton" data-target="end">
-        <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="7"/>
-                <path d="M20 20l-3.5-3.5"/>
-            </svg>
-        </span>
-        <span class="place-text placeholder" id="endText">장소를 검색해주세요</span>
-    </button>
+    <label class="field-label" for="endInput">도착지</label>
+    <div class="place-search" data-target="end">
+        <div class="place-search-row">
+            <span class="place-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="M20 20L16.5 16.5"/>
+                </svg>
+            </span>
+            <input type="search" id="endInput" class="place-search-input" placeholder="장소를 검색해주세요"
+                   autocomplete="off" enterkeyhint="search" aria-controls="endList">
+        </div>
+        <ul class="place-list" id="endList" role="listbox" aria-label="도착지 검색 결과"></ul>
+    </div>
 
     <section class="guide-box">
         <strong id="guideTitle">함께 걸으며 기록해요</strong>
@@ -53,28 +72,7 @@
     <button type="button" class="main-button" id="saveButton">경로 보기</button>
 </main>
 
-<!-- 장소 검색 -->
-<div class="search-layer hidden" id="searchLayer">
-    <div class="search-panel">
-        <header class="route-header">
-            <button type="button" class="back-button" id="searchCloseButton" aria-label="닫기">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-            </button>
-            <h1 id="searchTitle">장소 검색</h1>
-        </header>
-
-        <input type="text" id="searchInput" class="text-input" placeholder="장소 이름을 입력하세요" autocomplete="off">
-        <button type="button" class="main-button" id="searchButton">검색</button>
-
-        <ul class="place-list" id="placeList"></ul>
-        <p class="page-message" id="searchMessage"></p>
-    </div>
-</div>
-
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/route-new.js"></script>
+<script src="/js/route-new.js?v=20261121-target"></script>
 </body>
 </html>

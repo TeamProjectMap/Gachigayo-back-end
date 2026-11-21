@@ -1,5 +1,6 @@
 package com.baegopa.onestep.controller;
 
+import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
 import com.baegopa.onestep.dto.RouteDTO;
 import com.baegopa.onestep.dto.RoutePhotoDTO;
 import com.baegopa.onestep.service.IRoutePhotoService;
@@ -32,6 +33,8 @@ import java.util.Map;
 public class RouteController {
 
     private static final String ROLE_GUARDIAN = "GUARDIAN";
+    private static final String SESSION_ROUTE_OPTIONS = "routeOptions";
+    private static final String SESSION_ROUTE_OPTIONS_KEY = "routeOptionsKey";
 
     private final IRouteService routeService;
     private final IRoutePhotoService routePhotoService;
@@ -53,6 +56,22 @@ public class RouteController {
             log.error("경로 목록 조회 실패 guardianId={}", sessionUser.userId(), e);
             return createResponse(false, "경로를 불러오는 중 오류가 발생했습니다.");
         }
+    }
+
+    /** 출발지를 '현재 위치'로 정할 때: 좌표 → 주소 (보호자용) */
+    @ResponseBody
+    @GetMapping("/here")
+    public Map<String, Object> here(@RequestParam(value = "longitude", required = false) String longitude,
+                                    @RequestParam(value = "latitude", required = false) String latitude,
+                                    HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        Map<String, Object> response = createResponse(true, "현재 위치를 확인했습니다.");
+        response.put("addressName", routeService.findAddress(longitude, latitude));
+        return response;
     }
 
     /** 출발지·도착지 검색 (보호자용) */
@@ -77,6 +96,45 @@ public class RouteController {
         }
     }
 
+    /**
+     * 새 경로 등록 전에 고를 수 있는 경로 후보
+     * <p>
+     * 찾은 결과를 세션에 잠깐 두고, 등록할 때 같은 결과에서 고른 경로를 꺼낸다.
+     * (다시 찾으면 카카오 결과 순서가 바뀌어 다른 경로가 저장될 수 있다)
+     */
+    @ResponseBody
+    @GetMapping("/options")
+    public Map<String, Object> getRouteOptions(HttpServletRequest request, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        String key = optionsKey(request);
+
+        try {
+            KakaoRouteSearchResultDTO options = routeService.searchRouteOptions(
+                    getParameter(request, "startLongitude"),
+                    getParameter(request, "startLatitude"),
+                    getParameter(request, "endLongitude"),
+                    getParameter(request, "endLatitude"),
+                    getParameter(request, "endName"));
+
+            session.setAttribute(SESSION_ROUTE_OPTIONS, options);
+            session.setAttribute(SESSION_ROUTE_OPTIONS_KEY, key);
+
+            Map<String, Object> response = createResponse(true, "경로 후보를 찾았습니다.");
+            response.put("publicTransit", options.getPublicTransit());
+            response.put("walking", options.getWalking());
+            return response;
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("경로 후보 조회 실패 guardianId={}", sessionUser.userId(), e);
+            return createResponse(false, "경로를 찾는 중 오류가 발생했습니다.");
+        }
+    }
+
     /** 새 경로 등록 */
     @ResponseBody
     @PostMapping
@@ -91,6 +149,13 @@ public class RouteController {
         routeDTO.setStartName(getParameter(request, "startName"));
         routeDTO.setEndName(getParameter(request, "endName"));
 
+        // 후보를 볼 때와 같은 출발지·도착지면 그때 찾은 결과를 쓴다
+        KakaoRouteSearchResultDTO searched = null;
+        if (optionsKey(request).equals(session.getAttribute(SESSION_ROUTE_OPTIONS_KEY))
+                && session.getAttribute(SESSION_ROUTE_OPTIONS) instanceof KakaoRouteSearchResultDTO cached) {
+            searched = cached;
+        }
+
         try {
             RouteDTO saved = routeService.createRoute(
                     sessionUser.userId(),
@@ -98,7 +163,13 @@ public class RouteController {
                     getParameter(request, "startLongitude"),
                     getParameter(request, "startLatitude"),
                     getParameter(request, "endLongitude"),
-                    getParameter(request, "endLatitude"));
+                    getParameter(request, "endLatitude"),
+                    getParameter(request, "mode"),
+                    toIndex(getParameter(request, "routeIndex")),
+                    searched);
+
+            session.removeAttribute(SESSION_ROUTE_OPTIONS);
+            session.removeAttribute(SESSION_ROUTE_OPTIONS_KEY);
 
             Map<String, Object> response = createResponse(true, "경로를 등록했습니다.");
             response.put("routeId", saved.getRouteId());
@@ -363,5 +434,19 @@ public class RouteController {
     }
 
     private record SessionUser(Long userId, boolean valid, Map<String, Object> response) {
+    }
+
+    /** 출발지·도착지 좌표가 같은지 확인하는 열쇠 */
+    private String optionsKey(HttpServletRequest request) {
+        return getParameter(request, "startLongitude") + "," + getParameter(request, "startLatitude")
+                + ">" + getParameter(request, "endLongitude") + "," + getParameter(request, "endLatitude");
+    }
+
+    private int toIndex(String value) {
+        try {
+            return value == null ? 0 : Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }

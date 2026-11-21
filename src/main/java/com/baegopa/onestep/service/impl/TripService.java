@@ -1,11 +1,13 @@
 package com.baegopa.onestep.service.impl;
 
 import com.baegopa.onestep.dto.RouteDTO;
+import com.baegopa.onestep.dto.RoutePhotoDTO;
 import com.baegopa.onestep.dto.RouteStepDTO;
 import com.baegopa.onestep.dto.TripDTO;
 import com.baegopa.onestep.dto.TripEventDTO;
 import com.baegopa.onestep.dto.TripLocationDTO;
 import com.baegopa.onestep.mapper.IRouteMapper;
+import com.baegopa.onestep.mapper.IRoutePhotoMapper;
 import com.baegopa.onestep.mapper.ITripMapper;
 import com.baegopa.onestep.service.INotificationService;
 import com.baegopa.onestep.service.ITripService;
@@ -18,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -35,6 +39,8 @@ public class TripService implements ITripService {
      * 길안내는 20초마다 위치를 보내고 그 사이 20m 넘게 걸을 수 있어서 넉넉히 잡는다.
      */
     private static final double CHECKPOINT_RADIUS_METERS = 40;
+    /** 보호자 경로와 이용자 목적지가 이만큼 안이면 같은 목적지로 본다 */
+    private static final double SAME_DESTINATION_METERS = 150;
 
     private static final String EVENT_TYPE_DEVIATION = "DEVIATION";
     private static final String EVENT_TYPE_ROUTE_RETURN = "ROUTE_RETURN";
@@ -47,6 +53,7 @@ public class TripService implements ITripService {
 
     private final ITripMapper tripMapper;
     private final IRouteMapper routeMapper;
+    private final IRoutePhotoMapper routePhotoMapper;
     private final INotificationService notificationService;
 
     @Override
@@ -62,7 +69,7 @@ public class TripService implements ITripService {
         // 보호자가 이 목적지로 지정해둔 경로가 있으면 그 경로로 이동을 남긴다.
         // 그래야 보호자 화면에서 걸으며 기록한 구간·체크포인트를 이 이동에 겹쳐 볼 수 있다.
         // 이용자 화면은 그대로 두고 서버에서만 잇는다.
-        RouteDTO guardianRoute = routeMapper.getGuardianRouteByEndName(userId, routeDTO.getEndName().trim());
+        RouteDTO guardianRoute = findGuardianRoute(userId, routeDTO);
         Long routeId = guardianRoute != null
                 ? guardianRoute.getRouteId()
                 : insertRecommendedRoute(userId, routeDTO);
@@ -76,6 +83,35 @@ public class TripService implements ITripService {
                 routeDTO.getStartName(), routeDTO.getEndName());
 
         return tripDTO.getTripId();
+    }
+
+    /**
+     * 이번 목적지로 보호자가 등록한 경로
+     * <p>
+     * 목적지 좌표가 150m 안이면 같은 목적지로 본다. ('발산역'과 '발산역 5호선'처럼 이름이 달라도)
+     * 좌표가 없으면(예전 경로, 좌표를 안 보낸 화면) 이름이 같은 경로를 찾는다.
+     */
+    private RouteDTO findGuardianRoute(Long userId, RouteDTO routeDTO) {
+        // '보호자 경로'에서 고른 경로면 그 경로를 그대로 쓴다 (같은 목적지 경로가 여러 개여도)
+        if (routeDTO.getRouteId() != null) {
+            RouteDTO picked = routeMapper.getRoute(routeDTO.getRouteId());
+            routeDTO.setRouteId(null);
+            if (picked != null && userId.equals(picked.getUserId()) && "GUARDIAN".equals(picked.getRouteType())) {
+                return picked;
+            }
+        }
+
+        if (routeDTO.getEndLat() != null && routeDTO.getEndLng() != null) {
+            RouteDTO nearest = routeMapper.getNearestGuardianRoute(
+                    userId, routeDTO.getEndLat(), routeDTO.getEndLng());
+
+            if (nearest != null && GeoUtil.distanceMeters(routeDTO.getEndLat(), routeDTO.getEndLng(),
+                    nearest.getEndLat(), nearest.getEndLng()) <= SAME_DESTINATION_METERS) {
+                return nearest;
+            }
+        }
+
+        return routeMapper.getGuardianRouteByEndName(userId, routeDTO.getEndName().trim());
     }
 
     /** 보호자 경로가 없으면 이번 이동용 경로를 새로 남긴다 (TRIPS는 경로 없이 만들 수 없다) */
@@ -113,45 +149,85 @@ public class TripService implements ITripService {
 
         List<RouteStepDTO> steps = routeMapper.getRouteSteps(trip.getRouteId());
 
-        checkCheckpointPassed(trip, lat, lng, steps);
-        checkRouteDeviation(trip, lat, lng, steps);
+        List<Checkpoint> checkpoints = getCheckpoints(trip.getRouteId(), steps);
+
+        checkCheckpointPassed(trip, lat, lng, steps, checkpoints);
+        checkRouteDeviation(trip, lat, lng, checkpoints);
     }
 
     /**
      * 보호자가 걸으며 찍어 둔 지점 근처에 왔으면 지나간 것으로 보고 보호자에게 알린다.
      * <p>
-     * 보호자가 기록한 구간의 지점이 곧 체크포인트다. (체크포인트 이름이 없어도 된다)
+     * 보호자가 사진을 찍은 곳이 곧 체크포인트다. (사진 제목이 없어도 된다)
+     * 사진이 없는 구간은 구간을 기록할 때 남긴 지점 하나를 체크포인트로 쓴다.
      * 이용자 화면은 그대로 두고, 길안내가 보내는 위치만으로 서버에서 판단한다.
-     * 아직 기록 전인 구간은 어디인지 몰라서 건너뛴다.
      */
-    private void checkCheckpointPassed(TripDTO trip, BigDecimal lat, BigDecimal lng, List<RouteStepDTO> steps) {
-        for (RouteStepDTO step : steps) {
-            if (step.getLat() == null || step.getLng() == null) {
-                continue;
-            }
-
-            if (GeoUtil.distanceMeters(lat, lng, step.getLat(), step.getLng()) > CHECKPOINT_RADIUS_METERS) {
+    private void checkCheckpointPassed(TripDTO trip, BigDecimal lat, BigDecimal lng,
+                                       List<RouteStepDTO> steps, List<Checkpoint> checkpoints) {
+        for (Checkpoint checkpoint : checkpoints) {
+            if (GeoUtil.distanceMeters(lat, lng, checkpoint.lat(), checkpoint.lng()) > CHECKPOINT_RADIUS_METERS) {
                 continue;
             }
 
             // 근처에 머물면 위치가 계속 들어오므로, 한 이동에서 한 번만 알린다
-            if (tripMapper.getCheckpointEventCount(trip.getTripId(), step.getRouteStepId()) > 0) {
+            if (isPassed(trip, checkpoint)) {
                 continue;
             }
 
-            String checkpointName = checkpointName(step);
-            Long tripEventId = insertEvent(trip, step.getRouteStepId(), EVENT_TYPE_CHECKPOINT,
-                    checkpointName, lat, lng);
+            Long tripEventId = insertEvent(trip, checkpoint.step().getRouteStepId(), checkpoint.routePhotoId(),
+                    EVENT_TYPE_CHECKPOINT, checkpoint.name(), lat, lng);
 
-            moveCurrentStepPast(trip, steps, step);
+            moveCurrentStepPast(trip, steps, checkpoint.step());
 
-            log.info("체크포인트 통과 tripId={}, routeStepId={}, name={}",
-                    trip.getTripId(), step.getRouteStepId(), checkpointName);
+            log.info("체크포인트 통과 tripId={}, routeStepId={}, routePhotoId={}, name={}",
+                    trip.getTripId(), checkpoint.step().getRouteStepId(), checkpoint.routePhotoId(),
+                    checkpoint.name());
 
             notificationService.createCheckpointNotification(
-                    trip.getUserId(), checkpointName, tripEventId);
+                    trip.getUserId(), checkpoint.name(), tripEventId);
         }
     }
+
+    /**
+     * 이 경로의 체크포인트를 가는 순서대로
+     * <p>
+     * 구간 순서 → 구간 안 사진 순서. 사진이 있는 구간은 사진 지점들을,
+     * 사진이 없는 구간은 구간 기록 지점 하나를 쓴다. 위치가 없는 것은 어디인지 몰라서 뺀다.
+     */
+    private List<Checkpoint> getCheckpoints(Long routeId, List<RouteStepDTO> steps) {
+        Map<Long, List<RoutePhotoDTO>> photosByStep = new HashMap<>();
+        for (RoutePhotoDTO photo : routePhotoMapper.getPhotosByRoute(routeId)) {
+            if (photo.getLat() != null && photo.getLng() != null) {
+                photosByStep.computeIfAbsent(photo.getRouteStepId(), key -> new ArrayList<>()).add(photo);
+            }
+        }
+
+        List<Checkpoint> checkpoints = new ArrayList<>();
+        for (RouteStepDTO step : steps) {
+            List<RoutePhotoDTO> photos = photosByStep.get(step.getRouteStepId());
+
+            if (photos != null) {
+                for (RoutePhotoDTO photo : photos) {
+                    String name = isBlank(photo.getTitle()) ? checkpointName(step) : photo.getTitle().trim();
+                    checkpoints.add(new Checkpoint(step, photo.getRoutePhotoId(), name,
+                            photo.getLat(), photo.getLng()));
+                }
+            } else if (step.getLat() != null && step.getLng() != null) {
+                checkpoints.add(new Checkpoint(step, null, checkpointName(step), step.getLat(), step.getLng()));
+            }
+        }
+        return checkpoints;
+    }
+
+    private boolean isPassed(TripDTO trip, Checkpoint checkpoint) {
+        return checkpoint.routePhotoId() != null
+                ? tripMapper.getPhotoCheckpointEventCount(trip.getTripId(), checkpoint.routePhotoId()) > 0
+                : tripMapper.getCheckpointEventCount(trip.getTripId(), checkpoint.step().getRouteStepId()) > 0;
+    }
+
+    /** 체크포인트 하나: 사진 지점이면 routePhotoId가 있고, 구간 지점이면 null */
+    private record Checkpoint(RouteStepDTO step, Long routePhotoId, String name,
+                              BigDecimal lat, BigDecimal lng) { }
 
     /**
      * 알림에 보일 이름.
@@ -205,22 +281,14 @@ public class TripService implements ITripService {
      * GPS가 한 번 튀는 것으로 울리지 않도록 위치가 두 번 연속 벗어나야 이탈로 본다.
      * 벗어난 동안은 한 번만 알리고, 길로 돌아왔다가 다시 벗어나면 또 알린다.
      */
-    private void checkRouteDeviation(TripDTO trip, BigDecimal lat, BigDecimal lng, List<RouteStepDTO> steps) {
-        List<RouteStepDTO> points = new ArrayList<>();
-        for (RouteStepDTO step : steps) {
-            if (step.getLat() != null && step.getLng() != null) {
-                points.add(step);
-            }
-        }
-
+    private void checkRouteDeviation(TripDTO trip, BigDecimal lat, BigDecimal lng, List<Checkpoint> points) {
         // 보호자가 찍은 지점이 없으면 길을 몰라서 판단하지 않는다
         if (points.isEmpty()) {
             return;
         }
 
         // 마지막 지점을 지난 뒤로는 목적지까지의 길을 몰라서 판단하지 않는다
-        RouteStepDTO lastPoint = points.get(points.size() - 1);
-        if (tripMapper.getCheckpointEventCount(trip.getTripId(), lastPoint.getRouteStepId()) > 0) {
+        if (isPassed(trip, points.get(points.size() - 1))) {
             return;
         }
 
@@ -232,8 +300,8 @@ public class TripService implements ITripService {
             path.add(new BigDecimal[]{first.getLat(), first.getLng()});
         }
 
-        for (RouteStepDTO point : points) {
-            path.add(new BigDecimal[]{point.getLat(), point.getLng()});
+        for (Checkpoint point : points) {
+            path.add(new BigDecimal[]{point.lat(), point.lng()});
         }
 
         boolean offNow = GeoUtil.distanceToPathMeters(lat, lng, path) > DEVIATION_DISTANCE_METERS;
@@ -271,7 +339,13 @@ public class TripService implements ITripService {
     /** 이동 중 생긴 일을 남기고 번호를 돌려준다 */
     private Long insertEvent(TripDTO trip, Long routeStepId, String eventType, String message,
                              BigDecimal lat, BigDecimal lng) {
+        return insertEvent(trip, routeStepId, null, eventType, message, lat, lng);
+    }
+
+    private Long insertEvent(TripDTO trip, Long routeStepId, Long routePhotoId, String eventType,
+                             String message, BigDecimal lat, BigDecimal lng) {
         TripEventDTO eventDTO = new TripEventDTO();
+        eventDTO.setRoutePhotoId(routePhotoId);
         eventDTO.setUserId(trip.getUserId());
         eventDTO.setTripId(trip.getTripId());
         eventDTO.setRouteStepId(routeStepId);

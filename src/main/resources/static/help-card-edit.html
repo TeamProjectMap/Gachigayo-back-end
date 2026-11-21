@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>도움요청 카드 편집</title>
-    <link rel="stylesheet" href="/css/help-card-edit.css">
-    <link rel="stylesheet" href="/css/figma-skin.css?v=20261118-1">
+    <link rel="stylesheet" href="/css/help-card-edit.css?v=20261120-cards">
+    <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-find">
+    <link rel="stylesheet" href="/css/help-card-saved.css?v=20261120-plain">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
 </head>
 <body>
@@ -24,11 +25,13 @@
             <button type="button" class="preset-card" data-message="저는 혼자 이동 중 도움이 필요합니다" role="radio" aria-checked="false">
                 저는 혼자 이동 중 도움이 필요합니다
             </button>
-            <!-- 직접입력: 카드를 누르면 그 자리에서 바로 적는다 -->
+            <!-- 직접 쓴 문구 카드들은 여기(기본 문구 아래, 직접입력 위)에 js가 넣는다. 카드 안에 수정·삭제 -->
+            <!-- 직접입력: 카드를 누르면 그 자리에서 바로 적는다. 저장하면 위에 카드로 쌓인다 -->
             <div class="preset-card custom-card" id="customPresetButton" role="radio" aria-checked="false">
                 <textarea id="customMessage" class="custom-input" maxlength="500" rows="1"
                           placeholder="직접입력" aria-label="도움요청 문구 직접 입력"></textarea>
             </div>
+            <p class="custom-full-note hidden" id="customFullNote">직접 쓴 문구는 5개까지 저장할 수 있어요. 새로 쓰려면 안 쓰는 카드를 지워주세요.</p>
         </div>
     </section>
 
@@ -37,6 +40,7 @@
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/help-card-edit.js"></script>
+<script src="/js/confirm-dialog.js?v=20261120-form"></script>
+<script src="/js/help-card-edit.js?v=20261120-stay"></script>
 </body>
 </html>

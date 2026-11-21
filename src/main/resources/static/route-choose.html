@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>같이가요 경로 선택</title>
+    <!-- 이용자 경로 선택 화면(route-compare.html)과 같은 모양을 쓰려고 같은 스타일을 그대로 불러온다 -->
+    <link rel="stylesheet" href="/css/route-compare.css?v=20261120" />
+    <link rel="stylesheet" href="/css/map-experience.css" />
+    <link rel="stylesheet" href="/css/app-frame.css?v=20261120-border2" />
+    <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-find">
+    <script defer src="/js/figma-skin.js?v=20261118-1"></script>
+  </head>
+  <body>
+    <!-- 보호자: 새 경로 등록에서 출발지·도착지를 고른 뒤 경로 후보 중 하나를 고른다.
+         고르면 그 경로로 저장하고 구간 기록 화면으로 간다 -->
+    <main class="route-compare-page hidden" id="routeComparePage">
+      <header class="compare-header">
+        <button
+          type="button"
+          class="back-button"
+          id="backButton"
+          aria-label="새 경로 등록으로 돌아가기"
+        >
+          &lt;
+        </button>
+        <div class="route-points" aria-label="출발지와 도착지">
+          <div class="point-row">
+            <span>출발</span>
+            <strong id="compareOriginName">출발지</strong>
+          </div>
+          <div class="point-row destination">
+            <span>도착</span>
+            <strong id="destinationName">도착지</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="route-tabs" role="tablist" aria-label="경로 종류">
+        <button
+          type="button"
+          class="route-tab"
+          data-tab="publicTransit"
+          role="tab"
+          aria-selected="false"
+        >
+          버스/지하철
+        </button>
+        <button
+          type="button"
+          class="route-tab"
+          data-tab="walking"
+          role="tab"
+          aria-selected="false"
+        >
+          걷기
+        </button>
+      </section>
+
+      <section
+        id="compareMap"
+        class="compare-map experience-map"
+        aria-label="선택한 경로 지도"
+      >
+        지도를 불러오는 중입니다.
+      </section>
+      <div class="map-legend">
+        <span>도보</span><span class="bus">버스</span
+        ><span class="subway">지하철</span>
+      </div>
+      <div class="route-filter-toolbar">
+        <div id="transitFilters" class="transit-filters">
+          <button type="button" data-route-filter="all" aria-pressed="true">
+            전체</button
+          ><button type="button" data-route-filter="bus" aria-pressed="false">
+            버스만</button
+          ><button
+            type="button"
+            data-route-filter="subway"
+            aria-pressed="false"
+          >
+            지하철만
+          </button>
+        </div>
+      </div>
+      <section
+        class="route-list"
+        id="routeList"
+        aria-label="경로 후보"
+      ></section>
+
+      <p id="compareMessage" class="compare-message" role="status"></p>
+
+      <button type="button" class="guide-button" id="guideButton" disabled>
+        이 경로로 기록하기
+      </button>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/js/navigation-map.js"></script>
+    <script src="/js/route-choose.js?v=20261120-walk"></script>
+  </body>
+</html>

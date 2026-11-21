@@ -31,4 +31,8 @@ public interface INotificationMapper {
                                    @Param("notifyType") String notifyType,
                                    @Param("content") String content,
                                    @Param("withinMinutes") int withinMinutes);
+
+    /** 이 종류들 중 keepDays일이 지난 알림을 지운다. 지운 개수를 돌려준다 */
+    int deleteOldNotifications(@Param("notifyTypes") java.util.List<String> notifyTypes,
+                               @Param("keepDays") int keepDays);
 }

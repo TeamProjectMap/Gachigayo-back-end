@@ -94,7 +94,8 @@ ul {
     justify-content: space-between;
     gap: 10px;
     width: 100%;
-    padding: 16px;
+    min-height: 61px;          /* 피그마 알림 칸 354×61 */
+    padding: 10px 16px 10px 19px;
     border: 1px solid #ECECEC;
     border-radius: 14px;
     background: var(--bg);
@@ -113,15 +114,18 @@ ul {
 
 .noti-title {
     display: block;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
 }
 
 .noti-sub {
     display: block;
-    margin-top: 5px;
+    margin-top: 2px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 17px;
 }
 
 .noti-arrow {
@@ -246,4 +250,14 @@ ul {
     body {
         background: #FFFFFF;
     }
+}
+
+/* 알림 보관 기간 안내 (목록 맨 아래 작은 회색 글씨) */
+.noti-keep-note {
+    margin: 18px 16px 0;
+    color: #8D8D8D;
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: center;
+    word-break: keep-all;
 }

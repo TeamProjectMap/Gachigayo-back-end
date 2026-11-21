@@ -42,6 +42,9 @@ public interface ITripMapper {
     int getCheckpointEventCount(@Param("tripId") Long tripId,
                                 @Param("routeStepId") Long routeStepId);
 
+    /** 이 이동에서 이 사진 지점을 이미 지났는지 */
+    int getPhotoCheckpointEventCount(@Param("tripId") Long tripId, @Param("routePhotoId") Long routePhotoId);
+
     /** 이동 중 생긴 일 저장. 저장 후 tripEventId가 DTO에 채워진다. */
     int insertTripEvent(TripEventDTO tripEventDTO);
 

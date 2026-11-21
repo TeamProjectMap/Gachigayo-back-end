@@ -10,9 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -26,11 +29,14 @@ public class UserService implements IUserService {
     private static final int LINK_CODE_RETRY_LIMIT = 20;
     private static final String PASSWORD_PATTERN = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,16}$";
     private static final int HELP_REQUEST_MESSAGE_MAX_LENGTH = 500;
+    /** 직접 쓴 도움요청 문구는 이만큼까지 쌓아 둔다 */
+    private static final int CUSTOM_HELP_MESSAGE_MAX_COUNT = 5;
 
     private final IUserMapper userMapper;
     private final ILinkMapper linkMapper;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SecureRandom secureRandom = new SecureRandom();
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     @Override
     public boolean isLoginIdDuplicated(String loginId) {
@@ -133,6 +139,70 @@ public class UserService implements IUserService {
 
         UserSettingsDTO settingsDTO = userMapper.getUserSettings(userId);
         return settingsDTO == null ? null : settingsDTO.getHelpRequestMessage();
+    }
+
+    @Override
+    public List<String> getCustomHelpMessages(Long userId) {
+        if (userId == null) {
+            return new ArrayList<>();
+        }
+
+        UserSettingsDTO settingsDTO = userMapper.getUserSettings(userId);
+        String json = settingsDTO == null ? null : settingsDTO.getCustomHelpMessages();
+
+        if (isBlank(json)) {
+            return new ArrayList<>();
+        }
+
+        try {
+            List<String> messages = new ArrayList<>();
+            for (Object item : jsonMapper.readValue(json, List.class)) {
+                if (item != null && !isBlank(item.toString())) {
+                    messages.add(item.toString());
+                }
+            }
+            return messages;
+        } catch (Exception e) {
+            log.warn("직접 쓴 도움요청 문구를 읽지 못했습니다. userId={}", userId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    @Transactional
+    public List<String> saveCustomHelpMessages(Long userId, String messagesJson) {
+        if (userId == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        List<?> raw;
+        try {
+            raw = isBlank(messagesJson) ? List.of() : jsonMapper.readValue(messagesJson, List.class);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("문구 목록이 올바르지 않습니다.");
+        }
+
+        // 앞뒤 공백 정리, 빈 문구·같은 문구는 하나로
+        List<String> messages = new ArrayList<>();
+        for (Object item : raw) {
+            String message = item == null ? "" : item.toString().trim();
+            if (isBlank(message) || messages.contains(message)) {
+                continue;
+            }
+            if (message.length() > HELP_REQUEST_MESSAGE_MAX_LENGTH) {
+                throw new IllegalArgumentException("도움요청 문구는 500자 이하로 입력해주세요.");
+            }
+            messages.add(message);
+        }
+
+        if (messages.size() > CUSTOM_HELP_MESSAGE_MAX_COUNT) {
+            throw new IllegalArgumentException("직접 쓴 문구는 " + CUSTOM_HELP_MESSAGE_MAX_COUNT + "개까지 저장할 수 있어요.");
+        }
+
+        userMapper.upsertCustomHelpMessages(userId,
+                messages.isEmpty() ? null : jsonMapper.writeValueAsString(messages));
+
+        return messages;
     }
 
     @Override

@@ -24,6 +24,16 @@
     var map = null;
     var markers = [];
 
+    // 걷는 동안 계속 받는 지금 위치. 사진을 찍으면 이 위치를 체크포인트로 붙인다.
+    var FRESH_FIX_MS = 15000;     // 이보다 오래된 위치는 다시 받는다
+    var GOOD_ACCURACY = 50;       // 오차가 이보다 크면 다시 받는다 (m)
+    var lastFix = null;
+    var hereOverlay = null;
+    var centeredOnHere = false;
+    // 지도가 내 위치를 따라가는 중인지. 지도를 손으로 끌면 멈추고, '내 위치'를 누르면 다시 따라간다.
+    var following = true;
+    var wakeLock = null;
+
     $(function () {
         routeStepId = new URLSearchParams(window.location.search).get("stepId");
 
@@ -48,7 +58,124 @@
             // 같은 사진을 다시 고를 수 있게 비워둔다
             this.value = "";
         });
+
+        $("#followButton").on("click", function () {
+            setFollowing(true);
+        });
+
+        // 걷다가 헷갈릴 만한 곳에서 바로 누르는 큰 버튼
+        $("#checkpointButton").on("click", function () {
+            replacingPhotoId = null;
+            $("#photoInput").trigger("click");
+        });
+
+        watchHere();
+        keepScreenOn();
+        document.addEventListener("visibilitychange", function () {
+            // 다른 앱(카메라 등)에 다녀오면 화면 켜짐이 풀려서 다시 건다
+            if (document.visibilityState === "visible") {
+                keepScreenOn();
+            }
+        });
     });
+
+    /* ---------------------------- 지금 위치 ---------------------------- */
+
+    /** 걷는 동안 위치를 계속 받아 지도에 파란 점으로 보여준다 */
+    function watchHere() {
+        if (!navigator.geolocation) {
+            setHereText("이 기기는 위치를 받을 수 없어요");
+            return;
+        }
+
+        navigator.geolocation.watchPosition(function (position) {
+            lastFix = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                time: Date.now()
+            };
+            setHereText("지금 위치 정확도 약 " + Math.round(position.coords.accuracy) + "m"
+                    + (position.coords.accuracy > GOOD_ACCURACY ? " · 하늘이 트인 곳에서 찍으면 더 정확해요" : ""));
+            drawHere();
+        }, function (error) {
+            setHereText(error.code === 1
+                    ? "위치 권한을 허용해야 사진 위치가 기록돼요"
+                    : "지금 위치를 찾는 중이에요");
+        }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+    }
+
+    function drawHere() {
+        if (!map || !lastFix || !window.kakao) {
+            return;
+        }
+
+        var here = new window.kakao.maps.LatLng(lastFix.latitude, lastFix.longitude);
+
+        if (!hereOverlay) {
+            hereOverlay = new window.kakao.maps.CustomOverlay({
+                map: map,
+                position: here,
+                content: '<span class="map-here" aria-label="지금 위치"></span>',
+                yAnchor: 0.5,
+                zIndex: 5
+            });
+        } else {
+            hereOverlay.setPosition(here);
+        }
+
+        followHere();
+    }
+
+    /**
+     * 걷는 동안 지도가 내 위치를 따라간다 (파란 점이 늘 지도 가운데).
+     * 지도를 끌어 다른 곳을 보는 중이거나 사진 위치를 고르는 중이면 움직이지 않는다.
+     */
+    function followHere() {
+        if (!map || !lastFix || !following || pickingPhotoId !== null) {
+            return;
+        }
+
+        var here = new window.kakao.maps.LatLng(lastFix.latitude, lastFix.longitude);
+
+        if (!centeredOnHere) {
+            // 처음에는 골목이 보이게 가까이 확대해서 맞춘다
+            centeredOnHere = true;
+            map.setLevel(3);
+            map.setCenter(here);
+            return;
+        }
+        map.panTo(here);
+    }
+
+    function setFollowing(on) {
+        following = on;
+        $("#followButton").toggleClass("hidden", on);
+        if (on) {
+            followHere();
+        }
+    }
+
+    function hasLocation(photo) {
+        return photo.lat !== null && photo.lat !== undefined && photo.lng !== null && photo.lng !== undefined;
+    }
+
+    function setHereText(text) {
+        $("#hereStatus").text(text);
+    }
+
+    /** 걸으며 기록하는 동안 화면이 꺼지지 않게 (지원하지 않는 브라우저는 그냥 넘어간다) */
+    function keepScreenOn() {
+        if (!("wakeLock" in navigator) || wakeLock) {
+            return;
+        }
+        navigator.wakeLock.request("screen").then(function (lock) {
+            wakeLock = lock;
+            lock.addEventListener("release", function () {
+                wakeLock = null;
+            });
+        }).catch(function () {});
+    }
 
     function checkSession() {
         $.ajax({
@@ -108,6 +235,11 @@
 
                 render();
                 showMap();
+
+                // 이 구간에 더 찍을 수 없으면 큰 버튼을 막는다 (기존 사진은 카드에서 재촬영)
+                var full = photos.length >= maxPhotos;
+                $("#checkpointButton").prop("disabled", full)
+                        .text(full ? "이 구간 사진을 모두 찍었어요" : "여기 체크포인트로 찍기");
             },
             error: function () {
                 setMessage("사진을 불러오는 중 오류가 발생했습니다.", false);
@@ -241,6 +373,12 @@
     function takePhoto(file) {
         setMessage("사진을 올리는 중이에요...", true);
 
+        // 걷는 동안 받아 둔 위치가 방금 것이고 정확하면 그대로 쓴다 (다시 받는 것보다 빠르고 덜 튄다)
+        if (lastFix && Date.now() - lastFix.time <= FRESH_FIX_MS && lastFix.accuracy <= GOOD_ACCURACY) {
+            uploadPhoto(file, lastFix);
+            return;
+        }
+
         if (!navigator.geolocation) {
             uploadPhoto(file, null);
             return;
@@ -291,19 +429,36 @@
         });
     }
 
+    /**
+     * 지점 이름과 할 일을 한 창에서 적는다.
+     * window.prompt는 앱 화면(WebView)에서 창이 안 뜨고 바로 취소가 돼서 화면 안 입력창을 쓴다.
+     * 여기 적은 글이 이용자 길안내 사진 팝업에 그대로 나온다.
+     */
     function editText(photo) {
-        var title = window.prompt("이 지점의 이름을 적어주세요", photo.title || "");
+        AppForm("체크포인트 설명", [
+            {
+                name: "title",
+                label: "지점 이름",
+                value: photo.title || "",
+                placeholder: "예) 편의점 앞 횡단보도",
+                maxLength: 100
+            },
+            {
+                name: "description",
+                label: "여기서 무엇을 하면 되나요?",
+                value: photo.description || "",
+                placeholder: "예) 초록불이 켜지면 건너서 오른쪽으로 가요",
+                maxLength: 255,
+                multiline: true
+            }
+        ], "저장").then(function (values) {
+            if (values) {
+                saveText(photo, values.title, values.description);
+            }
+        });
+    }
 
-        if (title === null) {
-            return;
-        }
-
-        var description = window.prompt("여기서 무엇을 하면 되나요?", photo.description || "");
-
-        if (description === null) {
-            return;
-        }
-
+    function saveText(photo, title, description) {
         $.ajax({
             url: "/route/photos/" + photo.routePhotoId + "/text",
             type: "post",
@@ -342,6 +497,7 @@
     function stopPickingLocation() {
         pickingPhotoId = null;
         $("#photoPage").removeClass("picking");
+        followHere();
     }
 
     function savePickedLocation(latlng) {
@@ -461,14 +617,24 @@
                     savePickedLocation(mouseEvent.latLng);
                 }
             });
+
+            // 손으로 지도를 끌면 따라가기를 멈추고 '내 위치' 버튼을 보여준다
+            window.kakao.maps.event.addListener(map, "dragstart", function () {
+                setFollowing(false);
+            });
         }
 
         $.each(markers, function (index, marker) {
             marker.setMap(null);
         });
         markers = [];
+        drawHere();
 
         if (!located.length) {
+            // 사진도 구간 위치도 없으면(아직 기록 전) 시청 대신 실제 있을 만한 곳으로 옮긴다
+            if (!(stepLat && stepLng)) {
+                centerOnLikelyPlace();
+            }
             return;
         }
 
@@ -489,6 +655,11 @@
             bounds.extend(position);
         });
 
+        // 따라가는 중이면 사진을 새로 올린 뒤에도 내 위치에 머문다
+        if (following && lastFix && centeredOnHere) {
+            followHere();
+            return;
+        }
         map.setBounds(bounds);
     }
 
@@ -506,6 +677,62 @@
         }
 
         return new window.kakao.maps.LatLng(37.5665, 126.9780);
+    }
+
+    /**
+     * 기록 전 구간: 보호자는 그 자리를 걸으며 기록하므로 지금 위치를 먼저 쓰고,
+     * 위치를 못 받으면 구간 제목의 출발 장소('A → B (도보)'의 A, 아니면 B)를 검색해 그곳으로 옮긴다.
+     */
+    function centerOnLikelyPlace() {
+        if (!navigator.geolocation) {
+            centerOnStepPlace();
+            return;
+        }
+
+        // 파란 점은 watchHere가 그린다. 여기서는 지도만 옮긴다.
+        navigator.geolocation.getCurrentPosition(function (position) {
+            var here = new window.kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
+            centeredOnHere = true;
+            map.setCenter(here);
+            map.setLevel(3);
+        }, function () {
+            centerOnStepPlace();
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+    }
+
+    function centerOnStepPlace() {
+        var title = $("#stepTitle").text() || "";
+        var walk = title.match(/^(.+?)\s*→\s*(.+?)\s*\(도보\)\s*$/);
+        var names = walk ? [walk[1], walk[2]] : [title.replace(/\s*\(.*\)\s*$/, "")];
+
+        searchFirst(names);
+    }
+
+    /** 이름들을 차례로 찾아 처음 나온 장소로 지도를 옮긴다 */
+    function searchFirst(names) {
+        var name = $.trim(names.shift() || "");
+        if (!name) {
+            return;
+        }
+
+        $.ajax({
+            url: "/route/places",
+            type: "get",
+            dataType: "JSON",
+            data: { query: name },
+            success: function (json) {
+                var place = json && json.success && json.places && json.places[0];
+                if (place && place.latitude && place.longitude) {
+                    map.setCenter(new window.kakao.maps.LatLng(place.latitude, place.longitude));
+                    map.setLevel(3);
+                    return;
+                }
+                searchFirst(names);
+            },
+            error: function () {
+                searchFirst(names);
+            }
+        });
     }
 
     function setMapMessage(message) {

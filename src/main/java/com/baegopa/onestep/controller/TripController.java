@@ -1,6 +1,7 @@
 package com.baegopa.onestep.controller;
 
 import com.baegopa.onestep.dto.RouteDTO;
+import com.baegopa.onestep.service.IRouteService;
 import com.baegopa.onestep.service.ITripService;
 import com.baegopa.onestep.service.impl.NavigationLandmarkService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +34,47 @@ public class TripController {
 
     private final ITripService tripService;
     private final NavigationLandmarkService landmarkService;
+    private final IRouteService routeService;
+
+    /** 이용자 홈: 보호자가 등록해 준 경로 목록 */
+    @ResponseBody
+    @GetMapping("/guardian-routes")
+    public Map<String, Object> guardianRoutes(HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            Map<String, Object> response = createResponse(true, "보호자가 등록한 경로를 조회했습니다.");
+            response.put("routes", routeService.getRoutesForUser(sessionUser.userId()));
+            return response;
+        } catch (Exception e) {
+            log.error("보호자 경로 목록 조회 실패 userId={}", sessionUser.userId(), e);
+            return createResponse(false, "경로를 불러오는 중 오류가 발생했습니다.");
+        }
+    }
+
+    /** 이용자: 보호자가 고른 경로 그대로 (이 경로로 바로 길안내) */
+    @ResponseBody
+    @GetMapping("/guardian-routes/{routeId}")
+    public Map<String, Object> guardianRouteGuide(@PathVariable Long routeId, HttpSession session) {
+        SessionUser sessionUser = getSessionUser(session);
+        if (!sessionUser.valid()) {
+            return sessionUser.response();
+        }
+
+        try {
+            Map<String, Object> response = createResponse(true, "보호자 경로를 불러왔습니다.");
+            response.putAll(routeService.getRouteGuideForUser(sessionUser.userId(), routeId));
+            return response;
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("보호자 경로 불러오기 실패 userId={}, routeId={}", sessionUser.userId(), routeId, e);
+            return createResponse(false, "경로를 불러오는 중 오류가 발생했습니다.");
+        }
+    }
 
     @ResponseBody
     @GetMapping("/{tripId}/landmarks")
@@ -68,6 +110,10 @@ public class TripController {
         RouteDTO routeDTO = new RouteDTO();
         routeDTO.setStartName(getParameter(request, "startName"));
         routeDTO.setEndName(getParameter(request, "endName"));
+        // '보호자 경로'에서 고른 길안내면 그 경로 번호 (서버가 주인·종류를 다시 확인한다)
+        routeDTO.setRouteId(toLong(getParameter(request, "guardianRouteId")));
+        routeDTO.setEndLat(toDecimal(getParameter(request, "endLatitude")));
+        routeDTO.setEndLng(toDecimal(getParameter(request, "endLongitude")));
         routeDTO.setTotalDistance(toInteger(getParameter(request, "totalDistance")));
         routeDTO.setTotalDuration(toInteger(getParameter(request, "totalDuration")));
 
@@ -142,6 +188,19 @@ public class TripController {
     private Long toLong(String value) {
         try {
             return isBlank(value) ? null : Long.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 좌표 같은 소수. 숫자가 아니거나 범위를 벗어나면 null (없으면 이름으로 찾는다) */
+    private java.math.BigDecimal toDecimal(String value) {
+        try {
+            if (isBlank(value)) {
+                return null;
+            }
+            java.math.BigDecimal number = new java.math.BigDecimal(value.trim());
+            return number.abs().compareTo(java.math.BigDecimal.valueOf(180)) > 0 ? null : number;
         } catch (NumberFormatException e) {
             return null;
         }

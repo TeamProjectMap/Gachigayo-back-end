@@ -3,6 +3,7 @@ package com.baegopa.onestep.service.impl;
 import com.baegopa.onestep.dto.KakaoPlaceDTO;
 import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
 import com.baegopa.onestep.dto.PublicTransitRouteDTO;
+import com.baegopa.onestep.dto.PublicTransitRouteResultDTO;
 import com.baegopa.onestep.dto.PublicTransitStepDTO;
 import com.baegopa.onestep.dto.RouteDTO;
 import com.baegopa.onestep.dto.RoutePhotoDTO;
@@ -14,6 +15,7 @@ import com.baegopa.onestep.dto.WalkingStepDTO;
 import com.baegopa.onestep.mapper.ILinkMapper;
 import com.baegopa.onestep.mapper.IRouteMapper;
 import com.baegopa.onestep.mapper.IRoutePhotoMapper;
+import com.baegopa.onestep.service.IEasyGuideService;
 import com.baegopa.onestep.service.IKakaoMapService;
 import com.baegopa.onestep.service.IRouteService;
 import com.baegopa.onestep.util.StepTextUtil;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,6 +42,8 @@ public class RouteService implements IRouteService {
     private static final String ROUTE_TYPE_GUARDIAN = "GUARDIAN";
     private static final String DEFAULT_RISK_LEVEL = "LOW";
     private static final String STEP_TYPE_WALK = "WALK";
+    /** 경로 후보 중 걷기를 골랐을 때 */
+    private static final String MODE_WALKING = "WALKING";
 
     /** 카카오 대중교통 응답은 걷는 구간을 WALKING 으로 준다. 둘을 같은 것으로 본다. */
     private static final String STEP_TYPE_WALKING = "WALKING";
@@ -50,6 +55,8 @@ public class RouteService implements IRouteService {
     private final IRoutePhotoMapper routePhotoMapper;
     private final ILinkMapper linkMapper;
     private final IKakaoMapService kakaoMapService;
+    private final IEasyGuideService easyGuideService;
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     @Override
     public Map<String, Object> getRoutes(Long guardianId) {
@@ -88,7 +95,9 @@ public class RouteService implements IRouteService {
     @Transactional
     public RouteDTO createRoute(Long guardianId, RouteDTO routeDTO,
                                 String startLongitude, String startLatitude,
-                                String endLongitude, String endLatitude) {
+                                String endLongitude, String endLatitude,
+                                String mode, int routeIndex,
+                                KakaoRouteSearchResultDTO searched) {
 
         UserDTO linkedUser = linkMapper.getUserByGuardianId(guardianId);
 
@@ -102,10 +111,19 @@ public class RouteService implements IRouteService {
             throw new IllegalArgumentException("같은 이름의 경로가 이미 있습니다.");
         }
 
-        KakaoRouteSearchResultDTO searchResult = kakaoMapService.searchRoutes(
+        // 후보를 보여줄 때 찾아 둔 결과가 있으면 그대로 써야 보호자가 고른 경로와 같다
+        KakaoRouteSearchResultDTO searchResult = searched != null ? searched
+                : kakaoMapService.searchRoutes(
                 startLongitude, startLatitude, endLongitude, endLatitude, routeDTO.getEndName());
 
-        List<RouteStepDTO> steps = toSteps(searchResult,
+        PublicTransitRouteDTO transitRoute = MODE_WALKING.equalsIgnoreCase(mode)
+                ? null : pickTransitRoute(searchResult, routeIndex);
+
+        if (!MODE_WALKING.equalsIgnoreCase(mode) && transitRoute == null) {
+            throw new IllegalArgumentException("고른 경로를 찾지 못했습니다. 경로를 다시 골라주세요.");
+        }
+
+        List<RouteStepDTO> steps = toSteps(searchResult, transitRoute,
                 routeDTO.getStartName(), routeDTO.getEndName());
 
         if (steps.isEmpty()) {
@@ -114,8 +132,12 @@ public class RouteService implements IRouteService {
 
         routeDTO.setUserId(linkedUser.getUserId());
         routeDTO.setRouteType(ROUTE_TYPE_GUARDIAN);
+        routeDTO.setEndLat(toCoordinate(endLatitude, "도착지 위도"));
+        routeDTO.setEndLng(toCoordinate(endLongitude, "도착지 경도"));
         routeDTO.setRiskLevel(DEFAULT_RISK_LEVEL);
-        putTotals(routeDTO, searchResult);
+        putTotals(routeDTO, searchResult, transitRoute);
+        routeDTO.setRouteJson(buildRouteJson(searchResult, transitRoute, routeDTO.getStartName(),
+                startLongitude, startLatitude, routeDTO.getEndName(), endLongitude, endLatitude));
 
         routeMapper.insertRoute(routeDTO);
         routeMapper.insertRouteSteps(routeDTO.getRouteId(), steps);
@@ -125,6 +147,124 @@ public class RouteService implements IRouteService {
                 guardianId, linkedUser.getUserId(), routeDTO.getRouteId(), steps.size());
 
         return routeDTO;
+    }
+
+    /**
+     * 보호자가 고른 경로를 길안내에 그대로 쓸 수 있게 JSON으로 남긴다.
+     * <p>
+     * 이용자가 '보호자 경로'에서 이 경로를 고르면 다시 검색하지 않고 이것으로 안내한다.
+     * 안내 문구는 이용자 길안내와 같이 AI 쉬운 말(easyGuidance)을 미리 채워 둔다. 실패해도 저장은 한다.
+     */
+    private String buildRouteJson(KakaoRouteSearchResultDTO searchResult, PublicTransitRouteDTO transitRoute,
+                                  String startName, String startLongitude, String startLatitude,
+                                  String endName, String endLongitude, String endLatitude) {
+        KakaoRouteSearchResultDTO chosen = new KakaoRouteSearchResultDTO();
+        Object route;
+
+        if (transitRoute != null) {
+            PublicTransitRouteResultDTO transit = new PublicTransitRouteResultDTO();
+            transit.setAvailable(true);
+            transit.setRoutes(new ArrayList<>(List.of(transitRoute)));
+            chosen.setPublicTransit(transit);
+            route = transitRoute;
+        } else {
+            chosen.setWalking(searchResult.getWalking());
+            route = searchResult.getWalking();
+        }
+
+        try {
+            easyGuideService.applyEasyGuidance(chosen);
+        } catch (Exception e) {
+            log.warn("보호자 경로 쉬운 말 안내 실패 - 원래 문구로 저장", e);
+        }
+
+        Map<String, Object> json = new LinkedHashMap<>();
+        json.put("mode", transitRoute != null ? "PUBLIC_TRANSIT" : "WALKING");
+        json.put("start", place(startName, startLongitude, startLatitude));
+        json.put("end", place(endName, endLongitude, endLatitude));
+        json.put("route", route);
+
+        try {
+            return jsonMapper.writeValueAsString(json);
+        } catch (Exception e) {
+            log.warn("보호자 경로 JSON 저장 실패", e);
+            return null;
+        }
+    }
+
+    private Map<String, Object> place(String name, String longitude, String latitude) {
+        Map<String, Object> place = new LinkedHashMap<>();
+        place.put("placeName", name);
+        place.put("longitude", longitude);
+        place.put("latitude", latitude);
+        return place;
+    }
+
+    @Override
+    public Map<String, Object> getRouteGuideForUser(Long userId, Long routeId) {
+        RouteDTO route = routeId == null ? null : routeMapper.getRoute(routeId);
+
+        if (route == null || !userId.equals(route.getUserId()) || !ROUTE_TYPE_GUARDIAN.equals(route.getRouteType())) {
+            throw new IllegalArgumentException("경로를 찾을 수 없습니다.");
+        }
+
+        if (isBlank(route.getRouteJson())) {
+            throw new IllegalArgumentException(
+                    "예전에 등록한 경로라 그대로 안내할 수 없어요. 보호자에게 경로를 다시 등록해 달라고 해주세요.");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("routeId", route.getRouteId());
+        result.put("routeName", route.getRouteName());
+        result.put("guide", jsonMapper.readValue(route.getRouteJson(), Map.class));
+        return result;
+    }
+
+    @Override
+    public String findAddress(String longitude, String latitude) {
+        try {
+            toCoordinate(longitude, "경도");
+            toCoordinate(latitude, "위도");
+            String address = kakaoMapService.searchAddressByCoordinate(longitude.trim(), latitude.trim());
+            return isBlank(address) ? "" : address;
+        } catch (Exception e) {
+            log.warn("현재 위치 주소 찾기 실패", e);
+            return "";
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getRoutesForUser(Long userId) {
+        List<Map<String, Object>> routes = new ArrayList<>();
+
+        for (RouteDTO route : routeMapper.getRoutes(userId)) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("routeId", route.getRouteId());
+            item.put("routeName", route.getRouteName());
+            item.put("startName", route.getStartName());
+            item.put("endName", route.getEndName());
+            // 예전에 등록한 경로는 좌표가 없다. 화면이 이름으로 장소를 다시 찾는다.
+            item.put("endLatitude", route.getEndLat());
+            item.put("endLongitude", route.getEndLng());
+            item.put("photoCount", routePhotoMapper.getPhotosByRoute(route.getRouteId()).size());
+            item.put("guideReady", Boolean.TRUE.equals(route.getGuideReady()));
+            routes.add(item);
+        }
+
+        return routes;
+    }
+
+    @Override
+    public KakaoRouteSearchResultDTO searchRouteOptions(String startLongitude, String startLatitude,
+                                                        String endLongitude, String endLatitude,
+                                                        String endName) {
+        if (isBlank(startLongitude) || isBlank(startLatitude)) {
+            throw new IllegalArgumentException("출발지를 선택해주세요.");
+        }
+        if (isBlank(endLongitude) || isBlank(endLatitude)) {
+            throw new IllegalArgumentException("도착지를 선택해주세요.");
+        }
+        return kakaoMapService.searchRoutes(startLongitude, startLatitude, endLongitude, endLatitude, endName);
     }
 
     @Override
@@ -273,6 +413,7 @@ public class RouteService implements IRouteService {
      * 좌표는 보호자가 실제로 걸으며 기록할 때 채워진다.
      */
     private List<RouteStepDTO> toSteps(KakaoRouteSearchResultDTO searchResult,
+                                       PublicTransitRouteDTO route,
                                        String startName, String endName) {
         List<RouteStepDTO> steps = new ArrayList<>();
 
@@ -280,12 +421,7 @@ public class RouteService implements IRouteService {
             return steps;
         }
 
-        if (searchResult.getPublicTransit() != null
-                && searchResult.getPublicTransit().isAvailable()
-                && !searchResult.getPublicTransit().getRoutes().isEmpty()) {
-
-            PublicTransitRouteDTO route = searchResult.getPublicTransit().getRoutes().get(0);
-
+        if (route != null) {
             for (PublicTransitStepDTO step : route.getSteps()) {
                 steps.add(toStep(0, step));
             }
@@ -390,12 +526,23 @@ public class RouteService implements IRouteService {
         return stepDTO;
     }
 
-    private void putTotals(RouteDTO routeDTO, KakaoRouteSearchResultDTO searchResult) {
-        if (searchResult.getPublicTransit() != null
-                && searchResult.getPublicTransit().isAvailable()
-                && !searchResult.getPublicTransit().getRoutes().isEmpty()) {
+    /** 보호자가 고른 버스·지하철 경로 (몇 번째 후보인지) */
+    private PublicTransitRouteDTO pickTransitRoute(KakaoRouteSearchResultDTO searchResult, int routeIndex) {
+        if (searchResult == null || searchResult.getPublicTransit() == null
+                || !searchResult.getPublicTransit().isAvailable()) {
+            return null;
+        }
 
-            PublicTransitRouteDTO route = searchResult.getPublicTransit().getRoutes().get(0);
+        List<PublicTransitRouteDTO> routes = searchResult.getPublicTransit().getRoutes();
+        if (routeIndex < 0 || routeIndex >= routes.size()) {
+            return null;
+        }
+        return routes.get(routeIndex);
+    }
+
+    private void putTotals(RouteDTO routeDTO, KakaoRouteSearchResultDTO searchResult,
+                           PublicTransitRouteDTO route) {
+        if (route != null) {
             routeDTO.setTotalDistance(route.getTotalDistance() == null ? 0 : route.getTotalDistance());
             routeDTO.setTotalDuration(route.getTotalTime() == null ? 0 : route.getTotalTime());
             return;

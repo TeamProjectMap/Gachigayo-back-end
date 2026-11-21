@@ -583,8 +583,22 @@
     $("routeSearchPage").hidden = false;
     ensureCurrentLocation();
     const selectParam = new URLSearchParams(location.search).get("select");
-    if (selectParam === "origin")
+    if (selectParam === "origin") {
       $("searchTitle").textContent = "출발지를 선택해주세요";
+      // 직접 고른 출발지를 지우면 길안내가 다시 지금 위치에서 출발한다
+      const here = document.createElement("button");
+      here.type = "button";
+      here.className = "origin-here-button";
+      here.setAttribute("aria-label", "현재 위치를 출발지로");
+      here.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.6"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5"/></svg>';
+      here.addEventListener("click", () => {
+        sessionStorage.removeItem("currentOrigin");
+        location.href = "/place-detail.html";
+      });
+      $("searchForm").querySelector(".search-input-row").append(here);
+    }
     if (selectParam === "favorite") {
       // 장소 상세 위쪽처럼: 뒤로가기는 왼쪽, 검색창은 오른쪽 한 줄 (제목·칩 없음)
       $("routeSearchPage").classList.add("is-favorite-add");
@@ -593,6 +607,11 @@
       top.className = "favorite-add-top";
       $("searchForm").before(top);
       top.append($("searchBackButton"), $("searchForm"));
+      // 무엇을 하는 화면인지 위에 제목으로 알려준다
+      const title = document.createElement("h1");
+      title.className = "favorite-add-title";
+      title.textContent = "자주 가는 곳 등록";
+      top.before(title);
     }
     document.getElementById("searchBackButton").href =
       selectParam === "origin"
@@ -613,9 +632,12 @@
     const favorite =
         new URLSearchParams(location.search).get("view") === "favorites",
       previous = sessionStorage.getItem("navigationSearchQuery");
+    // 직전 검색 결과는 장소 화면에서 '뒤로'로 돌아왔을 때만 다시 보여준다.
+    // 홈·하단 메뉴에서 길안내를 새로 열면 늘 처음 화면(최근 검색)부터.
+    const cameBack = new URLSearchParams(location.search).get("back") === "1";
     if (favorite) saved("favorites");
     else if (selectParam === "favorite") saved("recent");
-    else if (previous) {
+    else if (previous && cameBack) {
       input.value = previous;
       search();
     } else saved("recent");

@@ -1,0 +1,98 @@
+/* 도움요청 카드 편집: 직접 쓴 문구 카드 (기본 문구 카드와 같은 모양 + 안에 수정·삭제) */
+.hidden {
+    display: none !important;
+}
+
+.saved-card {
+    display: block;
+    cursor: pointer;
+}
+
+.saved-card .saved-text {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+/* 카드 안 오른쪽 아래 작은 버튼 */
+.card-actions,
+.card-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+/* 눈에 덜 띄게: 작은 회색 글자 버튼 (수정·삭제 모두 같은 회색) */
+.card-action {
+    min-width: 0;
+    height: 24px;
+    padding: 0 9px;
+    border: 1px solid #E5E5E5;
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: #8D8D8D;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 22px;
+    cursor: pointer;
+}
+
+.card-action.danger {
+    color: #8D8D8D;
+}
+
+/* 수정 중 '완료'만 초록으로 */
+.card-action.primary {
+    border-color: #018B38;
+    background: #018B38;
+    color: #FFFFFF;
+}
+
+/* 수정 중: 카드 안에서 바로 고친다 */
+.card-edit-input {
+    display: block;
+    width: 100%;
+    min-height: 22px;
+    padding: 8px 10px;
+    border: 1px solid #018B38;
+    border-radius: 10px;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    background: #FFFFFF;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    box-sizing: border-box;
+}
+
+.custom-full-note {
+    margin: 0;
+    color: #8D8D8D;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.edit-message.error {
+    color: #E5484D;
+}
+
+/* 카드 안쪽 여백(좌우 29px)보다 오른쪽 끝에 붙인다 */
+.saved-card .card-actions {
+    margin-right: -17px;
+}
+
+/* 수정할 때도 상자 없이 카드 글자 그대로 그 자리에서 고친다 (직접입력 칸과 같은 방식) */
+.saved-card .card-edit-input {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.saved-card.editing .card-edit-actions {
+    margin-right: -17px;
+}

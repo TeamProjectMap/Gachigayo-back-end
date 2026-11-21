@@ -1,5 +1,6 @@
 package com.baegopa.onestep.service;
 
+import com.baegopa.onestep.dto.KakaoRouteSearchResultDTO;
 import com.baegopa.onestep.dto.KakaoPlaceDTO;
 import com.baegopa.onestep.dto.RouteDTO;
 
@@ -22,7 +23,18 @@ public interface IRouteService {
      */
     RouteDTO createRoute(Long guardianId, RouteDTO routeDTO,
                          String startLongitude, String startLatitude,
-                         String endLongitude, String endLatitude);
+                         String endLongitude, String endLatitude,
+                         String mode, int routeIndex,
+                         KakaoRouteSearchResultDTO searched);
+
+    /**
+     * 새 경로를 등록하기 전에 보여줄 경로 후보 (버스·지하철 여러 개 + 걷기)
+     * <p>
+     * 보호자가 이 중에서 하나를 고르면 그 경로로 구간을 나눈다.
+     */
+    KakaoRouteSearchResultDTO searchRouteOptions(String startLongitude, String startLatitude,
+                                                 String endLongitude, String endLatitude,
+                                                 String endName);
 
     /**
      * 경로 한 건 + 구간 목록 (경로 기록 화면)
@@ -43,4 +55,21 @@ public interface IRouteService {
 
     /** 출발지·도착지를 고르기 위한 장소 검색 */
     List<KakaoPlaceDTO> searchPlaces(String query);
+
+    /** 좌표 → 주소. 못 찾으면 빈 문자열 (출발지 '현재 위치'용) */
+    String findAddress(String longitude, String latitude);
+
+    /**
+     * 이용자 홈: 보호자가 이 이용자에게 등록해 준 경로 목록
+     * <p>
+     * 이용자가 하나를 고르면 그 도착지로 길안내를 시작하고,
+     * 길안내가 같은 목적지의 보호자 경로를 찾아 체크포인트 사진을 띄운다.
+     */
+    List<Map<String, Object>> getRoutesForUser(Long userId);
+
+    /**
+     * 이용자: 보호자가 고른 경로 그대로 (출발지·도착지·경로 전체)
+     * 이 경로로 다시 검색 없이 길안내를 시작한다.
+     */
+    Map<String, Object> getRouteGuideForUser(Long userId, Long routeId);
 }
