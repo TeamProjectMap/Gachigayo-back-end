@@ -311,9 +311,10 @@
     selectedDestination = readJson("selectedDestination");
     currentOrigin = readJson("currentOrigin");
     var hasOrigin = NavigationUI.coordinate(currentOrigin);
+    // 출발지를 따로 고르지 않았으면 기본은 '현재 위치'
     $("#compareOriginName")
-      .text(hasOrigin ? (currentOrigin.placeName || "현재 위치") : "출발지를 검색해주세요")
-      .toggleClass("is-empty", !hasOrigin);
+      .text(hasOrigin ? (currentOrigin.placeName || "현재 위치") : "현재 위치")
+      .removeClass("is-empty");
     if (selectedDestination) {
       try {
         sessionStorage.setItem("lastDestination", JSON.stringify(selectedDestination));
@@ -375,16 +376,71 @@
       .text(selectedDestination ? selectedDestination.placeName || "도착지" : "도착지를 검색해주세요")
       .toggleClass("is-empty", !selectedDestination);
     $("#routeComparePage").removeClass("hidden").addClass("is-incomplete");
-    $("#routeList").empty().append(
-      $("<div>")
-        .addClass("empty-card")
-        .text(
-          !hasOrigin
-            ? "출발 칸을 눌러 출발지를 검색해주세요"
-            : "도착 칸을 눌러 도착지를 검색해주세요",
-        ),
-    );
     updateGuideButton(false);
+
+    // 도착지는 있고 출발지(현재 위치)만 아직이면: 여기서 위치를 받아 바로 경로를 찾는다
+    if (!hasOrigin && selectedDestination) {
+      locateAndSearch();
+      return;
+    }
+
+    showIncompleteMessage(
+      !hasOrigin ? "출발 칸을 눌러 출발지를 검색해주세요" : "도착 칸을 눌러 도착지를 검색해주세요",
+    );
+  }
+
+  function showIncompleteMessage(text, withRetry) {
+    var $card = $("<div>").addClass("empty-card incomplete-card").append($("<p>").text(text));
+    if (withRetry) {
+      $card.append(
+        $("<button>")
+          .attr("type", "button")
+          .addClass("retry-location-button")
+          .text("다시 시도")
+          .on("click", locateAndSearch),
+      );
+    }
+    $("#routeList").empty().append($card);
+  }
+
+  /** 현재 위치를 받아 그 자리에서 도착지까지 경로를 찾는다. 못 받으면 다시 시도·출발지 검색 안내 */
+  function locateAndSearch() {
+    showIncompleteMessage("현재 위치를 확인하는 중이에요...");
+    NavigationUI.locate()
+      .then(function (origin) {
+        showIncompleteMessage("경로를 찾는 중이에요...");
+        return $.ajax({
+          url: "/map/routes",
+          type: "GET",
+          dataType: "JSON",
+          timeout: 40000,
+          data: {
+            startLongitude: origin.longitude,
+            startLatitude: origin.latitude,
+            endLongitude: selectedDestination.longitude,
+            endLatitude: selectedDestination.latitude,
+            destinationName: selectedDestination.placeName,
+          },
+        }).then(function (json) {
+          if (
+            !json.success ||
+            (!(json.walking && json.walking.available) &&
+              !(json.publicTransit && json.publicTransit.available))
+          ) {
+            showIncompleteMessage(json.message || "이동할 수 있는 경로를 찾지 못했어요.", true);
+            return;
+          }
+          sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
+          sessionStorage.setItem("routeSearchResult", JSON.stringify(json));
+          window.location.reload();
+        });
+      })
+      .catch(function () {
+        showIncompleteMessage(
+          "현재 위치를 확인할 수 없어요.\n위치 권한을 켜고 다시 시도하거나, 출발 칸을 눌러 출발지를 검색해주세요.",
+          true,
+        );
+      });
   }
 
   function buildPublicTransitCandidates(publicTransit) {
