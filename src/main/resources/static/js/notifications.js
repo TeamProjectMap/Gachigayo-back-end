@@ -1,6 +1,25 @@
 (function ($) {
 
     var linkedUserName = null;
+    var refreshTimer = null;
+    var requestInFlight = false;
+    var lastReadSnapshot = null;
+
+    function startRefresh() {
+        if (refreshTimer !== null) return;
+        refreshTimer = window.setInterval(function () {
+            if (!document.hidden) loadNotifications(true);
+        }, 15000);
+    }
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) loadNotifications(true);
+    });
+    window.addEventListener("pagehide", function () {
+        window.clearInterval(refreshTimer); refreshTimer = null;
+    });
+    window.addEventListener("pageshow", function (event) {
+        if (event.persisted) { startRefresh(); loadNotifications(true); }
+    });
 
     $(function () {
         checkSession();
@@ -27,7 +46,8 @@
                 }
 
                 $("#notiPage").removeClass("hidden");
-                loadNotifications();
+                startRefresh();
+                loadNotifications(false);
             },
             error: function () {
                 window.location.replace("/login.html");
@@ -35,30 +55,41 @@
         });
     }
 
-    function loadNotifications() {
+    function loadNotifications(isRefresh) {
+        if (requestInFlight) return;
+        requestInFlight = true;
         $.ajax({
+            timeout: 10000,
+            complete: function () { requestInFlight = false; },
             url: "/guardian/notifications",
             type: "get",
             dataType: "JSON",
             success: function (json) {
                 if (!json.success) {
-                    setMessage(json.message || "알림을 불러오지 못했습니다.");
+                    if (!isRefresh) setMessage(json.message || "알림을 불러오지 못했습니다.");
                     return;
                 }
 
                 linkedUserName = json.linkedUserName;
                 render(json.notifications);
 
-                // 목록을 열었으면 확인한 것으로 보고 홈의 빨간 점을 끈다
-                markAllRead();
+                setMessage("");
+                var snapshot = (json.notifications || []).map(function (item) { return item.notificationId; }).join(",");
+                // 실제로 열어 본 새 목록에 대해서만 읽음 처리한다.
+                if (!document.hidden && snapshot && snapshot !== lastReadSnapshot) {
+                    lastReadSnapshot = snapshot;
+                    markAllRead();
+                }
             },
             error: function () {
-                setMessage("알림을 불러오는 중 오류가 발생했습니다.");
+                if (!isRefresh) setMessage("알림을 불러오는 중 오류가 발생했습니다.");
             }
         });
     }
 
     function render(notifications) {
+        $("#notiList").empty();
+        $("#notiEmpty").toggleClass("hidden", !!(notifications && notifications.length));
         if (!notifications || !notifications.length) {
             $("#notiEmpty").removeClass("hidden");
             return;

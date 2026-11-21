@@ -11,6 +11,7 @@
     var guardianPhone = "";
     var safetyCenterPhone = "";
     var requestCreated = false;
+    var sessionUserId = null;
 
     $(function () {
         $("#backButton").on("click", goBack);
@@ -47,6 +48,7 @@
                     return;
                 }
 
+                sessionUserId = json.userId;
                 $("#helpRequestPage").removeClass("hidden");
                 destination = getCurrentDestination();
                 renderDestination(destination);
@@ -316,11 +318,17 @@
         var contextKey = destination ? "route:" + destination.placeName + ":" + destination.latitude + ":" + destination.longitude : "home";
         var state = readJson(HELP_REQUEST_STATE_KEY);
 
-        if (state && state.contextKey === contextKey && Date.now() - Number(state.createdAt) < HELP_REQUEST_STATE_TTL_MS) {
+        var navigation = window.performance && performance.getEntriesByType
+                ? performance.getEntriesByType("navigation")[0] : null;
+        var revisitingSameRequest = navigation && (navigation.type === "reload" || navigation.type === "back_forward");
+        if (revisitingSameRequest && state && state.userId === sessionUserId && state.contextKey === contextKey
+                && Date.now() - Number(state.createdAt) < HELP_REQUEST_STATE_TTL_MS) {
             return state.requestKey;
         }
 
-        return "help:" + contextKey + ":" + Date.now() + ":" + Math.random().toString(36).slice(2);
+        // 새로 도움을 요청하면 새 요청으로 보낸다. 장소 이름은 DB 키 길이(100자)에 넣지 않는다.
+        return "help:" + (window.crypto && crypto.randomUUID ? crypto.randomUUID()
+                : Date.now() + ":" + Math.random().toString(36).slice(2));
     }
 
     function saveHelpRequestState(requestKey, helpRequestId) {
@@ -328,6 +336,7 @@
         try {
             sessionStorage.setItem(HELP_REQUEST_STATE_KEY, JSON.stringify({
                 contextKey: contextKey,
+                userId: sessionUserId,
                 requestKey: requestKey,
                 helpRequestId: helpRequestId,
                 createdAt: Date.now()
