@@ -261,3 +261,9 @@ ul {
     text-align: center;
     word-break: keep-all;
 }
+
+/* 뒤로가기 화살표 왼쪽 끝을 아래 내용 왼쪽 끝과 같은 줄에 */
+main .noti-header {
+    position: relative;
+    left: -11px;
+}

@@ -993,3 +993,9 @@ ul {
 .here-button.is-loading {
     opacity: 0.4;
 }
+
+/* 뒤로가기 화살표 왼쪽 끝을 아래 내용 왼쪽 끝과 같은 줄에 */
+main .route-header {
+    position: relative;
+    left: -11px;
+}
