@@ -311,7 +311,10 @@
   async function loadRouteData() {
     selectedDestination = readJson("selectedDestination");
     currentOrigin = readJson("currentOrigin");
+    if (!NavigationUI.coordinate(selectedDestination)) selectedDestination = null;
     var hasOrigin = NavigationUI.coordinate(currentOrigin);
+    routeSearchResult = readJson("routeSearchResult");
+    showIncomplete(hasOrigin);
     // 출발지를 따로 고르지 않았으면 기본은 '현재 위치'
     $("#compareOriginName")
       .text(hasOrigin ? (currentOrigin.placeName || "현재 위치") : "현재 위치")
@@ -336,15 +339,51 @@
         }
       })
       .catch(function () {});
-    routeSearchResult = readJson("routeSearchResult");
+    if (!selectedDestination) return;
 
-    // 출발이나 도착 한쪽이 비어 있으면: 그 칸을 눌러 검색하라고 안내만 한다
-    if (!selectedDestination || !routeSearchResult || !hasOrigin) {
-      showIncomplete(hasOrigin);
-      return;
+    if (!hasOrigin) {
+      setMessage("현재 위치를 확인하고 있어요. 출발지를 직접 선택할 수도 있어요.");
+      try {
+        currentOrigin = await NavigationUI.locate();
+        hasOrigin = NavigationUI.coordinate(currentOrigin);
+        if (!hasOrigin) throw new Error("현재 위치를 확인하지 못했습니다.");
+        sessionStorage.setItem("currentOrigin", JSON.stringify(currentOrigin));
+        // 출발지가 새로 정해졌으므로 이전 검색 결과는 사용하지 않는다.
+        routeSearchResult = null;
+        sessionStorage.removeItem("routeSearchResult");
+        $("#compareOriginName").text(currentOrigin.placeName || "현재 위치");
+      } catch (error) {
+        showIncomplete(false);
+        setMessage((error.message || "현재 위치를 확인하지 못했습니다.") + " 위의 출발 칸을 눌러 출발지를 선택해주세요.");
+        return;
+      }
     }
 
-    $("#destinationName").text(selectedDestination.placeName || "목적지");
+    if (!routeSearchResult) {
+      setMessage("경로를 찾고 있어요.");
+      try {
+        var query = new URLSearchParams({
+          startLongitude: currentOrigin.longitude,
+          startLatitude: currentOrigin.latitude,
+          endLongitude: selectedDestination.longitude,
+          endLatitude: selectedDestination.latitude,
+          destinationName: selectedDestination.placeName || "목적지",
+        });
+        routeSearchResult = await NavigationUI.api("/map/routes?" + query, {
+          signal: AbortSignal.timeout(40000),
+        });
+        sessionStorage.setItem("routeSearchResult", JSON.stringify(routeSearchResult));
+      } catch (error) {
+        showIncomplete(hasOrigin);
+        setMessage(error.message || "경로를 찾지 못했습니다. 다시 시도해주세요.");
+        $("#routeList").append($("<button>").attr("type", "button")
+          .addClass("walking-retry-button").text("경로 다시 찾기")
+          .on("click", function () { window.location.reload(); }));
+        return;
+      }
+    }
+
+    $(".route-tab, [data-route-filter]").prop("disabled", false);
     allTransitRoutes =
       (routeSearchResult.publicTransit &&
         routeSearchResult.publicTransit.routes) ||
@@ -370,6 +409,20 @@
 
     selectTab("publicTransit");
     setMessage("이동 가능한 경로를 찾지 못했습니다.");
+  }
+
+  function showIncomplete(hasOrigin) {
+    $("#routeComparePage").removeClass("hidden");
+    $("#destinationName").text(selectedDestination ? selectedDestination.placeName || "목적지" : "도착지를 선택해주세요");
+    $(".route-tab, [data-route-filter]").prop("disabled", true);
+    $(".route-filter-toolbar").hide();
+    clearArrivalPanels();
+    $("#routeList").empty();
+    selectedRoute = null;
+    updateGuideButton(false);
+    setMessage(!selectedDestination
+      ? "위의 도착 칸을 눌러 도착지를 선택해주세요."
+      : !hasOrigin ? "위의 출발 칸을 눌러 출발지를 선택해주세요." : "경로를 찾고 있어요.");
   }
 
   async function loadCompletedRanks(routes) {

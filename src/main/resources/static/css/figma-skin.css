@@ -176,7 +176,6 @@ body > main.navigation-page { display: block; position: relative; padding: calc(
 .navigation-page .guide-actions { position: fixed; z-index: 12; bottom: calc(26px + env(safe-area-inset-bottom,0px)); left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: 1fr 1.35fr; gap: 7px; width: min(372px,calc(100% - 30px)); margin: 0; padding: 0; }
 .navigation-page .guide-actions button { min-height: 44px; height: 44px; border-radius: 25px; padding: 8px; font-size: 14px; font-weight: 600; }
 .navigation-page .help-button { background: #ff363b; color: white; border: 0; }
-.navigation-page .replay-button { color: #363636; border: .7px solid #c8c8c8; background: white; }
 .navigation-page .live-transit-card,.navigation-page .landmark-card,.navigation-page .arrival-actions,.navigation-page .journey-steps,.navigation-page .navigation-options { margin: 12px 19px; border: .7px solid #e5e5e5; border-radius: 14px; background: #fff; padding: 12px; }
 .navigation-options > summary,.journey-steps > summary { font-size: 12px; color: #8d8d8d; cursor: pointer; }
 .navigation-page .journey-toolbar { margin: 10px 0; padding: 0; }

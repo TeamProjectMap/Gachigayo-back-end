@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/css/app-frame.css?v=20261121-black" />
       <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-find">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
-    <link rel="stylesheet" href="/css/navigation-figma.css">
+    <link rel="stylesheet" href="/css/navigation-figma.css?v=20261121-no-voice">
     <link rel="stylesheet" href="/css/landmark-popup.css?v=20261121-arrive">
 </head>
   <body>
@@ -54,6 +54,8 @@
       <section class="guide-card" id="guideCard" aria-label="현재 안내">
         <div class="guide-main">
           <div class="transport-visual" id="transportVisual" aria-hidden="true">
+            <img id="transportIcon" class="transport-icon" src="/images/navigation/walking.svg" alt="" width="64" height="64">
+            <span class="guide-cue"><span id="guideCueLabel"></span></span>
             <span id="transportText">-</span>
           </div>
           <div class="guide-copy">
@@ -74,9 +76,6 @@
         <div class="guide-actions">
           <button type="button" class="help-button" id="helpButton">
             도움이 필요해요
-          </button>
-          <button type="button" class="replay-button" id="replayButton">
-            안내 다시 듣기
           </button>
         </div>
       </section>
@@ -108,8 +107,6 @@
         <span id="journeyRemaining" role="status"></span
         ><span id="journeyArrival" class="journey-arrival"></span
         ><button type="button" id="overviewButton">전체 경로</button
-        ><button type="button" id="voiceToggle" aria-pressed="false">
-          음성 안내 켜기</button
         ><button type="button" id="rerouteButton">경로 다시 찾기</button>
       </div>
       <p
@@ -137,7 +134,8 @@
     <script src="/js/navigation-geometry.js"></script>
     <script src="/js/navigation-landmarks.js?v=20261120"></script>
     <script src="/js/route-history.js?v=20261121"></script>
-    <script src="/js/journey-state.js?v=20261117"></script>
-    <script src="/js/navigation.js?v=20261121-history"></script>
+    <script src="/js/journey-state.js?v=20261121-no-voice"></script>
+    <script src="/js/navigation-cue.js?v=20261121"></script>
+    <script src="/js/navigation.js?v=20261121-no-voice"></script>
   </body>
 </html>
