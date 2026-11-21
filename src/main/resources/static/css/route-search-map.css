@@ -426,3 +426,8 @@
 #routeSearchPage:not(.is-favorite-add) .search-input-row::before {
     display: none;
 }
+
+/* 검색칸 뒤로가기를 왼쪽 끝 쪽으로 */
+#routeSearchPage .search-back-in-box {
+    margin-left: -8px;
+}
