@@ -408,10 +408,11 @@ main.navigation-page {
   font-size: 11px;
   white-space: nowrap;
 }
+/* 초록 칩(연한 초록 + 초록 테두리) 글씨는 검정으로 통일 */
 .transit-filters button[aria-pressed="true"] {
   background: #eef5eb;
   border-color: #018b38;
-  color: #018b38;
+  color: #363636;
 }
 .live-transit-card {
   margin: 0 12px 10px;
@@ -472,7 +473,7 @@ main.navigation-page {
   border: 2px solid #018b38;
   border-radius: 10px;
   background: #eef5eb;
-  color: #018b38;
+  color: #363636;
   font-weight: 700;
 }
 /* Suggestion list occupies the app's list area instead of a clipped floating popup. */
