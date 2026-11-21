@@ -10,6 +10,7 @@
   var NAVIGATION_PROGRESS_KEY = "navigationProgress";
   var sessionUserId = null;
 
+  var completedRanks = new Map();
   var comparisonMap = null;
   var transitFilter = "all";
   var allTransitRoutes = [];
@@ -296,7 +297,7 @@
     });
   }
 
-  function loadRouteData() {
+  async function loadRouteData() {
     selectedDestination = readJson("selectedDestination");
     currentOrigin = readJson("currentOrigin");
     $("#compareOriginName").text(
@@ -320,6 +321,7 @@
       (routeSearchResult.publicTransit &&
         routeSearchResult.publicTransit.routes) ||
       [];
+    await loadCompletedRanks(allTransitRoutes.concat(routeSearchResult.walking || []));
     publicTransitCandidates = buildPublicTransitCandidates(
       routeSearchResult.publicTransit,
     );
@@ -340,6 +342,21 @@
 
     selectTab("publicTransit");
     setMessage("이동 가능한 경로를 찾지 못했습니다.");
+  }
+
+  async function loadCompletedRanks(routes) {
+    completedRanks.clear();
+    try {
+      var response = await NavigationUI.api("/trip/completed-routes", {signal: AbortSignal.timeout(2000)});
+      if (!response.success || !Array.isArray(response.routes) || !response.routes.length) return;
+      await Promise.all(routes.map(async function (route) {
+        var signature = await RouteHistory.key(route);
+        var rank = response.routes.findIndex(function (record) {
+          return RouteHistory.matches(record, signature, currentOrigin, selectedDestination);
+        });
+        if (rank >= 0) completedRanks.set(route, rank);
+      }));
+    } catch (_) { /* History is optional: preserve the existing recommendation list on failure. */ }
   }
 
   function buildPublicTransitCandidates(publicTransit) {
@@ -401,7 +418,7 @@
       },
     );
 
-    return candidates.slice(0, 4);
+    return RouteHistory.prioritize(candidates.slice(0, 4), routes, completedRanks);
   }
 
   function addCandidateFromSorted(
@@ -738,6 +755,7 @@
         .attr("type", "button")
         .addClass("route-card")
         .toggleClass("recommended", isRecommended)
+        .toggleClass("previously-completed", candidate.selectionLabel === "PREVIOUSLY_COMPLETED")
         .toggleClass(
           "selected",
           selectedRoute &&
@@ -805,10 +823,11 @@
         "selected",
         selectedRoute && selectedRoute.mode === "WALKING",
       )
+      .toggleClass("previously-completed", completedRanks.has(walking))
       .data("mode", "WALKING");
 
     $card.append(
-      $("<span>").addClass("route-card-label").text("걸어서 이동해요"),
+      $("<span>").addClass("route-card-label").text(completedRanks.has(walking) ? "가봤던 길" : "걸어서 이동해요"),
     );
     $card.append(createTimeBlock(walking.totalTime));
 

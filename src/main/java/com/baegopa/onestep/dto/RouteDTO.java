@@ -28,6 +28,10 @@ public class RouteDTO {
     private Integer totalDistance;  // m
     private Integer totalDuration;  // 초
     private String riskLevel;
+    // 길안내 시작 시 선택한 경로 식별 정보. 보호자 경로 자체를 수정하지 않는다.
+    private String historyKey;
+    private BigDecimal startLat;
+    private BigDecimal startLng;
     private String routeJson;       // 보호자가 고른 경로 전체 (이용자가 그대로 길안내 받는다)
     private Boolean guideReady;     // 목록용: routeJson이 있는지
     private LocalDateTime regDt;

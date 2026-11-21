@@ -452,3 +452,11 @@ body > main.route-compare-page .segment-label {
 body > main.route-compare-page .selected-itinerary {
     display: none !important;
 }
+
+/* Only completed-route cards use the help-card tint; layout and map styles are unchanged. */
+.route-compare-page .route-card.previously-completed,
+.route-compare-page .route-card.previously-completed.selected,
+.route-compare-page .route-card.previously-completed:hover {
+    background: #FFEDED;
+    border-color: #E8B8BC;
+}
