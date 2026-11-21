@@ -592,7 +592,7 @@
       here.setAttribute("aria-label", "현재 위치를 출발지로");
       here.innerHTML =
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
-        '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+        '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.6"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5"/></svg>';
       here.addEventListener("click", () => {
         sessionStorage.removeItem("currentOrigin");
         location.href = "/place-detail.html";
