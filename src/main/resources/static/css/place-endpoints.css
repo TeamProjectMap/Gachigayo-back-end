@@ -85,3 +85,9 @@
     border-radius: 24px;
     font-size: 16px;
 }
+
+/* 오른쪽 끝을 '즐겨찾기' 버튼과 같은 줄에 (화면 판 오른쪽에서 20px 안쪽) */
+.place-detail-page .endpoint-actions {
+    width: min(362px, calc(100% - 40px));
+    padding: 0;
+}
