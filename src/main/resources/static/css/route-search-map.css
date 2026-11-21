@@ -375,3 +375,16 @@
     width: 22px;
     height: 22px;
 }
+
+/* 도착지 고르기: 검색창 위에 이미 고른 출발지 */
+#routeSearchPage .picked-origin-note {
+    flex-shrink: 0;
+    margin: 0 29px 8px;
+    color: #018B38;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#routeSearchPage.is-searching .picked-origin-note {
+    display: none;
+}

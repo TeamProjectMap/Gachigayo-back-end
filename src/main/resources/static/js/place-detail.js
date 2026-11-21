@@ -109,8 +109,13 @@
 
     if (favoriteMode) {
       $("#favoriteButton").remove();
+      // 자주 가는 곳 등록은 출발·도착을 고르지 않는다
+      $("#setOriginButton").remove();
+      $("#endpointActions").addClass("single");
       $("#confirmDestinationButton").text("등록하기");
     }
+
+    $("#setOriginButton").on("click", setAsOrigin);
 
     $("#favoriteButton").on("click", function () {
       toggleFavorite();
@@ -555,9 +560,33 @@
   }
 
   function setLoading(isLoading) {
-    $("#confirmDestinationButton")
-      .prop("disabled", isLoading)
-      .text(isLoading ? "현재 위치 확인 중..." : "이곳으로 가기");
+    $("#confirmDestinationButton, #setOriginButton").prop("disabled", isLoading);
+    if (!favoriteMode) {
+      $("#confirmDestinationButton").text(isLoading ? "확인 중..." : "도착");
+    }
+  }
+
+  /**
+   * '출발': 이 장소를 출발지로 정하고 도착지를 고르러 간다 (카카오맵처럼)
+   * 도착지를 고르면 장소 화면의 '도착'으로 이 출발지에서 경로를 찾는다.
+   */
+  function setAsOrigin() {
+    if (!selectedDestination || !NavigationUI.coordinate(selectedDestination)) {
+      setMessage("이 장소의 위치를 확인할 수 없어요.");
+      return;
+    }
+    invalidateEndpoints();
+    try {
+      sessionStorage.setItem(
+        "currentOrigin",
+        JSON.stringify(Object.assign({}, selectedDestination, { capturedAt: Date.now(), manual: true })),
+      );
+      sessionStorage.removeItem("selectedDestination");
+    } catch (e) {
+      setMessage("출발지를 저장하지 못했어요. 다시 시도해주세요.");
+      return;
+    }
+    window.location.href = "/route-search.html?select=destination";
   }
 
   function setMessage(message) {

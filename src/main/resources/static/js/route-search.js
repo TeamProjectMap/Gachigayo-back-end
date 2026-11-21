@@ -426,7 +426,12 @@
       }
       sessionStorage.setItem("selectedDestination", JSON.stringify(place));
       // 목적지를 새로 골랐으니 예전에 직접 고른 출발지는 지운다 (기본은 현재 위치)
-      if (NavigationUI.read("currentOrigin")?.manual) sessionStorage.removeItem("currentOrigin");
+      // 단, 방금 '출발'로 고른 뒤 도착지를 고르는 중이면 그 출발지를 그대로 쓴다
+      if (
+        new URLSearchParams(location.search).get("select") !== "destination" &&
+        NavigationUI.read("currentOrigin")?.manual
+      )
+        sessionStorage.removeItem("currentOrigin");
       // 자주 가는 곳 목록에서 고르면 최근 검색에 남기지 않고, 상세에서 뒤로가기는 이 목록으로
       if (new URLSearchParams(location.search).get("view") === "favorites") {
         location.href = "/place-detail.html?from=favorites";
@@ -598,6 +603,17 @@
         location.href = "/place-detail.html";
       });
       $("searchForm").querySelector(".search-input-row").append(here);
+    }
+    if (selectParam === "destination") {
+      // 장소 화면에서 '출발'을 누른 뒤: 출발지는 정해졌고 도착지를 고른다
+      const origin = NavigationUI.read("currentOrigin");
+      $("searchTitle").textContent = "도착지를 선택해주세요";
+      if (origin?.placeName) {
+        const note = document.createElement("p");
+        note.className = "picked-origin-note";
+        note.textContent = "출발 · " + origin.placeName;
+        $("searchForm").before(note);
+      }
     }
     if (selectParam === "favorite") {
       // 장소 상세 위쪽처럼: 뒤로가기는 왼쪽, 검색창은 오른쪽 한 줄 (제목·칩 없음)

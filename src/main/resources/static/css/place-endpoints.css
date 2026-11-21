@@ -1,0 +1,50 @@
+/*
+ * 장소 화면 아래 '출발' '도착' 두 버튼 (카카오맵처럼)
+ * figma-skin.css의 .confirm-button 고정 위치(!important)를 버튼 묶음으로 옮긴다.
+ */
+.place-detail-page .endpoint-actions {
+    position: fixed;
+    left: 50%;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    z-index: 15;
+    display: flex;
+    gap: 8px;
+    width: min(344px, calc(100% - 58px));
+    transform: translateX(-50%);
+}
+
+.place-detail-page .endpoint-actions .confirm-button,
+.place-detail-page .endpoint-actions .origin-button {
+    position: static !important;
+    left: auto;
+    bottom: auto;
+    flex: 1;
+    width: auto;
+    height: 48px;
+    min-height: 48px;
+    margin: 0 !important;
+    border-radius: 24px;
+    font-size: 16px;
+    font-weight: 600;
+    transform: none !important;
+}
+
+/* 출발: 연한 초록 + 2px 초록 테두리 (앱의 다른 칩과 같은 모양) */
+.place-detail-page .endpoint-actions .origin-button {
+    border: 2px solid #018B38;
+    background: #EEF5EB;
+    color: #018B38;
+    cursor: pointer;
+}
+
+.place-detail-page .endpoint-actions button:disabled {
+    opacity: 0.6;
+}
+
+/* 도착: 초록 (다른 스타일이 '버튼 묶음 안 버튼'을 투명하게 덮어써서 직접 정한다) */
+.place-detail-page .endpoint-actions .confirm-button {
+    border: 0;
+    background: #018B38 !important;
+    color: #FFFFFF !important;
+    cursor: pointer;
+}
