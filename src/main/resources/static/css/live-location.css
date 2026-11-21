@@ -207,3 +207,9 @@ button {
         background: #FFFFFF;
     }
 }
+
+/* 뒤로가기 화살표 왼쪽 끝을 아래 내용 왼쪽 끝과 같은 줄에 */
+main .live-header {
+    position: relative;
+    left: -12px;
+}

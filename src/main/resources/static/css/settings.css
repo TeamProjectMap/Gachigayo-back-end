@@ -331,3 +331,9 @@ button {
 .profile-head ~ .row:not(.hidden) {
     margin-top: 6px;
 }
+
+/* 제목 글자 왼쪽 끝을 아래 카드 왼쪽 끝과 같은 줄에 */
+.settings-page .page-title,
+main .page-title {
+    margin-left: 0;
+}

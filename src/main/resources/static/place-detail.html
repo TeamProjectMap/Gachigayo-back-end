@@ -9,10 +9,11 @@
     <title>같이가요 장소 상세</title>
     <link rel="stylesheet" href="/css/place-detail.css" />
     <link rel="stylesheet" href="/css/map-experience.css" />
-    <link rel="stylesheet" href="/css/app-frame.css?v=20261120-border2" />
+    <link rel="stylesheet" href="/css/app-frame.css?v=20261121-black" />
       <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-find">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
-    <link rel="stylesheet" href="/css/place-detail-top.css">
+    <link rel="stylesheet" href="/css/place-detail-top.css?v=20261121-box3">
+    <link rel="stylesheet" href="/css/place-endpoints.css?v=20261121-align">
 </head>
   <body>
     <main class="place-detail-page hidden" id="placeDetailPage">
@@ -62,18 +63,22 @@
       <!-- 현재 위치를 못 가져올 때만 보인다 -->
       <a id="originSearchLink" class="origin-fallback hidden" href="/route-search.html?select=origin">출발지 직접 검색하기</a>
 
-      <button
-        type="button"
-        class="confirm-button"
-        id="confirmDestinationButton"
-      >
-        이곳으로 가기
-      </button>
+      <!-- 카카오맵처럼: 이 장소를 출발지로 할지, 도착지로 할지 고른다 -->
+      <div class="endpoint-actions" id="endpointActions">
+        <button type="button" class="origin-button" id="setOriginButton">출발</button>
+        <button
+          type="button"
+          class="confirm-button"
+          id="confirmDestinationButton"
+        >
+          도착
+        </button>
+      </div>
     </main>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="/js/navigation-map.js"></script>
     <script src="/js/place-proximity.js?v=20261106-journey"></script>
-    <script src="/js/place-detail.js?v=20261120-fresh"></script>
+    <script src="/js/place-detail.js?v=20261121-box"></script>
   </body>
 </html>

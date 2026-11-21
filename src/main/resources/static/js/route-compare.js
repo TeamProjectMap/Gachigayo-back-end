@@ -229,6 +229,17 @@
       window.location.href = "/place-detail.html";
     });
 
+    // 출발·도착 칸을 누르면 그 칸에 넣을 장소를 검색한다 (카카오맵처럼)
+    $(".route-points .point-row")
+      .attr("role", "button")
+      .attr("tabindex", "0")
+      .on("click keydown", function (event) {
+        if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        var side = $(this).hasClass("destination") ? "destination" : "origin";
+        window.location.href = "/route-search.html?select=" + side;
+      });
+
     $(".route-tab").on("click", function () {
       selectTab($(this).data("tab"));
     });
@@ -300,19 +311,36 @@
   async function loadRouteData() {
     selectedDestination = readJson("selectedDestination");
     currentOrigin = readJson("currentOrigin");
-    $("#compareOriginName").text(
-      (currentOrigin && currentOrigin.placeName) || "현재 위치",
-    );
-    NavigationUI.create(document.getElementById("compareMap"), currentOrigin)
+    var hasOrigin = NavigationUI.coordinate(currentOrigin);
+    // 출발지를 따로 고르지 않았으면 기본은 '현재 위치'
+    $("#compareOriginName")
+      .text(hasOrigin ? (currentOrigin.placeName || "현재 위치") : "현재 위치")
+      .removeClass("is-empty");
+    if (selectedDestination) {
+      try {
+        sessionStorage.setItem("lastDestination", JSON.stringify(selectedDestination));
+      } catch (e) {}
+    }
+    NavigationUI.create(
+      document.getElementById("compareMap"),
+      hasOrigin ? currentOrigin : selectedDestination,
+    )
       .then(function (view) {
         comparisonMap = view;
         previewSelectedRoute();
+        // 한쪽만 정해졌으면 그 장소에 핀을 찍어 둔다
+        if (!routeSearchResult || !hasOrigin || !selectedDestination) {
+          if (hasOrigin) view.pin(currentOrigin, "출발");
+          if (NavigationUI.coordinate(selectedDestination)) view.pin(selectedDestination, "도착");
+          view.fit([currentOrigin, selectedDestination].filter(NavigationUI.coordinate));
+        }
       })
       .catch(function () {});
     routeSearchResult = readJson("routeSearchResult");
 
-    if (!selectedDestination || !routeSearchResult) {
-      window.location.replace("/route-search.html");
+    // 출발이나 도착 한쪽이 비어 있으면: 그 칸을 눌러 검색하라고 안내만 한다
+    if (!selectedDestination || !routeSearchResult || !hasOrigin) {
+      showIncomplete(hasOrigin);
       return;
     }
 
@@ -1358,8 +1386,15 @@
     }
   }
 
+  /** 걸리는 시간: 60분 이상이면 "1시간 25분"(정각이면 "2시간"), 그보다 짧으면 "35분" */
   function formatMinutes(seconds) {
-    return "약 " + Math.max(secondsToMinutes(seconds), 1) + "분";
+    var minutes = Math.max(secondsToMinutes(seconds), 1);
+    if (minutes < 60) {
+      return minutes + "분";
+    }
+    var hours = Math.floor(minutes / 60);
+    var rest = minutes % 60;
+    return hours + "시간" + (rest ? " " + rest + "분" : "");
   }
 
   function formatArrival(seconds) {

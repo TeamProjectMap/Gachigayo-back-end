@@ -865,8 +865,15 @@
     }
   }
 
+  /** 걸리는 시간: 60분 이상이면 "1시간 25분"(정각이면 "2시간"), 그보다 짧으면 "35분" */
   function formatMinutes(seconds) {
-    return "약 " + Math.max(secondsToMinutes(seconds), 1) + "분";
+    var minutes = Math.max(secondsToMinutes(seconds), 1);
+    if (minutes < 60) {
+      return minutes + "분";
+    }
+    var hours = Math.floor(minutes / 60);
+    var rest = minutes % 60;
+    return hours + "시간" + (rest ? " " + rest + "분" : "");
   }
 
   function formatArrival(seconds) {

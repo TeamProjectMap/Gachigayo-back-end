@@ -45,7 +45,7 @@ button {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin: 0 0 14px -8px;
+    margin: 0 0 14px -17px; /* 뒤로가기 화살표 왼쪽 끝 = 아래 카드 왼쪽 끝 */
 }
 
 .routes-back {
