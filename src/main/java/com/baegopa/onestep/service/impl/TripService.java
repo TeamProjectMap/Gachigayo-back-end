@@ -78,6 +78,20 @@ public class TripService implements ITripService {
         tripDTO.setRouteId(routeId);
         tripMapper.insertTrip(tripDTO);
 
+        // 목적지가 같아 보호자 경로에 연결되더라도, 실제로 고른 일반 경로를 별도로 기록한다.
+        // 도착 전에는 추천에 쓰이지 않는다. 과거 클라이언트의 누락된 정보는 추측하지 않는다.
+        if (routeDTO.getHistoryKey() != null && routeDTO.getHistoryKey().matches("v1:[0-9a-f]{64}")
+                && validHistoryCoordinate(routeDTO.getStartLat(), 90)
+                && validHistoryCoordinate(routeDTO.getStartLng(), 180)
+                && validHistoryCoordinate(routeDTO.getEndLat(), 90)
+                && validHistoryCoordinate(routeDTO.getEndLng(), 180)) {
+            tripDTO.setUserId(userId);
+            insertEvent(tripDTO, null, "ROUTE_SELECTED",
+                    routeDTO.getHistoryKey() + "|" + routeDTO.getEndLat().toPlainString()
+                            + "|" + routeDTO.getEndLng().toPlainString(),
+                    routeDTO.getStartLat(), routeDTO.getStartLng());
+        }
+
         log.info("이동 시작 userId={}, tripId={}, routeId={}, 보호자경로={}, {} -> {}",
                 userId, tripDTO.getTripId(), routeId, guardianRoute != null,
                 routeDTO.getStartName(), routeDTO.getEndName());
@@ -392,6 +406,11 @@ public class TripService implements ITripService {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(name + " 값이 올바르지 않습니다.");
         }
+    }
+
+    private boolean validHistoryCoordinate(BigDecimal coordinate, int bound) {
+        return coordinate != null && coordinate.scale() <= 20
+                && coordinate.abs().compareTo(BigDecimal.valueOf(bound)) <= 0;
     }
 
     private boolean isBlank(String value) {

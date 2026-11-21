@@ -32,6 +32,9 @@ public interface ITripMapper {
     /** 이용자가 지금 진행 중인 이동 (출발을 두 번 눌러도 하나만 쓰도록) */
     TripDTO getOngoingTrip(@Param("userId") Long userId);
 
+    /** 선택 경로 식별 로그가 있고 ARRIVED 상태인 본인의 이동만, 최근 도착 순으로 조회. */
+    List<TripEventDTO> getCompletedRouteHistory(@Param("userId") Long userId);
+
     /** 도착 처리 */
     int updateTripArrived(@Param("tripId") Long tripId);
 

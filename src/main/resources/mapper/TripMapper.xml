@@ -62,6 +62,18 @@
         LIMIT 1
     </select>
 
+    <select id="getCompletedRouteHistory" resultType="com.baegopa.onestep.dto.TripEventDTO">
+        SELECT e.eventMessage, e.lat, e.lng
+        FROM TRIP_EVENTS e
+        INNER JOIN TRIPS t ON t.tripId = e.tripId
+        INNER JOIN ROUTES r ON r.routeId = t.routeId
+        WHERE e.userId = #{userId} AND r.userId = #{userId}
+          AND e.eventType = 'ROUTE_SELECTED'
+          AND t.tripStatus = 'ARRIVED' AND t.endDt IS NOT NULL
+        GROUP BY e.eventMessage, e.lat, e.lng
+        ORDER BY MAX(t.endDt) DESC, MAX(e.tripEventId) DESC
+    </select>
+
     <update id="updateTripArrived" parameterType="long">
         UPDATE TRIPS
         SET tripStatus = 'ARRIVED',

@@ -10,6 +10,7 @@
   var NAVIGATION_PROGRESS_KEY = "navigationProgress";
   var sessionUserId = null;
 
+  var completedRanks = new Map();
   var comparisonMap = null;
   var transitFilter = "all";
   var allTransitRoutes = [];
@@ -307,7 +308,7 @@
     });
   }
 
-  function loadRouteData() {
+  async function loadRouteData() {
     selectedDestination = readJson("selectedDestination");
     currentOrigin = readJson("currentOrigin");
     var hasOrigin = NavigationUI.coordinate(currentOrigin);
@@ -348,6 +349,7 @@
       (routeSearchResult.publicTransit &&
         routeSearchResult.publicTransit.routes) ||
       [];
+    await loadCompletedRanks(allTransitRoutes.concat(routeSearchResult.walking || []));
     publicTransitCandidates = buildPublicTransitCandidates(
       routeSearchResult.publicTransit,
     );
@@ -370,107 +372,19 @@
     setMessage("이동 가능한 경로를 찾지 못했습니다.");
   }
 
-  /** 출발·도착 중 하나가 아직 없을 때 */
-  function showIncomplete(hasOrigin) {
-    $("#destinationName")
-      .text(selectedDestination ? selectedDestination.placeName || "도착지" : "도착지를 검색해주세요")
-      .toggleClass("is-empty", !selectedDestination);
-    $("#routeComparePage").removeClass("hidden").addClass("is-incomplete");
-    updateGuideButton(false);
-
-    // 도착지는 있고 출발지(현재 위치)만 아직이면: 여기서 위치를 받아 바로 경로를 찾는다
-    if (!hasOrigin && selectedDestination) {
-      locateAndSearch();
-      return;
-    }
-
-    // 출발·도착이 다 있는데 경로만 아직이면 (칸을 눌러 장소를 바꾼 뒤) 바로 찾는다
-    if (hasOrigin && selectedDestination) {
-      searchFrom(currentOrigin);
-      return;
-    }
-
-    showIncompleteMessage(
-      !hasOrigin ? "출발 칸을 눌러 출발지를 검색해주세요" : "도착 칸을 눌러 도착지를 검색해주세요",
-    );
-  }
-
-  function showIncompleteMessage(text, withRetry) {
-    var $card = $("<div>").addClass("empty-card incomplete-card").append($("<p>").text(text));
-    if (withRetry) {
-      $card.append(
-        $("<button>")
-          .attr("type", "button")
-          .addClass("retry-location-button")
-          .text("다시 시도")
-          .on("click", function () {
-            if (NavigationUI.coordinate(currentOrigin)) searchFrom(currentOrigin);
-            else locateAndSearch();
-          }),
-      );
-    }
-    $("#routeList").empty().append($card);
-  }
-
-  /** 현재 위치를 받아 그 자리에서 도착지까지 경로를 찾는다. 못 받으면 다시 시도·출발지 검색 안내 */
-  function locateAndSearch() {
-    showIncompleteMessage("현재 위치를 확인하는 중이에요...");
-    NavigationUI.locate()
-      .then(searchFrom)
-      .catch(function () {
-        showIncompleteMessage(
-          "현재 위치를 확인할 수 없어요.\n위치 권한을 켜고 다시 시도하거나, 출발 칸을 눌러 출발지를 검색해주세요.",
-          true,
-        );
-      });
-  }
-
-  /** 이 출발지에서 도착지까지 경로를 찾아 이 화면을 다시 그린다 */
-  function searchFrom(origin) {
-    if (PlaceProximityDistance(origin, selectedDestination) < 10) {
-      showIncompleteMessage("출발지와 도착지가 같아요. 출발이나 도착 칸을 눌러 다른 장소를 골라주세요.");
-      return;
-    }
-    showIncompleteMessage("경로를 찾는 중이에요...");
-    $.ajax({
-      url: "/map/routes",
-      type: "GET",
-      dataType: "JSON",
-      timeout: 40000,
-      data: {
-        startLongitude: origin.longitude,
-        startLatitude: origin.latitude,
-        endLongitude: selectedDestination.longitude,
-        endLatitude: selectedDestination.latitude,
-        destinationName: selectedDestination.placeName,
-      },
-    })
-      .done(function (json) {
-        if (
-          !json.success ||
-          (!(json.walking && json.walking.available) &&
-            !(json.publicTransit && json.publicTransit.available))
-        ) {
-          showIncompleteMessage(json.message || "이동할 수 있는 경로를 찾지 못했어요.", true);
-          return;
-        }
-        sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
-        sessionStorage.setItem("routeSearchResult", JSON.stringify(json));
-        window.location.reload();
-      })
-      .fail(function () {
-        showIncompleteMessage("경로를 찾는 중 오류가 발생했어요.", true);
-      });
-  }
-
-  /** 두 지점 사이 직선거리(m) */
-  function PlaceProximityDistance(a, b) {
-    var rad = Math.PI / 180;
-    var lat1 = Number(a.latitude) * rad, lat2 = Number(b.latitude) * rad;
-    var dLat = lat2 - lat1, dLng = (Number(b.longitude) - Number(a.longitude)) * rad;
-    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  async function loadCompletedRanks(routes) {
+    completedRanks.clear();
+    try {
+      var response = await NavigationUI.api("/trip/completed-routes", {signal: AbortSignal.timeout(2000)});
+      if (!response.success || !Array.isArray(response.routes) || !response.routes.length) return;
+      await Promise.all(routes.map(async function (route) {
+        var signature = await RouteHistory.key(route);
+        var rank = response.routes.findIndex(function (record) {
+          return RouteHistory.matches(record, signature, currentOrigin, selectedDestination);
+        });
+        if (rank >= 0) completedRanks.set(route, rank);
+      }));
+    } catch (_) { /* History is optional: preserve the existing recommendation list on failure. */ }
   }
 
   function buildPublicTransitCandidates(publicTransit) {
@@ -532,7 +446,7 @@
       },
     );
 
-    return candidates.slice(0, 4);
+    return RouteHistory.prioritize(candidates.slice(0, 4), routes, completedRanks);
   }
 
   function addCandidateFromSorted(
@@ -869,6 +783,7 @@
         .attr("type", "button")
         .addClass("route-card")
         .toggleClass("recommended", isRecommended)
+        .toggleClass("previously-completed", candidate.selectionLabel === "PREVIOUSLY_COMPLETED")
         .toggleClass(
           "selected",
           selectedRoute &&
@@ -936,10 +851,11 @@
         "selected",
         selectedRoute && selectedRoute.mode === "WALKING",
       )
+      .toggleClass("previously-completed", completedRanks.has(walking))
       .data("mode", "WALKING");
 
     $card.append(
-      $("<span>").addClass("route-card-label").text("걸어서 이동해요"),
+      $("<span>").addClass("route-card-label").text(completedRanks.has(walking) ? "가봤던 길" : "걸어서 이동해요"),
     );
     $card.append(createTimeBlock(walking.totalTime));
 

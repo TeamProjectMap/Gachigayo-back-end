@@ -35,6 +35,23 @@ public class TripController {
     private final ITripService tripService;
     private final NavigationLandmarkService landmarkService;
     private final IRouteService routeService;
+    private final com.baegopa.onestep.mapper.ITripMapper tripMapper;
+
+    /** 본인이 선택해 도착까지 완료한 일반 길찾기 기록만 제공한다. */
+    @ResponseBody
+    @GetMapping("/completed-routes")
+    public Map<String, Object> completedRoutes(HttpSession session) {
+        SessionUser user = getSessionUser(session);
+        if (!user.valid()) return user.response();
+        try {
+            Map<String, Object> response = createResponse(true, "완료한 경로를 조회했습니다.");
+            response.put("routes", tripMapper.getCompletedRouteHistory(user.userId()));
+            return response;
+        } catch (Exception e) {
+            log.warn("완료 경로 조회 실패 userId={}", user.userId(), e);
+            return createResponse(false, "완료한 경로를 불러오지 못했습니다.");
+        }
+    }
 
     /** 이용자 홈: 보호자가 등록해 준 경로 목록 */
     @ResponseBody
@@ -114,6 +131,9 @@ public class TripController {
         routeDTO.setRouteId(toLong(getParameter(request, "guardianRouteId")));
         routeDTO.setEndLat(toDecimal(getParameter(request, "endLatitude")));
         routeDTO.setEndLng(toDecimal(getParameter(request, "endLongitude")));
+        routeDTO.setHistoryKey(getParameter(request, "historyKey"));
+        routeDTO.setStartLat(toDecimal(getParameter(request, "startLatitude")));
+        routeDTO.setStartLng(toDecimal(getParameter(request, "startLongitude")));
         routeDTO.setTotalDistance(toInteger(getParameter(request, "totalDistance")));
         routeDTO.setTotalDuration(toInteger(getParameter(request, "totalDuration")));
 

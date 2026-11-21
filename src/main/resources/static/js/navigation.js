@@ -519,6 +519,8 @@
     if (tripStarting) return;
     tripStarting = true;
     try {
+      // 실제 안내를 시작한 일반 경로만 기록한다. 식별 실패 시에도 기존 안내는 계속한다.
+      const historyKey = selection.guardianRouteId ? "" : await RouteHistory.key(selection.route).catch(() => "");
       const r = await api("/trip/start", {
         method: "POST",
         body: new URLSearchParams({
@@ -531,6 +533,9 @@
           guardianRouteId: selection.guardianRouteId ?? "",
           totalDistance: selection.route.totalDistance || 0,
           totalDuration: selection.route.totalTime || 0,
+          historyKey,
+          startLatitude: selection.origin?.latitude ?? "",
+          startLongitude: selection.origin?.longitude ?? "",
         }),
       });
       tripId = r.tripId;
