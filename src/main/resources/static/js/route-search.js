@@ -416,10 +416,22 @@
         location.href = "/place-detail.html?mode=favorite";
         return;
       }
-      if (new URLSearchParams(location.search).get("select") === "origin") {
-        // 장소 화면에서 '출발'을 누르면 출발지로 들어간다 (도착지는 따로 기억돼 있다)
-        sessionStorage.setItem("selectedDestination", JSON.stringify(place));
-        location.href = "/place-detail.html";
+      // 경로 선택 화면의 출발·도착 칸을 눌러 들어왔으면 출발/도착을 다시 묻지 않고 그 칸에 바로 넣는다
+      const pickSide = new URLSearchParams(location.search).get("select");
+      if (pickSide === "origin" || pickSide === "destination") {
+        if (pickSide === "origin") {
+          sessionStorage.setItem(
+            "currentOrigin",
+            JSON.stringify({ ...place, capturedAt: Date.now(), manual: true }),
+          );
+          const destination = NavigationUI.read("lastDestination");
+          if (destination) sessionStorage.setItem("selectedDestination", JSON.stringify(destination));
+        } else {
+          sessionStorage.setItem("selectedDestination", JSON.stringify(place));
+          sessionStorage.setItem("lastDestination", JSON.stringify(place));
+        }
+        sessionStorage.removeItem("routeSearchResult");
+        location.href = "/route-compare.html";
         return;
       }
       sessionStorage.setItem("selectedDestination", JSON.stringify(place));
@@ -599,11 +611,9 @@
       here.addEventListener("click", () => {
         sessionStorage.removeItem("currentOrigin");
         const destination = NavigationUI.read("lastDestination");
-        if (destination) {
-          sessionStorage.setItem("selectedDestination", JSON.stringify(destination));
-          location.href = "/place-detail.html?go=1";
-          return;
-        }
+        if (destination) sessionStorage.setItem("selectedDestination", JSON.stringify(destination));
+        sessionStorage.removeItem("routeSearchResult");
+        // 경로 선택 화면이 현재 위치를 받아 바로 경로를 찾는다
         location.href = "/route-compare.html";
       });
       $("searchForm").querySelector(".search-input-row").append(here);
@@ -655,6 +665,9 @@
     // 직전 검색 결과는 장소 화면에서 '뒤로'로 돌아왔을 때만 다시 보여준다.
     // 홈·하단 메뉴에서 길안내를 새로 열면 늘 처음 화면(최근 검색)부터.
     const cameBack = new URLSearchParams(location.search).get("back") === "1";
+    // 길안내를 새로 열면 예전에 골랐던 도착지 기억도 지운다
+    // (안 지우면 새로 검색한 장소를 '출발'로 고를 때 예전 도착지가 미리 들어가 있었다)
+    if (!selectParam && !cameBack && !favorite) sessionStorage.removeItem("lastDestination");
     if (favorite) saved("favorites");
     else if (selectParam === "favorite") saved("recent");
     else if (previous && cameBack) {

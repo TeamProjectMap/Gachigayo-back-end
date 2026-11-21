@@ -384,6 +384,12 @@
       return;
     }
 
+    // 출발·도착이 다 있는데 경로만 아직이면 (칸을 눌러 장소를 바꾼 뒤) 바로 찾는다
+    if (hasOrigin && selectedDestination) {
+      searchFrom(currentOrigin);
+      return;
+    }
+
     showIncompleteMessage(
       !hasOrigin ? "출발 칸을 눌러 출발지를 검색해주세요" : "도착 칸을 눌러 도착지를 검색해주세요",
     );
@@ -397,7 +403,10 @@
           .attr("type", "button")
           .addClass("retry-location-button")
           .text("다시 시도")
-          .on("click", locateAndSearch),
+          .on("click", function () {
+            if (NavigationUI.coordinate(currentOrigin)) searchFrom(currentOrigin);
+            else locateAndSearch();
+          }),
       );
     }
     $("#routeList").empty().append($card);
@@ -407,40 +416,61 @@
   function locateAndSearch() {
     showIncompleteMessage("현재 위치를 확인하는 중이에요...");
     NavigationUI.locate()
-      .then(function (origin) {
-        showIncompleteMessage("경로를 찾는 중이에요...");
-        return $.ajax({
-          url: "/map/routes",
-          type: "GET",
-          dataType: "JSON",
-          timeout: 40000,
-          data: {
-            startLongitude: origin.longitude,
-            startLatitude: origin.latitude,
-            endLongitude: selectedDestination.longitude,
-            endLatitude: selectedDestination.latitude,
-            destinationName: selectedDestination.placeName,
-          },
-        }).then(function (json) {
-          if (
-            !json.success ||
-            (!(json.walking && json.walking.available) &&
-              !(json.publicTransit && json.publicTransit.available))
-          ) {
-            showIncompleteMessage(json.message || "이동할 수 있는 경로를 찾지 못했어요.", true);
-            return;
-          }
-          sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
-          sessionStorage.setItem("routeSearchResult", JSON.stringify(json));
-          window.location.reload();
-        });
-      })
+      .then(searchFrom)
       .catch(function () {
         showIncompleteMessage(
           "현재 위치를 확인할 수 없어요.\n위치 권한을 켜고 다시 시도하거나, 출발 칸을 눌러 출발지를 검색해주세요.",
           true,
         );
       });
+  }
+
+  /** 이 출발지에서 도착지까지 경로를 찾아 이 화면을 다시 그린다 */
+  function searchFrom(origin) {
+    if (PlaceProximityDistance(origin, selectedDestination) < 10) {
+      showIncompleteMessage("출발지와 도착지가 같아요. 출발이나 도착 칸을 눌러 다른 장소를 골라주세요.");
+      return;
+    }
+    showIncompleteMessage("경로를 찾는 중이에요...");
+    $.ajax({
+      url: "/map/routes",
+      type: "GET",
+      dataType: "JSON",
+      timeout: 40000,
+      data: {
+        startLongitude: origin.longitude,
+        startLatitude: origin.latitude,
+        endLongitude: selectedDestination.longitude,
+        endLatitude: selectedDestination.latitude,
+        destinationName: selectedDestination.placeName,
+      },
+    })
+      .done(function (json) {
+        if (
+          !json.success ||
+          (!(json.walking && json.walking.available) &&
+            !(json.publicTransit && json.publicTransit.available))
+        ) {
+          showIncompleteMessage(json.message || "이동할 수 있는 경로를 찾지 못했어요.", true);
+          return;
+        }
+        sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
+        sessionStorage.setItem("routeSearchResult", JSON.stringify(json));
+        window.location.reload();
+      })
+      .fail(function () {
+        showIncompleteMessage("경로를 찾는 중 오류가 발생했어요.", true);
+      });
+  }
+
+  /** 두 지점 사이 직선거리(m) */
+  function PlaceProximityDistance(a, b) {
+    var rad = Math.PI / 180;
+    var lat1 = Number(a.latitude) * rad, lat2 = Number(b.latitude) * rad;
+    var dLat = lat2 - lat1, dLng = (Number(b.longitude) - Number(a.longitude)) * rad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
   }
 
   function buildPublicTransitCandidates(publicTransit) {
