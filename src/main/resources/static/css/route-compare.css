@@ -452,3 +452,21 @@ body > main.route-compare-page .segment-label {
 body > main.route-compare-page .selected-itinerary {
     display: none !important;
 }
+
+/* 출발·도착 칸: 눌러서 그 칸에 넣을 장소를 검색한다 */
+body > main.route-compare-page .route-points .point-row {
+    cursor: pointer;
+}
+
+/* 아직 비어 있는 칸은 회색으로 */
+body > main.route-compare-page .route-points strong.is-empty {
+    color: #8D8D8D !important;
+    font-weight: 400;
+}
+
+/* 한쪽이 비어 있을 때는 탭·지도 범례·필터를 숨긴다 */
+body > main.route-compare-page.is-incomplete .route-tabs,
+body > main.route-compare-page.is-incomplete .map-legend,
+body > main.route-compare-page.is-incomplete .route-filter-toolbar {
+    display: none;
+}

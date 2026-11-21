@@ -147,6 +147,9 @@
         }
 
         loadSelectedDestination();
+        if (new URLSearchParams(location.search).get("go") === "1" && !favoriteMode) {
+          requestCurrentOrigin();
+        }
       },
       error: function () {
         window.location.replace("/login.html");
@@ -341,6 +344,12 @@
   }
 
   function requestCurrentOrigin() {
+    // 도착지로 고른 장소를 따로 기억한다 ('출발'로 다른 장소를 고를 때 이 도착지를 그대로 쓴다)
+    if (hasSelectedDestination()) {
+      try {
+        sessionStorage.setItem("lastDestination", JSON.stringify(selectedDestination));
+      } catch (e) {}
+    }
     if (!hasSelectedDestination()) {
       setMessage("선택한 목적지가 없습니다.");
       setTimeout(function () {
@@ -394,10 +403,9 @@
       },
       function (error) {
         if (version !== endpointRevision) return;
-        setMessage(getGeolocationErrorMessage(error));
-        // 위치 권한이 없거나 못 찾으면 출발지를 직접 고를 수 있게 한다
-        $("#originSearchLink").removeClass("hidden");
+        // 위치를 못 받아도 경로 선택 화면으로 간다. 출발 칸을 눌러 출발지를 검색할 수 있다
         setLoading(false);
+        goToCompareWithout("origin");
       },
       {
         enableHighAccuracy: true,
@@ -576,17 +584,35 @@
       return;
     }
     invalidateEndpoints();
+    var origin = Object.assign({}, selectedDestination, { capturedAt: Date.now(), manual: true });
+    var destination = NavigationUI.read("lastDestination");
     try {
-      sessionStorage.setItem(
-        "currentOrigin",
-        JSON.stringify(Object.assign({}, selectedDestination, { capturedAt: Date.now(), manual: true })),
-      );
-      sessionStorage.removeItem("selectedDestination");
+      sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
     } catch (e) {
       setMessage("출발지를 저장하지 못했어요. 다시 시도해주세요.");
       return;
     }
-    window.location.href = "/route-search.html?select=destination";
+
+    // 기억해 둔 도착지가 있고 이 장소와 다르면 바로 경로를 찾는다
+    if (NavigationUI.coordinate(destination) && PlaceProximity.distance(origin, destination) >= 10) {
+      selectedDestination = normalizePlace(destination);
+      sessionStorage.setItem("selectedDestination", JSON.stringify(selectedDestination));
+      setLoading(true);
+      searchRoutes(origin);
+      return;
+    }
+
+    sessionStorage.removeItem("selectedDestination");
+    goToCompareWithout("destination");
+  }
+
+  /** 한쪽(출발 또는 도착)이 비어 있는 채로 경로 선택 화면으로. 그 칸을 눌러 검색한다 */
+  function goToCompareWithout(side) {
+    sessionStorage.removeItem("routeSearchResult");
+    if (side === "origin") {
+      sessionStorage.removeItem("currentOrigin");
+    }
+    window.location.href = "/route-compare.html";
   }
 
   function setMessage(message) {

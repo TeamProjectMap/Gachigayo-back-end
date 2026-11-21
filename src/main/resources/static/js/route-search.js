@@ -417,10 +417,8 @@
         return;
       }
       if (new URLSearchParams(location.search).get("select") === "origin") {
-        sessionStorage.setItem(
-          "currentOrigin",
-          JSON.stringify({ ...place, capturedAt: Date.now(), manual: true }),
-        );
+        // 장소 화면에서 '출발'을 누르면 출발지로 들어간다 (도착지는 따로 기억돼 있다)
+        sessionStorage.setItem("selectedDestination", JSON.stringify(place));
         location.href = "/place-detail.html";
         return;
       }
@@ -428,7 +426,7 @@
       // 목적지를 새로 골랐으니 예전에 직접 고른 출발지는 지운다 (기본은 현재 위치)
       // 단, 방금 '출발'로 고른 뒤 도착지를 고르는 중이면 그 출발지를 그대로 쓴다
       if (
-        new URLSearchParams(location.search).get("select") !== "destination" &&
+        !["destination", "origin"].includes(new URLSearchParams(location.search).get("select")) &&
         NavigationUI.read("currentOrigin")?.manual
       )
         sessionStorage.removeItem("currentOrigin");
@@ -600,7 +598,13 @@
         '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.6"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5"/></svg>';
       here.addEventListener("click", () => {
         sessionStorage.removeItem("currentOrigin");
-        location.href = "/place-detail.html";
+        const destination = NavigationUI.read("lastDestination");
+        if (destination) {
+          sessionStorage.setItem("selectedDestination", JSON.stringify(destination));
+          location.href = "/place-detail.html?go=1";
+          return;
+        }
+        location.href = "/route-compare.html";
       });
       $("searchForm").querySelector(".search-input-row").append(here);
     }
@@ -630,8 +634,8 @@
       top.before(title);
     }
     document.getElementById("searchBackButton").href =
-      selectParam === "origin"
-        ? "/place-detail.html"
+      selectParam === "origin" || selectParam === "destination"
+        ? "/route-compare.html"
         : selectParam === "favorite"
           ? "/route-search.html?view=favorites"
           : "/user-home.html";

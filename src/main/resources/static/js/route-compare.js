@@ -228,6 +228,17 @@
       window.location.href = "/place-detail.html";
     });
 
+    // 출발·도착 칸을 누르면 그 칸에 넣을 장소를 검색한다 (카카오맵처럼)
+    $(".route-points .point-row")
+      .attr("role", "button")
+      .attr("tabindex", "0")
+      .on("click keydown", function (event) {
+        if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        var side = $(this).hasClass("destination") ? "destination" : "origin";
+        window.location.href = "/route-search.html?select=" + side;
+      });
+
     $(".route-tab").on("click", function () {
       selectTab($(this).data("tab"));
     });
@@ -299,19 +310,35 @@
   function loadRouteData() {
     selectedDestination = readJson("selectedDestination");
     currentOrigin = readJson("currentOrigin");
-    $("#compareOriginName").text(
-      (currentOrigin && currentOrigin.placeName) || "현재 위치",
-    );
-    NavigationUI.create(document.getElementById("compareMap"), currentOrigin)
+    var hasOrigin = NavigationUI.coordinate(currentOrigin);
+    $("#compareOriginName")
+      .text(hasOrigin ? (currentOrigin.placeName || "현재 위치") : "출발지를 검색해주세요")
+      .toggleClass("is-empty", !hasOrigin);
+    if (selectedDestination) {
+      try {
+        sessionStorage.setItem("lastDestination", JSON.stringify(selectedDestination));
+      } catch (e) {}
+    }
+    NavigationUI.create(
+      document.getElementById("compareMap"),
+      hasOrigin ? currentOrigin : selectedDestination,
+    )
       .then(function (view) {
         comparisonMap = view;
         previewSelectedRoute();
+        // 한쪽만 정해졌으면 그 장소에 핀을 찍어 둔다
+        if (!routeSearchResult || !hasOrigin || !selectedDestination) {
+          if (hasOrigin) view.pin(currentOrigin, "출발");
+          if (NavigationUI.coordinate(selectedDestination)) view.pin(selectedDestination, "도착");
+          view.fit([currentOrigin, selectedDestination].filter(NavigationUI.coordinate));
+        }
       })
       .catch(function () {});
     routeSearchResult = readJson("routeSearchResult");
 
-    if (!selectedDestination || !routeSearchResult) {
-      window.location.replace("/route-search.html");
+    // 출발이나 도착 한쪽이 비어 있으면: 그 칸을 눌러 검색하라고 안내만 한다
+    if (!selectedDestination || !routeSearchResult || !hasOrigin) {
+      showIncomplete(hasOrigin);
       return;
     }
 
@@ -340,6 +367,24 @@
 
     selectTab("publicTransit");
     setMessage("이동 가능한 경로를 찾지 못했습니다.");
+  }
+
+  /** 출발·도착 중 하나가 아직 없을 때 */
+  function showIncomplete(hasOrigin) {
+    $("#destinationName")
+      .text(selectedDestination ? selectedDestination.placeName || "도착지" : "도착지를 검색해주세요")
+      .toggleClass("is-empty", !selectedDestination);
+    $("#routeComparePage").removeClass("hidden").addClass("is-incomplete");
+    $("#routeList").empty().append(
+      $("<div>")
+        .addClass("empty-card")
+        .text(
+          !hasOrigin
+            ? "출발 칸을 눌러 출발지를 검색해주세요"
+            : "도착 칸을 눌러 도착지를 검색해주세요",
+        ),
+    );
+    updateGuideButton(false);
   }
 
   function buildPublicTransitCandidates(publicTransit) {
