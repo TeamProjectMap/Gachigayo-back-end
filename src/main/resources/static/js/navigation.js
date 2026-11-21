@@ -201,13 +201,71 @@
     const expected = Math.max(Number(step.time) || 0, 60) * 1000;
     return Date.now() - stepStartedAt > expected * 1.5 + 120000;
   }
+  /**
+   * 이용자가 걷는 중에 폰을 보고 누르지 않아도 되게 손으로 넘기는 버튼은 보이지 않는다.
+   * 탑승·도착·지하철 뒤 따라잡기는 모두 위치로 자동 처리한다.
+   * 막혔을 때는 위치가 다시 잡히면 이어서 안내한다고만 알린다.
+   */
   function renderFallback() {
-    const complete = index >= steps.length,
-      transit = !complete && mode(steps[index]) !== "WALKING",
-      waitingToBoard = transit && !boarded.has(index),
-      stuck = isStuck();
-    $("boardingButton").hidden = !(waitingToBoard && stuck);
-    $("stepFallback").classList.toggle("hidden", complete || !stuck || waitingToBoard);
+    $("boardingButton").hidden = true;
+    $("stepFallback").classList.add("hidden");
+    if (index < steps.length && isStuck() && Date.now() - lastGoodFixAt > NO_FIX_STUCK_MS) {
+      text("gpsStatus", "위치가 잘 안 잡혀요. 다시 잡히면 이어서 안내할게요.");
+    }
+  }
+  /** 목적지 25m 안에 들어오면 어느 단계에 있든 도착 (두 번 연속 확인) */
+  let arriveConfirm = 0;
+  function autoArrive(fix) {
+    const dest = selection?.destination;
+    if (!valid(dest) || distance(fix, dest) > 25) {
+      arriveConfirm = 0;
+      return false;
+    }
+    if (++arriveConfirm < 2) return false;
+    index = steps.length;
+    persist();
+    render();
+    return true;
+  }
+  /**
+   * 지하철·실내에서 위치를 잃었다가 다시 잡혔을 때, 이미 뒤 단계의 걷는 길 위에 있으면 그 단계로 건너뛴다.
+   * (예전에는 '다음 안내로'를 눌러야 했다) GPS 튐을 막으려고 같은 단계로 두 번 연속 확인한다.
+   */
+  let catchUpTarget = -1,
+    catchUpConfirm = 0;
+  function autoCatchUp(fix) {
+    let found = -1;
+    for (let i = index + 1; i < steps.length; i++) {
+      const pts = path(steps[i]);
+      if (mode(steps[i]) === "WALKING" && pts.length >= 2 && match(fix, pts).distance <= 30) {
+        found = i;
+        break;
+      }
+    }
+    // 지금 단계의 길 위에 있으면 건너뛰지 않는다
+    const current = path(steps[index]);
+    if (found < 0 || (current.length >= 2 && match(fix, current).distance <= 30)) {
+      catchUpTarget = -1;
+      catchUpConfirm = 0;
+      return false;
+    }
+    catchUpConfirm = found === catchUpTarget ? catchUpConfirm + 1 : 1;
+    catchUpTarget = found;
+    if (catchUpConfirm < 2) return false;
+    for (let i = index; i < found; i++) {
+      if (mode(steps[i]) !== "WALKING") boarded.add(i);
+    }
+    index = found;
+    catchUpTarget = -1;
+    catchUpConfirm = 0;
+    confirmations = 0;
+    stepRemaining = null;
+    stepProgress = 0;
+    stepStartedAt = Date.now();
+    persist();
+    render();
+    focusCurrent();
+    return true;
   }
   /** 버스·지하철에 탔다 (자동 감지 또는 버튼) → '내리세요' 안내로 */
   function markBoarded(auto) {
@@ -344,6 +402,8 @@
     lastGoodFixAt = Date.now();
     const before = prevFix;
     prevFix = fix;
+    // 버튼 없이 알아서: 목적지 근처면 바로 도착, 뒤 단계 길 위에 있으면 그 단계로 건너뛴다
+    if (autoArrive(fix) || autoCatchUp(fix)) return;
     if (mode(step) !== "WALKING" && !boarded.has(index)) {
       confirmations = 0;
       // 탑승 자동 감지: 노선 근처에서 빠르게(약 15km/h↑) 움직이면 두 번 연속 확인 후 탄 것으로 본다
@@ -367,7 +427,7 @@
       confirmations = 0;
       text(
         "gpsStatus",
-        "이 구간은 길 정보가 없어요. 이동을 마치면 아래 '다음 안내로'를 눌러주세요.",
+        "이 구간은 길 정보가 없어요. 다음 길에 들어서면 이어서 안내할게요.",
       );
       return;
     }
