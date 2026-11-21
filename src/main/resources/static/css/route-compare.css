@@ -452,3 +452,52 @@ body > main.route-compare-page .segment-label {
 body > main.route-compare-page .selected-itinerary {
     display: none !important;
 }
+
+/* 출발·도착 칸: 눌러서 그 칸에 넣을 장소를 검색한다 */
+body > main.route-compare-page .route-points .point-row {
+    cursor: pointer;
+}
+
+/* 아직 비어 있는 칸은 회색으로 */
+body > main.route-compare-page .route-points strong.is-empty {
+    color: #8D8D8D !important;
+    font-weight: 400;
+}
+
+/* 한쪽이 비어 있을 때는 탭·지도 범례·필터를 숨긴다 */
+body > main.route-compare-page.is-incomplete .route-tabs,
+body > main.route-compare-page.is-incomplete .map-legend,
+body > main.route-compare-page.is-incomplete .route-filter-toolbar {
+    display: none;
+}
+
+/* 출발·도착이 아직 다 안 정해졌을 때 안내 + 다시 시도 */
+body > main.route-compare-page .incomplete-card {
+    flex-direction: column;
+    gap: 12px;
+}
+
+body > main.route-compare-page .incomplete-card p {
+    margin: 0;
+    white-space: pre-line;
+}
+
+body > main.route-compare-page .retry-location-button {
+    padding: 7px 14px;
+    border: 2px solid #018B38;
+    border-radius: 20px;
+    background: #EEF5EB;
+    color: #363636;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* 지도 아래 안내는 칸(테두리·바탕) 없이 글씨와 버튼만 */
+body > main.route-compare-page .route-list > .incomplete-card {
+    min-height: 0;
+    margin: 18px 0 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}

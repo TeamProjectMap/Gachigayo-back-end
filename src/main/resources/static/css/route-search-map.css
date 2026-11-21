@@ -375,3 +375,80 @@
     width: 22px;
     height: 22px;
 }
+
+/* 도착지 고르기: 검색창 위에 이미 고른 출발지 */
+#routeSearchPage .picked-origin-note {
+    flex-shrink: 0;
+    margin: 0 29px 8px;
+    color: #018B38;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#routeSearchPage.is-searching .picked-origin-note {
+    display: none;
+}
+
+/* 검색 결과를 보는 중: 검색칸 돋보기 대신 뒤로가기 */
+#routeSearchPage .search-back-in-box {
+    display: none;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #363636;
+}
+
+#routeSearchPage .search-back-in-box svg {
+    width: 24px;
+    height: 24px;
+}
+
+#routeSearchPage.is-searching .search-back-in-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#routeSearchPage.is-searching .search-input-row::before {
+    display: none;
+}
+
+/* 돋보기는 늘 뒤로가기로 (자주 가는 곳 등록은 바깥에 따로 뒤로가기가 있어서 빼고) */
+#routeSearchPage:not(.is-favorite-add) .search-back-in-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#routeSearchPage:not(.is-favorite-add) .search-input-row::before {
+    display: none;
+}
+
+/* 검색칸 뒤로가기를 왼쪽 끝 쪽으로 */
+#routeSearchPage .search-back-in-box {
+    margin-left: -14px;
+}
+
+/* 자주 가는 곳 등록도 같은 모양: 바깥 뒤로가기 대신 검색칸 안 뒤로가기 */
+#routeSearchPage.is-favorite-add .favorite-add-top > a {
+    display: none;
+}
+
+#routeSearchPage.is-favorite-add .favorite-add-top {
+    margin-left: 29px;
+    margin-right: 29px;
+}
+
+#routeSearchPage.is-favorite-add .search-back-in-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 제목 옆 뒤로가기는 없앤다 (검색칸 안 뒤로가기로 충분). 제목은 검색칸과 같은 왼쪽 줄에 */
+#routeSearchPage .map-header > a {
+    display: none !important;
+}

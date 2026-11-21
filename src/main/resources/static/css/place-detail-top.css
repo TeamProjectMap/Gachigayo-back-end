@@ -53,3 +53,25 @@
 .place-detail-page .origin-fallback.hidden {
     display: none;
 }
+
+/* 길안내 검색창과 같은 모양: 뒤로가기는 검색박스 안 왼쪽, 박스는 좌우 29px */
+.place-detail-page.back-in-box .detail-top {
+    margin-left: 29px;
+    margin-right: 29px;
+}
+
+.place-detail-page.back-in-box .detail-header .back-button {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    margin-left: -10px; /* 길안내 검색창과 같은 자리 (칸 왼쪽에서 7px) */
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #363636;
+}
+
+.place-detail-page.back-in-box .detail-header .back-button svg {
+    width: 24px;
+    height: 24px;
+}

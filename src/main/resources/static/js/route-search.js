@@ -416,17 +416,32 @@
         location.href = "/place-detail.html?mode=favorite";
         return;
       }
-      if (new URLSearchParams(location.search).get("select") === "origin") {
-        sessionStorage.setItem(
-          "currentOrigin",
-          JSON.stringify({ ...place, capturedAt: Date.now(), manual: true }),
-        );
-        location.href = "/place-detail.html";
+      // 경로 선택 화면의 출발·도착 칸을 눌러 들어왔으면 출발/도착을 다시 묻지 않고 그 칸에 바로 넣는다
+      const pickSide = new URLSearchParams(location.search).get("select");
+      if (pickSide === "origin" || pickSide === "destination") {
+        if (pickSide === "origin") {
+          sessionStorage.setItem(
+            "currentOrigin",
+            JSON.stringify({ ...place, capturedAt: Date.now(), manual: true }),
+          );
+          const destination = NavigationUI.read("lastDestination");
+          if (destination) sessionStorage.setItem("selectedDestination", JSON.stringify(destination));
+        } else {
+          sessionStorage.setItem("selectedDestination", JSON.stringify(place));
+          sessionStorage.setItem("lastDestination", JSON.stringify(place));
+        }
+        sessionStorage.removeItem("routeSearchResult");
+        location.href = "/route-compare.html";
         return;
       }
       sessionStorage.setItem("selectedDestination", JSON.stringify(place));
       // 목적지를 새로 골랐으니 예전에 직접 고른 출발지는 지운다 (기본은 현재 위치)
-      if (NavigationUI.read("currentOrigin")?.manual) sessionStorage.removeItem("currentOrigin");
+      // 단, 방금 '출발'로 고른 뒤 도착지를 고르는 중이면 그 출발지를 그대로 쓴다
+      if (
+        !["destination", "origin"].includes(new URLSearchParams(location.search).get("select")) &&
+        NavigationUI.read("currentOrigin")?.manual
+      )
+        sessionStorage.removeItem("currentOrigin");
       // 자주 가는 곳 목록에서 고르면 최근 검색에 남기지 않고, 상세에서 뒤로가기는 이 목록으로
       if (new URLSearchParams(location.search).get("view") === "favorites") {
         location.href = "/place-detail.html?from=favorites";
@@ -479,6 +494,23 @@
   // Korean input can keep the final full syllable in composition until blur.
   // Query complete syllables while typing; only isolated jamo are deferred.
   input.addEventListener("input", requestSuggestions);
+  // 검색 결과(지도)를 보는 중에는 검색칸 돋보기 자리에 뒤로가기: 누르면 처음 검색 화면으로
+  const searchBack = document.createElement("button");
+  searchBack.type = "button";
+  searchBack.className = "search-back-in-box";
+  searchBack.setAttribute("aria-label", "검색 결과 닫기");
+  searchBack.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+  searchBack.addEventListener("click", () => {
+    // 검색 결과를 보는 중이면 처음 검색 화면으로, 아니면 이전 화면(홈 등)으로
+    if ($("routeSearchPage").classList.contains("is-searching")) {
+      input.value = "";
+      input.dispatchEvent(new Event("input"));
+      return;
+    }
+    location.href = $("searchBackButton").href;
+  });
+  $("searchForm").querySelector(".search-input-row").prepend(searchBack);
   // 검색어를 다 지우면 지도를 닫고 장소 목록으로 돌아간다
   input.addEventListener("input", () => {
     if (!input.value && $("routeSearchPage").classList.contains("is-searching")) {
@@ -595,9 +627,24 @@
         '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.6"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5"/></svg>';
       here.addEventListener("click", () => {
         sessionStorage.removeItem("currentOrigin");
-        location.href = "/place-detail.html";
+        const destination = NavigationUI.read("lastDestination");
+        if (destination) sessionStorage.setItem("selectedDestination", JSON.stringify(destination));
+        sessionStorage.removeItem("routeSearchResult");
+        // 경로 선택 화면이 현재 위치를 받아 바로 경로를 찾는다
+        location.href = "/route-compare.html";
       });
       $("searchForm").querySelector(".search-input-row").append(here);
+    }
+    if (selectParam === "destination") {
+      // 장소 화면에서 '출발'을 누른 뒤: 출발지는 정해졌고 도착지를 고른다
+      const origin = NavigationUI.read("currentOrigin");
+      $("searchTitle").textContent = "도착지를 선택해주세요";
+      if (origin?.placeName) {
+        const note = document.createElement("p");
+        note.className = "picked-origin-note";
+        note.textContent = "출발 · " + origin.placeName;
+        $("searchForm").before(note);
+      }
     }
     if (selectParam === "favorite") {
       // 장소 상세 위쪽처럼: 뒤로가기는 왼쪽, 검색창은 오른쪽 한 줄 (제목·칩 없음)
@@ -614,8 +661,8 @@
       top.before(title);
     }
     document.getElementById("searchBackButton").href =
-      selectParam === "origin"
-        ? "/place-detail.html"
+      selectParam === "origin" || selectParam === "destination"
+        ? "/route-compare.html"
         : selectParam === "favorite"
           ? "/route-search.html?view=favorites"
           : "/user-home.html";
@@ -635,6 +682,9 @@
     // 직전 검색 결과는 장소 화면에서 '뒤로'로 돌아왔을 때만 다시 보여준다.
     // 홈·하단 메뉴에서 길안내를 새로 열면 늘 처음 화면(최근 검색)부터.
     const cameBack = new URLSearchParams(location.search).get("back") === "1";
+    // 길안내를 새로 열면 예전에 골랐던 도착지 기억도 지운다
+    // (안 지우면 새로 검색한 장소를 '출발'로 고를 때 예전 도착지가 미리 들어가 있었다)
+    if (!selectParam && !cameBack && !favorite) sessionStorage.removeItem("lastDestination");
     if (favorite) saved("favorites");
     else if (selectParam === "favorite") saved("recent");
     else if (previous && cameBack) {
