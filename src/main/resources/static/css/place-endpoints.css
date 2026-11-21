@@ -48,3 +48,40 @@
     color: #FFFFFF !important;
     cursor: pointer;
 }
+
+/* 작게, 오른쪽 아래에 나란히. 두 버튼 같은 모양(초록 바탕 흰 글씨) */
+.place-detail-page .endpoint-actions {
+    justify-content: flex-end;
+    gap: 6px;
+    pointer-events: none;
+}
+
+.place-detail-page .endpoint-actions .confirm-button,
+.place-detail-page .endpoint-actions .origin-button {
+    flex: none;
+    width: auto;
+    min-width: 64px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 18px;
+    background: #018B38 !important;
+    color: #FFFFFF !important;
+    font-size: 14px;
+    font-weight: 600;
+    pointer-events: auto;
+}
+
+/* 자주 가는 곳 등록(버튼 하나)은 예전처럼 넓게 */
+.place-detail-page .endpoint-actions.single {
+    justify-content: stretch;
+}
+
+.place-detail-page .endpoint-actions.single .confirm-button {
+    flex: 1;
+    height: 48px;
+    min-height: 48px;
+    border-radius: 24px;
+    font-size: 16px;
+}
