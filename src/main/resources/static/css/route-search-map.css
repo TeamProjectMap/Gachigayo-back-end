@@ -388,3 +388,30 @@
 #routeSearchPage.is-searching .picked-origin-note {
     display: none;
 }
+
+/* 검색 결과를 보는 중: 검색칸 돋보기 대신 뒤로가기 */
+#routeSearchPage .search-back-in-box {
+    display: none;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #363636;
+}
+
+#routeSearchPage .search-back-in-box svg {
+    width: 24px;
+    height: 24px;
+}
+
+#routeSearchPage.is-searching .search-back-in-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#routeSearchPage.is-searching .search-input-row::before {
+    display: none;
+}

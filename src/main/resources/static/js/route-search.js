@@ -494,6 +494,18 @@
   // Korean input can keep the final full syllable in composition until blur.
   // Query complete syllables while typing; only isolated jamo are deferred.
   input.addEventListener("input", requestSuggestions);
+  // 검색 결과(지도)를 보는 중에는 검색칸 돋보기 자리에 뒤로가기: 누르면 처음 검색 화면으로
+  const searchBack = document.createElement("button");
+  searchBack.type = "button";
+  searchBack.className = "search-back-in-box";
+  searchBack.setAttribute("aria-label", "검색 결과 닫기");
+  searchBack.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+  searchBack.addEventListener("click", () => {
+    input.value = "";
+    input.dispatchEvent(new Event("input"));
+  });
+  $("searchForm").querySelector(".search-input-row").prepend(searchBack);
   // 검색어를 다 지우면 지도를 닫고 장소 목록으로 돌아간다
   input.addEventListener("input", () => {
     if (!input.value && $("routeSearchPage").classList.contains("is-searching")) {
