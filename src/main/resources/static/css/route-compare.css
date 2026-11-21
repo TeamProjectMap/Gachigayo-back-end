@@ -491,3 +491,13 @@ body > main.route-compare-page .retry-location-button {
     font-size: 13px;
     font-weight: 500;
 }
+
+/* 지도 아래 안내는 칸(테두리·바탕) 없이 글씨와 버튼만 */
+body > main.route-compare-page .route-list > .incomplete-card {
+    min-height: 0;
+    margin: 18px 0 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
