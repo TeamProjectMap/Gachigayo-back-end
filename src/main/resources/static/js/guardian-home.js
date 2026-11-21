@@ -9,10 +9,11 @@
         ARRIVED: "도착"
     };
 
-    // 이동 중일 때 화면을 다시 불러오는 간격
+    // 대기 상태에서도 새 도움요청·이동을 감지하는 조회 간격
     var REFRESH_INTERVAL = 15000;
 
     var refreshTimer = null;
+    var requestInFlight = false;
     var unreadCount = 0;
 
     $(function () {
@@ -45,6 +46,15 @@
         });
     });
 
+    // 다른 앱·탭에서 돌아오면 다음 주기를 기다리지 않고 최신 상태를 확인한다.
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) loadHomeInfo(true);
+    });
+    window.addEventListener("pageshow", function (event) {
+        if (event.persisted) { startRefresh(); loadHomeInfo(true); }
+    });
+    window.addEventListener("pagehide", stopRefresh);
+
     /* ---------------------------- 세션 확인 ---------------------------- */
 
     function checkSession() {
@@ -64,6 +74,7 @@
                 }
 
                 $("#guardianHomePage").removeClass("hidden");
+                startRefresh();
                 loadHomeInfo(false);
             },
             error: function () {
@@ -79,7 +90,11 @@
      *                  자동 갱신은 조용히 실패해야 해서 오류 문구를 띄우지 않는다.
      */
     function loadHomeInfo(isRefresh) {
+        if (requestInFlight) return;
+        requestInFlight = true;
         $.ajax({
+            timeout: 10000,
+            complete: function () { requestInFlight = false; },
             url: "/guardian/home",
             type: "get",
             dataType: "JSON",
@@ -95,12 +110,8 @@
                 renderTrip(json);
                 renderNotifications(json.notifications, json.unreadCount);
 
-                // 이동 중일 때만 계속 다시 불러온다
-                if (json.moving) {
-                    startRefresh();
-                } else {
-                    stopRefresh();
-                }
+                // 대기 중에도 새 이동·도움요청을 받을 수 있도록 갱신을 유지한다.
+                startRefresh();
             },
             error: function () {
                 if (!isRefresh) {

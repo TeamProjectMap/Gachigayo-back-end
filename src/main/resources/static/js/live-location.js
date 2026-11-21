@@ -1,9 +1,10 @@
 (function ($) {
 
-    // 이동 중일 때 위치를 다시 받아오는 간격
+    // 대기 상태에서도 새 이동을 감지하는 조회 간격
     var REFRESH_INTERVAL = 15000;
 
     var refreshTimer = null;
+    var requestInFlight = false;
 
     var map = null;
     var overlays = [];
@@ -38,6 +39,7 @@
                 }
 
                 $("#livePage").removeClass("hidden");
+                startRefresh();
                 loadLive(false);
             },
             error: function () {
@@ -46,6 +48,15 @@
         });
     }
 
+    // 다른 앱·탭에서 돌아오면 다음 주기를 기다리지 않고 최신 상태를 확인한다.
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) loadLive(true);
+    });
+    window.addEventListener("pageshow", function (event) {
+        if (event.persisted) { startRefresh(); loadLive(true); }
+    });
+    window.addEventListener("pagehide", stopRefresh);
+
     /* ---------------------------- 조회 ---------------------------- */
 
     /**
@@ -53,7 +64,11 @@
      *                  자동 갱신은 조용히 실패해야 해서 오류 문구를 띄우지 않는다.
      */
     function loadLive(isRefresh) {
+        if (requestInFlight) return;
+        requestInFlight = true;
         $.ajax({
+            timeout: 10000,
+            complete: function () { requestInFlight = false; },
             url: "/guardian/live",
             type: "get",
             dataType: "JSON",
@@ -67,12 +82,8 @@
 
                 render(json);
 
-                // 이동 중일 때만 계속 다시 불러온다
-                if (json.moving) {
-                    startRefresh();
-                } else {
-                    stopRefresh();
-                }
+                // 대기 중에도 새 이동·도움요청을 받을 수 있도록 갱신을 유지한다.
+                startRefresh();
             },
             error: function () {
                 if (!isRefresh) {
