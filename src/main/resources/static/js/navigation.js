@@ -163,7 +163,8 @@
     renderLandmark();
     if (complete) {
       stopWatch();
-      notifyArrival();
+      // 도착 알림을 보낸 뒤(실패해도) 도착 팝업을 띄우고 잠시 후 홈으로
+      Promise.resolve(notifyArrival()).finally(showArrivalPopup);
     }
   }
   function renderJourneySummary() {
@@ -641,6 +642,35 @@
   }
   function arrivalMessage(notified) {
     return notified ? "보호자에게 도착 알림을 보냈어요." : "도착을 기록했어요. 보호자 연결 또는 알림 설정에 따라 알림은 전송되지 않았어요.";
+  }
+  /**
+   * 목적지 도착: 큰 팝업으로 알리고 4초 뒤 홈으로 나간다. 팝업을 누르면 바로 나간다.
+   * 이용자가 폰을 조작하지 않아도 되게 버튼 없이 자동으로.
+   */
+  let arrivalPopupShown = false;
+  function showArrivalPopup() {
+    if (arrivalPopupShown) return;
+    arrivalPopupShown = true;
+    const goHome = () => {
+      try {
+        JourneyState.clear(sessionStorage);
+      } catch {}
+      location.replace("/user-home.html");
+    };
+    const popup = document.createElement("div");
+    popup.className = "arrival-popup";
+    popup.setAttribute("role", "alertdialog");
+    popup.setAttribute("aria-label", "목적지 도착");
+    popup.innerHTML =
+      '<div class="arrival-popup-box"><span class="arrival-popup-check" aria-hidden="true"></span>' +
+      "<strong>목적지에 도착했어요!</strong><p></p><small>잠시 후 홈으로 돌아가요</small></div>";
+    popup.querySelector("p").textContent = selection?.destination?.placeName || "";
+    popup.addEventListener("click", goHome);
+    document.body.append(popup);
+    try {
+      navigator.vibrate?.([200, 100, 200]);
+    } catch {}
+    setTimeout(goHome, 4000);
   }
   async function notifyArrival() {
     if (arrivalOutcome) { text("arrivalNotificationStatus", arrivalMessage(arrivalOutcome.notified)); return; }
