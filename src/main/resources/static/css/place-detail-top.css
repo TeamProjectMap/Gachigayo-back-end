@@ -64,7 +64,7 @@
     flex: 0 0 24px;
     width: 24px;
     height: 24px;
-    margin-left: -14px;
+    margin-left: -10px; /* 길안내 검색창과 같은 자리 (칸 왼쪽에서 7px) */
     padding: 0;
     border: 0;
     background: transparent;

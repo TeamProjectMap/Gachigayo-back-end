@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>같이가요 새 경로 등록</title>
-    <link rel="stylesheet" href="/css/route-manage.css?v=20261120-hereicon">
+    <link rel="stylesheet" href="/css/route-manage.css?v=20261121-fieldback2">
 </head>
 <body>
 <main class="route-page new-route hidden" id="newRoutePage">
@@ -26,12 +26,13 @@
     <label class="field-label" for="startInput">출발지</label>
     <div class="place-search" data-target="start">
         <div class="place-search-row">
-            <span class="place-search-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="7"/>
-                    <path d="M20 20L16.5 16.5"/>
+            <!-- 이용자 길안내 검색창과 같은 모양: 돋보기 자리에 뒤로가기 -->
+            <button type="button" class="field-back" aria-label="뒤로">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 18l-6-6 6-6"/>
                 </svg>
-            </span>
+            </button>
             <input type="search" id="startInput" class="place-search-input" placeholder="장소를 검색해주세요"
                    autocomplete="off" enterkeyhint="search" aria-controls="startList">
             <!-- 지금 서 있는 곳을 출발지로 (같이 걸으며 등록할 때 바로 쓰도록) -->
@@ -50,12 +51,13 @@
     <label class="field-label" for="endInput">도착지</label>
     <div class="place-search" data-target="end">
         <div class="place-search-row">
-            <span class="place-search-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="7"/>
-                    <path d="M20 20L16.5 16.5"/>
+            <!-- 이용자 길안내 검색창과 같은 모양: 돋보기 자리에 뒤로가기 -->
+            <button type="button" class="field-back" aria-label="뒤로">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 18l-6-6 6-6"/>
                 </svg>
-            </span>
+            </button>
             <input type="search" id="endInput" class="place-search-input" placeholder="장소를 검색해주세요"
                    autocomplete="off" enterkeyhint="search" aria-controls="endList">
         </div>
@@ -73,6 +75,6 @@
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/js/route-new.js?v=20261121-target"></script>
+<script src="/js/route-new.js?v=20261121-fieldback"></script>
 </body>
 </html>
