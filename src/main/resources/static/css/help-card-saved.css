@@ -96,3 +96,8 @@
 .saved-card.editing .card-edit-actions {
     margin-right: -17px;
 }
+
+/* 뒤로가기 화살표 왼쪽 끝을 아래 카드 왼쪽 끝과 같은 줄에 */
+.edit-header {
+    margin-left: -7px;
+}
