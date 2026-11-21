@@ -32,6 +32,13 @@
   let sessionUserId = null,
     shareLocation = true,
     boarded = new Set();
+  // 탑승 자동 감지 + 막혔을 때만 버튼 보이기
+  const BOARD_SPEED = 4.2; // m/s (약 15km/h) 넘게 노선을 따라 움직이면 탄 것으로 본다
+  const NO_FIX_STUCK_MS = 45000; // 이만큼 쓸 만한 위치가 없으면(지하·실내) 손으로 넘기게 한다
+  let stepStartedAt = Date.now(),
+    lastGoodFixAt = 0,
+    prevFix = null,
+    boardConfirm = 0;
   const mode = (step) =>
     String(step?.type || "WALKING").includes("SUBWAY")
       ? "SUBWAY"
@@ -101,7 +108,8 @@
           : (step.stops || []).filter(Boolean).join(" → "),
     );
     const transit = !complete && mode(step) !== "WALKING";
-    $("boardingButton").hidden = !transit || boarded.has(index);
+    // 버튼은 renderFallback이 막혔을 때만 보인다 (탑승은 자동 감지)
+    text("boardingButton", `${label(step || {})}에 탔어요`);
     if (transit) {
       const stops = (step.stops || []).filter(Boolean);
       text(
@@ -128,13 +136,13 @@
           : "마지막 구간입니다. 목적지를 확인해주세요.",
     );
     renderJourneySummary();
-    $("stepFallback").classList.toggle("hidden", complete);
     $("stepFallback").querySelector("span").textContent =
-      "이동을 마쳤다면 다음 안내로 넘어가세요.";
+      "위치가 잘 안 잡혀요. 이동을 마쳤다면 눌러주세요.";
     text(
       "nextStepFallbackButton",
-      index === steps.length - 1 ? "도착 확인" : "현재 단계 완료",
+      index === steps.length - 1 ? "도착했어요" : "다음 안내로",
     );
+    renderFallback();
     $("journeySteps").replaceChildren();
     steps.forEach((s, i) => {
       const row = document.createElement("div");
@@ -181,12 +189,51 @@
     );
     $("progressFill").style.width = `${result.progress * 100}%`;
   }
+  /**
+   * 막혔는지: 쓸 만한 위치가 한동안 없거나(지하철·실내), 길 정보가 없거나,
+   * 예상 시간보다 한참(1.5배 + 2분) 지나도 이 단계가 안 끝났을 때. 이때만 손으로 넘기는 버튼을 보인다.
+   */
+  function isStuck() {
+    if (index >= steps.length) return false;
+    const step = steps[index];
+    if (Date.now() - lastGoodFixAt > NO_FIX_STUCK_MS) return true;
+    if (path(step).length < 2) return true;
+    const expected = Math.max(Number(step.time) || 0, 60) * 1000;
+    return Date.now() - stepStartedAt > expected * 1.5 + 120000;
+  }
+  function renderFallback() {
+    const complete = index >= steps.length,
+      transit = !complete && mode(steps[index]) !== "WALKING",
+      waitingToBoard = transit && !boarded.has(index),
+      stuck = isStuck();
+    $("boardingButton").hidden = !(waitingToBoard && stuck);
+    $("stepFallback").classList.toggle("hidden", complete || !stuck || waitingToBoard);
+  }
+  /** 버스·지하철에 탔다 (자동 감지 또는 버튼) → '내리세요' 안내로 */
+  function markBoarded(auto) {
+    if (index >= steps.length || boarded.has(index)) return;
+    boarded.add(index);
+    confirmations = 0;
+    lastConfirmation = 0;
+    boardConfirm = 0;
+    stepStartedAt = Date.now();
+    lastSpoken = -1;
+    persist();
+    render();
+    text(
+      "gpsStatus",
+      auto
+        ? `${label(steps[index])}에 탄 것을 확인했어요. 내릴 곳을 안내할게요.`
+        : "탑승을 확인했습니다. 하차할 곳을 안내합니다.",
+    );
+  }
   function advance() {
     if (index >= steps.length) return;
     if (mode(steps[index]) !== "WALKING" && !boarded.has(index)) {
-      text("gpsStatus", "교통편에 탄 뒤 ‘탑승했어요’를 눌러주세요.");
+      text("gpsStatus", "버스나 지하철에 탄 뒤 다시 눌러주세요.");
       return;
     }
+    stepStartedAt = Date.now();
     index++;
     confirmations = 0;
     lastConfirmation = 0;
@@ -294,16 +341,33 @@
       return;
     }
     sendLocation();
+    lastGoodFixAt = Date.now();
+    const before = prevFix;
+    prevFix = fix;
     if (mode(step) !== "WALKING" && !boarded.has(index)) {
       confirmations = 0;
-      text("gpsStatus", "탑승할 교통편을 확인한 뒤 ‘탑승했어요’를 눌러주세요.");
+      // 탑승 자동 감지: 노선 근처에서 빠르게(약 15km/h↑) 움직이면 두 번 연속 확인 후 탄 것으로 본다
+      const speed = Number.isFinite(Number(fix.speed)) && fix.speed !== null
+        ? Number(fix.speed)
+        : before
+          ? distance(before, fix) /
+            Math.max(((Number(fix.capturedAt) || Date.now()) - (Number(before.capturedAt) || 0)) / 1000, 1)
+          : 0;
+      const nearLine = points.length < 2 || match(fix, points).distance <= 70;
+      boardConfirm = speed >= BOARD_SPEED && nearLine ? boardConfirm + 1 : 0;
+      if (boardConfirm >= 2) {
+        markBoarded(true);
+        return;
+      }
+      text("gpsStatus", `${label(step)}${mode(step) === "SUBWAY" ? "이" : "가"} 오면 타세요. 출발하면 자동으로 내릴 곳을 안내해요.`);
+      renderFallback();
       return;
     }
     if (points.length < 2) {
       confirmations = 0;
       text(
         "gpsStatus",
-        "이 구간의 정확한 경로선을 확인할 수 없습니다. 이동 후 현재 단계 완료를 눌러주세요.",
+        "이 구간은 길 정보가 없어요. 이동을 마치면 아래 '다음 안내로'를 눌러주세요.",
       );
       return;
     }
@@ -632,15 +696,11 @@
       speak();
     } else if ("speechSynthesis" in window) speechSynthesis.cancel();
   });
-  $("boardingButton").addEventListener("click", () => {
-    boarded.add(index);
-    confirmations = 0;
-    lastConfirmation = 0;
-    lastSpoken = -1;
-    persist();
-    render();
-    text("gpsStatus", "탑승을 확인했습니다. 하차할 곳을 안내합니다.");
-  });
+  $("boardingButton").addEventListener("click", () => markBoarded(false));
+  // 시간이 지나 '막힘'이 될 수 있어 주기적으로 버튼을 다시 본다
+  setInterval(() => {
+    if (live && steps.length) renderFallback();
+  }, 15000);
   $("retryArrivalButton").addEventListener("click", notifyArrival);
   $("nextStepFallbackButton").addEventListener("click", advance);
   $("helpButton").addEventListener("click", () => {
