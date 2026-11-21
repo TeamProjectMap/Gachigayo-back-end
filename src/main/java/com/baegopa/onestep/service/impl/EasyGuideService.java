@@ -25,12 +25,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -52,7 +50,7 @@ public class EasyGuideService implements IEasyGuideService {
      * 프롬프트를 바꾸면 이 값을 올린다. 저장된 문장은 이 값과 원문을 합쳐 찾으므로,
      * 예전 프롬프트로 만든 문장은 더 이상 쓰이지 않고 새로 만든다.
      */
-    private static final String PROMPT_VERSION = "v2";
+    private static final String PROMPT_VERSION = "v3";
 
     private static final String SYSTEM_INSTRUCTION = String.join("\n",
             "너는 발달장애인을 위한 길안내 문구를 쉬운 말로 바꾸는 도우미야.",
@@ -76,10 +74,6 @@ public class EasyGuideService implements IEasyGuideService {
 
     /** 카카오 버스 안내 '652외 8대'의 '외 8대'(같은 길로 가는 다른 버스 수)는 이용자에게 필요 없다 */
     private static final Pattern OTHER_BUSES = Pattern.compile("\\s*외\\s*\\d+\\s*대");
-
-    /** 원문에 있으면 바꾼 문장에도 꼭 있어야 하는 것: 숫자, '○○역' */
-    private static final Pattern NUMBER = Pattern.compile("\\d+");
-    private static final Pattern STATION = Pattern.compile("[가-힣A-Za-z0-9]+역");
 
     private final IEasyGuideMapper easyGuideMapper;
     private final JsonMapper jsonMapper = JsonMapper.builder().build();
@@ -197,7 +191,7 @@ public class EasyGuideService implements IEasyGuideService {
         try {
             for (EasyGuideTextDTO row : easyGuideMapper.getEasyTexts(new ArrayList<>(hashToOriginal.keySet()))) {
                 String original = hashToOriginal.get(row.getOriginalHash());
-                if (original != null && row.getEasyText() != null) {
+                if (original != null && isSafe(forAi(original), row.getEasyText())) {
                     saved.put(original, row.getEasyText());
                 }
             }
@@ -344,35 +338,10 @@ public class EasyGuideService implements IEasyGuideService {
 
     /**
      * 쉬운 문장이 원문의 사실을 지켰는지 검사한다.
-     * 숫자(버스 번호·호선·출구·거리)와 '○○역'은 그대로 들어 있어야 한다.
+     * 방향·숫자·장소명·출발/도착 역할을 보존하지 못하면 원문으로 안내한다.
      */
     static boolean isSafe(String original, String easy) {
-        if (easy == null || easy.isBlank()) {
-            return false;
-        }
-        if (easy.length() > Math.max(80, original.length() * 3)) {
-            return false;
-        }
-        for (String token : tokens(NUMBER, original)) {
-            if (!easy.contains(token)) {
-                return false;
-            }
-        }
-        for (String token : tokens(STATION, original)) {
-            if (!easy.contains(token)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static Set<String> tokens(Pattern pattern, String text) {
-        Set<String> tokens = new LinkedHashSet<>();
-        Matcher matcher = pattern.matcher(text);
-        while (matcher.find()) {
-            tokens.add(matcher.group());
-        }
-        return tokens;
+        return EasyGuideValidator.isSafe(original, easy);
     }
 
     private RestClient client() {
