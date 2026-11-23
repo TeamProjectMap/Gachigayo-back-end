@@ -420,7 +420,7 @@
     if (NavigationUI.isRough(origin)) {
       $name.append($("<small>").addClass("origin-accuracy").text(NavigationUI.roughText(origin)));
       $("#originAccuracyNote").remove();
-      $(".route-points").after(
+      $(".compare-header").after(
         $("<p>").attr("id", "originAccuracyNote").addClass("origin-accuracy-note")
           .text("현재 위치가 정확하지 않을 수 있어요. 출발 칸을 눌러 출발지를 직접 골라도 돼요."),
       );
