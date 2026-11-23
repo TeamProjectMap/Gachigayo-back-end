@@ -177,31 +177,151 @@
       },
     };
   }
-  const locate = () =>
+  /**
+   * 현재 위치. 처음 잡히는 위치는 와이파이·기지국 기준이라 수백 m 틀릴 때가 많아서
+   * 몇 초 동안 위치를 받아 가장 정확한 값을 쓴다. 30m 안으로 잡히면 바로 끝낸다.
+   */
+  const GOOD_ACCURACY = 30;
+  const ROUGH_ACCURACY = 100;
+  const locate = (options = {}) =>
     new Promise((resolve, reject) => {
       if (!navigator.geolocation)
         return reject(
           new Error("이 브라우저에서는 현재 위치를 사용할 수 없습니다."),
         );
-      navigator.geolocation.getCurrentPosition(
-        (p) =>
-          resolve({
+      const maxWait = options.maxWait ?? 8000;
+      const giveUp = options.timeout ?? 15000;
+      let best = null;
+      let lastError = null;
+      let watchId = null;
+      let waitTimer = null;
+      let giveUpTimer = null;
+      const finish = () => {
+        if (watchId != null) navigator.geolocation.clearWatch(watchId);
+        clearTimeout(waitTimer);
+        clearTimeout(giveUpTimer);
+        if (best) {
+          resolve({ ...best, capturedAt: Date.now(), placeName: "현재 위치" });
+          return;
+        }
+        reject(
+          new Error(
+            lastError && lastError.code === 1
+              ? "위치 권한을 허용하거나 출발지를 직접 검색해주세요."
+              : "현재 위치를 찾지 못했습니다. 다시 시도해주세요.",
+          ),
+        );
+      };
+      watchId = navigator.geolocation.watchPosition(
+        (p) => {
+          const fix = {
             longitude: p.coords.longitude,
             latitude: p.coords.latitude,
             accuracy: p.coords.accuracy,
-            capturedAt: Date.now(),
-            placeName: "현재 위치",
-          }),
-        (e) =>
-          reject(
-            new Error(
-              e.code === 1
-                ? "위치 권한을 허용하거나 출발지를 직접 검색해주세요."
-                : "현재 위치를 찾지 못했습니다. 다시 시도해주세요.",
-            ),
-          ),
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 },
+          };
+          if (!best || !(Number(best.accuracy) <= Number(fix.accuracy))) best = fix;
+          if (Number(fix.accuracy) <= GOOD_ACCURACY) return finish();
+          // 첫 위치가 잡힌 뒤로는 maxWait 만큼만 더 기다린다
+          if (!waitTimer) waitTimer = setTimeout(finish, maxWait);
+        },
+        (e) => {
+          lastError = e;
+          if (e.code === 1) finish();
+        },
+        { enableHighAccuracy: true, timeout: giveUp, maximumAge: 0 },
       );
+      giveUpTimer = setTimeout(finish, giveUp);
     });
-  window.NavigationUI = { read, api, create, locate, coordinate, color };
+  /** 오차가 커서 믿기 어려운 현재 위치인지 */
+  const isRough = (point) =>
+    !!point &&
+    !point.manual &&
+    Number.isFinite(Number(point.accuracy)) &&
+    Number(point.accuracy) > ROUGH_ACCURACY;
+  const roughText = (point) =>
+    isRough(point) ? `오차 약 ${Math.round(Number(point.accuracy) / 10) * 10}m` : "";
+
+  const meters = (a, b) => {
+    const r = Math.PI / 180;
+    const dLat = (b.latitude - a.latitude) * r;
+    const dLng = (b.longitude - a.longitude) * r;
+    const s =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(a.latitude * r) * Math.cos(b.latitude * r) * Math.sin(dLng / 2) ** 2;
+    return 2 * 6371000 * Math.asin(Math.sqrt(s));
+  };
+  /** 지하철역이면 '○○역' 이름을, 아니면 null */
+  const stationBase = (name, category) => {
+    const text = String(name || "").trim();
+    if (!text || /출구/.test(text)) return null;
+    const isStation = /지하철|전철/.test(String(category || "")) || (!category && /역$/.test(text));
+    const match = text.match(/^(.+?역)(?:\s|$)/);
+    return isStation && match ? match[1] : null;
+  };
+  /**
+   * 역 좌표는 역 한가운데 한 점이라 출구가 아닌 곳으로 안내된다.
+   * 역을 도착지로 고르면 출발지에서 가장 가까운 출구로 바꾼다. 못 찾으면 그대로 둔다.
+   */
+  async function nearestStationExit(destination, origin) {
+    if (!coordinate(destination) || !coordinate(origin)) return destination;
+    const station = destination.stationPoint || destination;
+    const base = stationBase(destination.stationName || destination.placeName, destination.categoryName);
+    if (!base || !coordinate(station)) return destination;
+    try {
+      const query = new URLSearchParams({
+        query: `${base} 출구`,
+        page: 1,
+        longitude: station.longitude,
+        latitude: station.latitude,
+        sort: "accuracy",
+      });
+      const result = await api(`/map/search?${query}`, { signal: AbortSignal.timeout(6000) });
+      const from = { latitude: Number(origin.latitude), longitude: Number(origin.longitude) };
+      const center = { latitude: Number(station.latitude), longitude: Number(station.longitude) };
+      const exits = (result.places || [])
+        .filter(coordinate)
+        .map((p) => ({ ...p, latitude: Number(p.latitude), longitude: Number(p.longitude) }))
+        .filter(
+          (p) =>
+            String(p.placeName || "").startsWith(base) &&
+            /\d+\s*번\s*출구/.test(p.placeName) &&
+            meters(p, center) < 600,
+        )
+        .sort((a, b) => meters(a, from) - meters(b, from));
+      if (!exits.length) return destination;
+      const exit = exits[0];
+      return {
+        ...destination,
+        placeName: exit.placeName,
+        latitude: String(exit.latitude),
+        longitude: String(exit.longitude),
+        stationName: destination.stationName || destination.placeName,
+        stationPoint: { latitude: center.latitude, longitude: center.longitude },
+      };
+    } catch {
+      return destination;
+    }
+  }
+  /** 역·공원처럼 넓은 곳은 좌표 한 점에서 멀리 떨어져 도착할 수 있어 도착 판정 거리를 넓힌다 */
+  const arrivalRadius = (destination) => {
+    const name = String(destination?.placeName || "");
+    const category = String(destination?.categoryName || "");
+    if (/출구/.test(name)) return 25;
+    if (/지하철|전철|기차|공원|대학교|병원|시장|아파트|운동장|경기장|터미널|공항|백화점|대형마트|테마파크|관광|궁/.test(category)) return 60;
+    if (/(역|공원|대학교|병원|시장|터미널)$/.test(name)) return 60;
+    return 25;
+  };
+  window.NavigationUI = {
+    read,
+    api,
+    create,
+    locate,
+    coordinate,
+    color,
+    isRough,
+    roughText,
+    meters,
+    nearestStationExit,
+    arrivalRadius,
+  };
 })();

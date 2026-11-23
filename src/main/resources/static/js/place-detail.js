@@ -394,29 +394,18 @@
     setLoading(true);
     setMessage("현재 위치 확인 중...");
 
-    navigator.geolocation.getCurrentPosition(
-      function (position) {
+    // 몇 초 동안 위치를 받아 가장 정확한 값을 쓴다 (첫 위치는 수백 m 틀릴 때가 많다)
+    NavigationUI.locate().then(
+      function (currentOrigin) {
         if (version !== endpointRevision) return;
-        var currentOrigin = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          capturedAt: Date.now(),
-        };
-
         sessionStorage.setItem("currentOrigin", JSON.stringify(currentOrigin));
         searchRoutes(currentOrigin);
       },
-      function (error) {
+      function () {
         if (version !== endpointRevision) return;
         // 위치를 못 받아도 경로 선택 화면으로 간다. 출발 칸을 눌러 출발지를 검색할 수 있다
         setLoading(false);
         goToCompareWithout("origin");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
       },
     );
   }
@@ -432,6 +421,18 @@
     var version = endpointRevision;
     setMessage("경로 찾는 중...");
     $("#confirmDestinationButton").text("경로 찾는 중…");
+    // 역이면 출발지에서 가장 가까운 출구로 도착지를 바꾼 뒤 찾는다
+    NavigationUI.nearestStationExit(selectedDestination, currentOrigin).then(function (destination) {
+      if (version !== endpointRevision) return;
+      if (destination !== selectedDestination) {
+        selectedDestination = destination;
+        sessionStorage.setItem("selectedDestination", JSON.stringify(selectedDestination));
+      }
+      requestRoutes(currentOrigin, version);
+    });
+  }
+
+  function requestRoutes(currentOrigin, version) {
     routeRequest = $.ajax({
       url: "/map/routes",
       timeout: 40000,
