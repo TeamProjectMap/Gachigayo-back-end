@@ -23,6 +23,9 @@
                r.startName,
                r.endName,
                r.totalDuration,
+               r.totalDistance,
+               r.endLat,
+               r.endLng,
                <!--
                    보호자가 걸으며 찍어 둔 지점(좌표가 있는 구간)이 체크포인트다.
                    이름이 없으면 랜드마크, 안내 문구 순으로 보여준다. (체크포인트 알림과 같은 기준)
@@ -36,7 +39,8 @@
                                                WHERE cur.routeStepId = t.currentStepId), 0)
                 ORDER BY s.stepOrder
                 LIMIT 1) AS nextCheckpointName,
-               (SELECT s.distance
+               <!-- 거리는 화면에서 이용자 현재 위치와의 직선거리로 계산한다 (구간 길이가 아니라) -->
+               (SELECT s.lat
                 FROM ROUTE_STEPS s
                 WHERE s.routeId = t.routeId
                   AND s.lat IS NOT NULL
@@ -44,7 +48,16 @@
                                                FROM ROUTE_STEPS cur
                                                WHERE cur.routeStepId = t.currentStepId), 0)
                 ORDER BY s.stepOrder
-                LIMIT 1) AS nextCheckpointDistance
+                LIMIT 1) AS nextCheckpointLat,
+               (SELECT s.lng
+                FROM ROUTE_STEPS s
+                WHERE s.routeId = t.routeId
+                  AND s.lat IS NOT NULL
+                  AND s.stepOrder >= COALESCE((SELECT cur.stepOrder
+                                               FROM ROUTE_STEPS cur
+                                               WHERE cur.routeStepId = t.currentStepId), 0)
+                ORDER BY s.stepOrder
+                LIMIT 1) AS nextCheckpointLng
         FROM TRIPS t
                  INNER JOIN ROUTES r
                             ON r.routeId = t.routeId

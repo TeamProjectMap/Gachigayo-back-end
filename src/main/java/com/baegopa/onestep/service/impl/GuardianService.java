@@ -9,6 +9,7 @@ import com.baegopa.onestep.dto.UserDTO;
 import com.baegopa.onestep.mapper.IGuardianMapper;
 import com.baegopa.onestep.service.IGuardianService;
 import com.baegopa.onestep.service.IKakaoMapService;
+import com.baegopa.onestep.util.GeoUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -196,10 +197,16 @@ public class GuardianService implements IGuardianService {
         homeInfo.put("startName", trip.getStartName());
         homeInfo.put("endName", trip.getEndName());
         homeInfo.put("nextCheckpointName", trip.getNextCheckpointName());
-        homeInfo.put("nextCheckpointDistance", trip.getNextCheckpointDistance());
-        homeInfo.put("remainMinutes", calculateRemainMinutes(trip));
 
         TripLocationDTO location = guardianMapper.getLatestTripLocation(trip.getTripId());
+
+        // 다음 체크포인트까지 거리: 이용자 현재 위치에서 체크포인트까지 (위치를 모르면 null → "거리 정보 없음")
+        homeInfo.put("nextCheckpointDistance", hasPoint(location)
+                && trip.getNextCheckpointLat() != null && trip.getNextCheckpointLng() != null
+                ? (int) Math.round(GeoUtil.distanceMeters(location.getLat(), location.getLng(),
+                        trip.getNextCheckpointLat(), trip.getNextCheckpointLng()))
+                : null);
+        homeInfo.put("remainMinutes", calculateRemainMinutes(trip, location));
 
         if (location != null) {
             homeInfo.put("currentLat", location.getLat());
@@ -223,12 +230,43 @@ public class GuardianService implements IGuardianService {
                 location.getLng().toPlainString(), location.getLat().toPlainString());
     }
 
+    /** 목적지에서 이만큼 안이면 "곧 도착" */
+    private static final double NEAR_DESTINATION_METERS = 100;
+
+    /** 직선거리를 실제 길 거리로 어림할 때 곱하는 값 (길은 직선보다 돌아간다) */
+    private static final double ROAD_DETOUR = 1.3;
+
+    /** 경로 평균 속도를 모를 때 쓰는 걷는 속도(m/s) */
+    private static final double WALKING_SPEED = 1.1;
+
     /**
-     * 남은 시간(분) = (출발 시각 + 경로 전체 예상 시간) - 지금
-     * 아직 TRIPS에 "예상 도착 시각" 컬럼이 없어 ROUTES.totalDuration으로 계산
-     * 이미 지났으면 0을 돌려주고 화면에서 "곧 도착"으로 표시
+     * 남은 시간(분)
+     * <p>
+     * 이용자의 현재 위치와 목적지를 알면 남은 거리로 계산한다.
+     * (남은 직선거리 × 1.3) ÷ 이 경로의 평균 속도(전체 거리 ÷ 전체 시간, 대중교통 포함)
+     * 그래서 예상보다 늦어져도 멀리 있으면 "곧 도착"이 되지 않는다.
+     * 위치나 목적지를 모르면 예전처럼 (출발 시각 + 경로 전체 예상 시간) - 지금 으로 계산한다.
+     * 0이면 화면에서 "곧 도착"으로 표시한다.
      */
-    private Integer calculateRemainMinutes(GuardianTripDTO trip) {
+    private Integer calculateRemainMinutes(GuardianTripDTO trip, TripLocationDTO location) {
+        if (hasPoint(location) && trip.getEndLat() != null && trip.getEndLng() != null) {
+            double remainMeters = GeoUtil.distanceMeters(location.getLat(), location.getLng(),
+                    trip.getEndLat(), trip.getEndLng());
+
+            if (remainMeters <= NEAR_DESTINATION_METERS) {
+                return 0;
+            }
+
+            double speed = WALKING_SPEED;
+            if (trip.getTotalDistance() != null && trip.getTotalDistance() > 0
+                    && trip.getTotalDuration() != null && trip.getTotalDuration() > 0) {
+                speed = Math.max(WALKING_SPEED, trip.getTotalDistance() / (double) trip.getTotalDuration());
+            }
+
+            // 멀리 있으면 적어도 1분
+            return Math.max(1, (int) Math.round(remainMeters * ROAD_DETOUR / speed / 60.0));
+        }
+
         if (trip.getStartDt() == null || trip.getTotalDuration() == null) {
             return null;
         }
@@ -242,6 +280,10 @@ public class GuardianService implements IGuardianService {
 
         // 30초 이상 남았으면 1분으로 올려서 보여준다
         return (int) Math.round(remainSeconds / 60.0);
+    }
+
+    private static boolean hasPoint(TripLocationDTO location) {
+        return location != null && location.getLat() != null && location.getLng() != null;
     }
 
     private List<Map<String, Object>> getNotifications(Long guardianId, int listSize) {
