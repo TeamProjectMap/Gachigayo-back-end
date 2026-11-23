@@ -470,7 +470,10 @@ body > main.route-compare-page .selected-itinerary {
 }
 
 .origin-accuracy-note {
-    margin: 8px 0 0;
+    margin: 0 8px 12px;
+    min-width: 0;
+    flex-shrink: 0;
+    overflow-wrap: anywhere;
     color: #8A8A8A;
     font-size: 12px;
     font-weight: 700;
