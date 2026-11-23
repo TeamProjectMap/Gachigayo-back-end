@@ -199,11 +199,14 @@
       text("gpsStatus", "위치가 잘 안 잡혀요. 다시 잡히면 이어서 안내할게요.");
     }
   }
-  /** 목적지 25m 안에 들어오면 어느 단계에 있든 도착 (두 번 연속 확인) */
+  /**
+   * 목적지 가까이(보통 25m, 역·공원처럼 넓은 곳은 60m) 들어오면
+   * 어느 단계에 있든 도착 (두 번 연속 확인)
+   */
   let arriveConfirm = 0;
   function autoArrive(fix) {
     const dest = selection?.destination;
-    if (!valid(dest) || distance(fix, dest) > 25) {
+    if (!valid(dest) || distance(fix, dest) > NavigationUI.arrivalRadius(dest)) {
       arriveConfirm = 0;
       return false;
     }

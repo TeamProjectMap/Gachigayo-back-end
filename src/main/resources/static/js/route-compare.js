@@ -316,9 +316,7 @@
     routeSearchResult = readJson("routeSearchResult");
     showIncomplete(hasOrigin);
     // 출발지를 따로 고르지 않았으면 기본은 '현재 위치'
-    $("#compareOriginName")
-      .text(hasOrigin ? (currentOrigin.placeName || "현재 위치") : "현재 위치")
-      .removeClass("is-empty");
+    renderOriginName(hasOrigin ? currentOrigin : null);
     if (selectedDestination) {
       try {
         sessionStorage.setItem("lastDestination", JSON.stringify(selectedDestination));
@@ -351,7 +349,7 @@
         // 출발지가 새로 정해졌으므로 이전 검색 결과는 사용하지 않는다.
         routeSearchResult = null;
         sessionStorage.removeItem("routeSearchResult");
-        $("#compareOriginName").text(currentOrigin.placeName || "현재 위치");
+        renderOriginName(currentOrigin);
       } catch (error) {
         showIncomplete(false);
         setMessage((error.message || "현재 위치를 확인하지 못했습니다.") + " 위의 출발 칸을 눌러 출발지를 선택해주세요.");
@@ -362,6 +360,7 @@
     if (!routeSearchResult) {
       setMessage("경로를 찾고 있어요.");
       try {
+        await useNearestStationExit();
         var query = new URLSearchParams({
           startLongitude: currentOrigin.longitude,
           startLatitude: currentOrigin.latitude,
@@ -409,6 +408,34 @@
 
     selectTab("publicTransit");
     setMessage("이동 가능한 경로를 찾지 못했습니다.");
+  }
+
+  /**
+   * 출발 칸 이름. 현재 위치의 오차가 크면 옆에 오차를 작게 적어
+   * 출발 칸을 눌러 직접 고를 수 있다는 걸 알린다.
+   */
+  function renderOriginName(origin) {
+    var $name = $("#compareOriginName").removeClass("is-empty");
+    $name.text((origin && origin.placeName) || "현재 위치");
+    if (NavigationUI.isRough(origin)) {
+      $name.append($("<small>").addClass("origin-accuracy").text(NavigationUI.roughText(origin)));
+      $("#originAccuracyNote").remove();
+      $(".route-points").after(
+        $("<p>").attr("id", "originAccuracyNote").addClass("origin-accuracy-note")
+          .text("현재 위치가 정확하지 않을 수 있어요. 출발 칸을 눌러 출발지를 직접 골라도 돼요."),
+      );
+    } else {
+      $("#originAccuracyNote").remove();
+    }
+  }
+
+  /** 역은 출발지에서 가장 가까운 출구를 도착지로 쓴다 */
+  async function useNearestStationExit() {
+    var adjusted = await NavigationUI.nearestStationExit(selectedDestination, currentOrigin);
+    if (adjusted === selectedDestination) return;
+    selectedDestination = adjusted;
+    sessionStorage.setItem("selectedDestination", JSON.stringify(selectedDestination));
+    $("#destinationName").text(selectedDestination.placeName || "목적지");
   }
 
   function showIncomplete(hasOrigin) {

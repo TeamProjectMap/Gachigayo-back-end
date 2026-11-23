@@ -460,3 +460,19 @@ body > main.route-compare-page .selected-itinerary {
     background: #FFEDED;
     border-color: #E8B8BC;
 }
+
+/* 현재 위치 오차가 클 때: 출발 이름 옆 작은 회색 글씨와 아래 안내 한 줄 */
+.point-row strong .origin-accuracy {
+    margin-left: 6px;
+    color: #8A8A8A;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.origin-accuracy-note {
+    margin: 8px 0 0;
+    color: #8A8A8A;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
