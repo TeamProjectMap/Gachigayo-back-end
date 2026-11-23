@@ -130,6 +130,12 @@ public class KakaoMapService implements IKakaoMapService {
             resultDTO.setWalking(unavailable);
         }
         resultDTO.setPublicTransit(transit.join());
+        TransitAccessWalks.complete(resultDTO.getPublicTransit(),
+                new TransitAccessWalks.Point(Double.parseDouble(startLongitude), Double.parseDouble(startLatitude)),
+                new TransitAccessWalks.Point(Double.parseDouble(endLongitude), Double.parseDouble(endLatitude)),
+                destinationName, (from, to, label) -> searchWalkingRoute(
+                        Double.toString(from.longitude()), Double.toString(from.latitude()),
+                        Double.toString(to.longitude()), Double.toString(to.latitude()), label), ROUTE_EXECUTOR);
 
         return resultDTO;
     }
