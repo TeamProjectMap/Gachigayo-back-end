@@ -81,3 +81,29 @@
 }
 
 .navigation-page #guideCard .guide-actions { grid-template-columns: minmax(0, 1fr); }
+
+/* 안내 카드: 아이콘과 글씨를 카드 높이 한가운데에 (피그마처럼).
+   방향 글씨(guide-cue)가 비어 있으면 자리를 차지하지 않게 숨긴다 */
+.navigation-page #guideCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.navigation-page #guideCard .guide-main {
+    align-items: center;
+    min-height: 0;
+}
+.navigation-page #guideCard .transport-visual {
+    height: auto;
+    align-items: center;
+    justify-content: center;
+}
+.navigation-page #guideCard .guide-cue:has(#guideCueLabel:empty) {
+    display: none;
+}
+.navigation-page #guideCard #transportText {
+    display: none;
+}
+.navigation-page #guideCard .guide-copy {
+    padding: 0;
+}

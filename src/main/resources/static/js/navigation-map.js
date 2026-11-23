@@ -179,17 +179,44 @@
   }
   /**
    * 현재 위치. 처음 잡히는 위치는 와이파이·기지국 기준이라 수백 m 틀릴 때가 많아서
-   * 몇 초 동안 위치를 받아 가장 정확한 값을 쓴다. 30m 안으로 잡히면 바로 끝낸다.
+   * 몇 초 동안 위치를 받아 가장 정확한 값을 쓴다. 50m 안으로 잡히면 바로 끝낸다.
+   * 빨리 끝내려고 방금(20초 안) 잡은 정확한 위치는 다시 찾지 않고 그대로 쓰고,
+   * 이미 찾는 중이면 새로 찾지 않고 그 결과를 같이 기다린다.
    */
-  const GOOD_ACCURACY = 30;
+  const GOOD_ACCURACY = 50;
   const ROUGH_ACCURACY = 100;
-  const locate = (options = {}) =>
+  const RECENT_FIX_MS = 20000;
+  let locating = null;
+  const recentFix = () => {
+    const fix = read("recentFix");
+    return fix &&
+      coordinate(fix) &&
+      Date.now() - Number(fix.at) < RECENT_FIX_MS &&
+      Number(fix.accuracy) <= GOOD_ACCURACY
+      ? fix
+      : null;
+  };
+  const locate = (options = {}) => {
+    const recent = recentFix();
+    if (recent)
+      return Promise.resolve({
+        longitude: recent.longitude,
+        latitude: recent.latitude,
+        accuracy: recent.accuracy,
+        capturedAt: Date.now(),
+        placeName: "현재 위치",
+      });
+    return (locating ||= findPosition(options).finally(() => {
+      locating = null;
+    }));
+  };
+  const findPosition = (options) =>
     new Promise((resolve, reject) => {
       if (!navigator.geolocation)
         return reject(
           new Error("이 브라우저에서는 현재 위치를 사용할 수 없습니다."),
         );
-      const maxWait = options.maxWait ?? 8000;
+      const maxWait = options.maxWait ?? 4000;
       const giveUp = options.timeout ?? 15000;
       let best = null;
       let lastError = null;
@@ -201,6 +228,9 @@
         clearTimeout(waitTimer);
         clearTimeout(giveUpTimer);
         if (best) {
+          try {
+            sessionStorage.setItem("recentFix", JSON.stringify({ ...best, at: Date.now() }));
+          } catch {}
           resolve({ ...best, capturedAt: Date.now(), placeName: "현재 위치" });
           return;
         }

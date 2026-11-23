@@ -51,6 +51,14 @@ public class KakaoMapService implements IKakaoMapService {
     }
     private final Map<String, String> addressCache = new ConcurrentHashMap<>();
 
+    /** 대중교통 경로를 도보 경로와 동시에 찾을 때 쓰는 일꾼. 서버 종료를 막지 않게 데몬 스레드로 만든다 */
+    private static final java.util.concurrent.ExecutorService ROUTE_EXECUTOR =
+            java.util.concurrent.Executors.newFixedThreadPool(8, task -> {
+                Thread thread = new Thread(task, "kakao-route");
+                thread.setDaemon(true);
+                return thread;
+            });
+
     @Value("${kakao.rest-api-key:}")
     private String kakaoRestApiKey;
 
@@ -99,15 +107,20 @@ public class KakaoMapService implements IKakaoMapService {
             throw new IllegalStateException("Kakao REST API key is not configured.");
         }
 
+        // 대중교통과 도보 경로는 서로 상관없어서 동시에 요청한다 (차례로 하면 두 번 기다린다)
+        java.util.concurrent.CompletableFuture<PublicTransitRouteResultDTO> transit =
+                java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return searchPublicTransitRoutes(startLongitude, startLatitude, endLongitude, endLatitude, destinationName);
+                    } catch (Exception error) {
+                        var unavailable = new PublicTransitRouteResultDTO();
+                        unavailable.setStatus("PROVIDER_ERROR");
+                        unavailable.setMessage("대중교통 경로를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+                        return unavailable;
+                    }
+                }, ROUTE_EXECUTOR);
+
         KakaoRouteSearchResultDTO resultDTO = new KakaoRouteSearchResultDTO();
-        try {
-            resultDTO.setPublicTransit(searchPublicTransitRoutes(startLongitude, startLatitude, endLongitude, endLatitude, destinationName));
-        } catch (Exception error) {
-            var unavailable = new PublicTransitRouteResultDTO();
-            unavailable.setStatus("PROVIDER_ERROR");
-            unavailable.setMessage("대중교통 경로를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
-            resultDTO.setPublicTransit(unavailable);
-        }
         try {
             resultDTO.setWalking(searchWalkingRoute(startLongitude, startLatitude, endLongitude, endLatitude, destinationName));
         } catch (Exception error) {
@@ -116,6 +129,7 @@ public class KakaoMapService implements IKakaoMapService {
             unavailable.setMessage("도보 경로를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
             resultDTO.setWalking(unavailable);
         }
+        resultDTO.setPublicTransit(transit.join());
 
         return resultDTO;
     }
