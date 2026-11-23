@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -22,7 +23,11 @@ public class GuardianTripDTO {
     private String startName;           // 출발지 이름
     private String endName;             // 목적지 이름
     private Integer totalDuration;      // 경로 전체 예상 시간(초)
+    private Integer totalDistance;      // 경로 전체 거리(m)
+    private BigDecimal endLat;          // 목적지 위도 (없을 수 있음)
+    private BigDecimal endLng;          // 목적지 경도
 
     private String nextCheckpointName;  // 다음 체크포인트 이름
-    private Integer nextCheckpointDistance; // 다음 체크포인트까지 거리(m)
+    private BigDecimal nextCheckpointLat;   // 다음 체크포인트 위치
+    private BigDecimal nextCheckpointLng;
 }
