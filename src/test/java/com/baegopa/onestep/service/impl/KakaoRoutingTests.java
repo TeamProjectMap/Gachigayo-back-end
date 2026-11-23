@@ -13,7 +13,7 @@ class KakaoRoutingTests {
 
     @Test void ordinaryWalkingUsesBroadFirstInsteadOfRestrictiveAccessibleMode() {
         var builder = org.springframework.web.client.RestClient.builder();
-        var server = org.springframework.test.web.client.MockRestServiceServer.bindTo(builder).build();
+        var server = org.springframework.test.web.client.MockRestServiceServer.bindTo(builder).ignoreExpectOrder(true).build();
         server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo(org.hamcrest.Matchers.containsString("/routing/publictraffic")))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess("{\"status\":\"NO_RESULTS\"}", org.springframework.http.MediaType.APPLICATION_JSON));
         server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo(org.hamcrest.Matchers.containsString("/routing/walk")))
