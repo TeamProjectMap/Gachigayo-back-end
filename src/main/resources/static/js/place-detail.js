@@ -155,6 +155,9 @@
         loadSelectedDestination();
         if (new URLSearchParams(location.search).get("go") === "1" && !favoriteMode) {
           requestCurrentOrigin();
+        } else if (!favoriteMode) {
+          // 출발·도착 버튼을 누르기 전에 미리 현재 위치를 찾아 둔다. 누르면 기다리지 않고 바로 경로를 찾는다
+          NavigationUI.locate().catch(function () {});
         }
       },
       error: function () {
