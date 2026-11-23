@@ -1,0 +1,16 @@
+/*
+ * PC 크롬처럼 창이 휴대폰보다 넓을 때만: 바깥을 회색으로 칠하고 화면(402px)에 그림자를 넣어
+ * 휴대폰 화면이 가운데 떠 있는 것처럼 보이게 한다.
+ * 휴대폰(창 폭 440px 미만)에서는 바깥이 없으니 아무것도 바뀌지 않는다.
+ * 모든 화면에서 가장 마지막에 불러온다.
+ */
+@media (min-width: 440px) {
+    html,
+    body {
+        background: #DADFE5 !important;
+    }
+
+    body > main {
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 10px 40px rgba(30, 45, 60, 0.18) !important;
+    }
+}
