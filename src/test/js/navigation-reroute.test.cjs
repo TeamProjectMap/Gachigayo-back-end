@@ -3,21 +3,36 @@ const assert=require('node:assert/strict');
 const R=require('../../main/resources/static/js/navigation-reroute.js');
 const sample=(now,overrides={})=>({now,accuracy:10,distance:100,active:true,...overrides});
 test('requires persistent accurate off-route fixes, not a single GPS jump',()=>{
- const d=R.detector();assert.equal(d.observe(sample(0)),false);assert.equal(d.observe(sample(5000)),false);assert.equal(d.observe(sample(10000)),true);
+ const d=R.detector();assert.equal(d.observe(sample(0)),false);assert.equal(d.observe(sample(2500)),false);assert.equal(d.observe(sample(5000)),true);
 });
 test('rejoining, poor accuracy, invalid distance and transit reset the evidence',()=>{
  for(const change of [{distance:30},{accuracy:100},{accuracy:NaN},{distance:Infinity},{active:false}]){
-  const d=R.detector();d.observe(sample(0));d.observe(sample(5000));assert.equal(d.observe(sample(6000,change)),false);
-  assert.equal(d.observe(sample(10000)),false);
+  const d=R.detector();d.observe(sample(0));d.observe(sample(2500));assert.equal(d.observe(sample(3000,change)),false);
+  assert.equal(d.observe(sample(5000)),false);
  }
+});
+test('five seconds and three independent fixes are both required',()=>{
+ const d=R.detector();d.observe(sample(0));d.observe(sample(2000));assert.equal(d.observe(sample(4999)),false);
+ const sparse=R.detector();sparse.observe(sample(0));assert.equal(sparse.observe(sample(5000)),false);
+ assert.equal(sparse.observe(sample(6000)),true);
+});
+test('only walking journeys and the final walking leg use walking-only reroute',()=>{
+ assert.equal(R.walkingOnly({mode:'WALKING'},[{type:'WALKING'}]),true);
+ assert.equal(R.walkingOnly({mode:'PUBLIC_TRANSIT'},[{type:'WALKING'}]),true);
+ assert.equal(R.walkingOnly({mode:'PUBLIC_TRANSIT'},[{type:'WALKING'},{type:'SUBWAY'}]),false);
 });
 test('duplicate fixes and long background gaps cannot instantly trigger rerouting',()=>{
  const d=R.detector();d.observe(sample(0));for(let i=0;i<10;i++)assert.equal(d.observe(sample(0)),false);
  assert.equal(d.observe(sample(50000)),false);assert.equal(d.observe(sample(55000)),false);assert.equal(d.observe(sample(60000)),true);
 });
-test('requests are throttled across routes and can retry after failure',()=>{
+test('failed requests are throttled and can retry after failure',()=>{
  const d=R.detector();d.requested(0);d.observe(sample(1000));d.observe(sample(6000));assert.equal(d.observe(sample(11000)),false);
  assert.equal(d.observe(sample(20000)),false);d.observe(sample(30000));d.observe(sample(40000));assert.equal(d.observe(sample(45000)),true);
+});
+test('a successfully applied route can reroute again after a fresh five-second deviation',()=>{
+ const d=R.detector();d.requested(5000);d.applied();
+ assert.equal(d.observe(sample(6000)),false);assert.equal(d.observe(sample(8500)),false);
+ assert.equal(d.observe(sample(11000)),true);
 });
 const step=(name='5호선')=>({type:'SUBWAY',vehicles:[{name}]});
 const route=(name,time,transfers=0)=>({steps:[{type:'WALKING'},step(name)],totalTime:time,transfers});

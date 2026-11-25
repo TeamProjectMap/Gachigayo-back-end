@@ -126,6 +126,35 @@ public class MapController {
         }
     }
 
+    @ResponseBody
+    @GetMapping("/walking-reroute")
+    public Map<String, Object> walkingReroute(
+            @RequestParam(value = "startLongitude", required = false) String startLongitude,
+            @RequestParam(value = "startLatitude", required = false) String startLatitude,
+            @RequestParam(value = "endLongitude", required = false) String endLongitude,
+            @RequestParam(value = "endLatitude", required = false) String endLatitude,
+            @RequestParam(value = "destinationName", required = false) String destinationName,
+            HttpSession session) {
+        Long userId = (Long) session.getAttribute("SS_USER_ID");
+        if (userId == null) return createResponse(false, "로그인이 필요합니다.");
+        if (!ROLE_USER.equals(session.getAttribute("SS_USER_ROLE"))) return createResponse(false, "이용자만 사용할 수 있는 기능입니다.");
+        if (!isValidLongitude(startLongitude) || !isValidLatitude(startLatitude)
+                || !isValidLongitude(endLongitude) || !isValidLatitude(endLatitude))
+            return createResponse(false, "출발지 또는 목적지 위치정보가 올바르지 않습니다.");
+        try {
+            var routes = new KakaoRouteSearchResultDTO();
+            routes.setWalking(kakaoMapService.searchFastestWalkingRoute(startLongitude.trim(), startLatitude.trim(),
+                    endLongitude.trim(), endLatitude.trim(), destinationName == null ? null : destinationName.trim()));
+            easyGuideService.applyEasyGuidance(routes);
+            var response = createResponse(true, routes.getWalking().getMessage());
+            response.put("walking", routes.getWalking());
+            return response;
+        } catch (Exception error) {
+            log.warn("도보 재탐색 실패 userId={}", userId, error);
+            return createResponse(false, "도보 경로를 다시 찾지 못했습니다. 잠시 후 시도해주세요.");
+        }
+    }
+
     private Map<String, Object> createResponse(boolean success, String message) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", success);
