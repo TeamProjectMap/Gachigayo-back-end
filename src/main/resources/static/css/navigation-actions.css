@@ -1,6 +1,6 @@
 /* A large help action and a smaller end action, including inside the app frame. */
 .navigation-page #guideCard .guide-actions {
-    grid-template-columns: minmax(0, 4fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
 }
 .navigation-page .guide-actions .end-guidance-button {
     background: #fff;
