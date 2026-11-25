@@ -116,9 +116,9 @@
     height: 20px;
     border: 3px solid white;
     border-radius: 50%;
-    color: var(--main, #018b38);
-    background: var(--main, #018b38);
-    box-shadow: 0 0 0 6px #018b3826, 0 1px 4px #1233;
+    color: var(--danger, #ff363b);
+    background: var(--danger, #ff363b);
+    box-shadow: 0 0 0 6px #ff363b26, 0 1px 4px #1233;
 }
 .navigation-page .has-heading .current-location-arrow {
     display: block;
