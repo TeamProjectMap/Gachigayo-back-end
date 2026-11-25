@@ -766,6 +766,10 @@
     endPromptOpen = false;
     if (!confirmed || !live) return;
     ending = true;
+    // 종료 요청 중 도착 판정이나 늦게 도착한 재탐색 응답이 새 이동을 만들지 않게 잠시 멈춘다.
+    live = false;
+    stopWatch();
+    stopRealtime();
     $("endGuidanceButton").disabled = true;
     $("endGuidanceStatus").hidden = true;
     try {
@@ -782,6 +786,9 @@
       location.replace("/user-home.html");
     } catch {
       ending = false;
+      live = true;
+      startWatch();
+      refreshRealtime();
       $("endGuidanceButton").disabled = false;
       text("endGuidanceStatus", "종료하지 못했어요. 연결을 확인하고 다시 눌러주세요.");
       $("endGuidanceStatus").hidden = false;
