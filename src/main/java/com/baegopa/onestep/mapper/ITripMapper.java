@@ -38,6 +38,9 @@ public interface ITripMapper {
     /** 도착 처리 */
     int updateTripArrived(@Param("tripId") Long tripId);
 
+    /** 지정한 본인의 이동만 취소한다. 완료된 이동은 바꾸지 않는다. */
+    int updateTripCancelled(@Param("userId") Long userId, @Param("tripId") Long tripId);
+
     /** 끝나지 않은 다른 이동을 정리한다 (새로 출발할 때) */
     int updateOngoingTripsCancelled(@Param("userId") Long userId);
 

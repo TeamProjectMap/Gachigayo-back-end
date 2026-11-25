@@ -27,4 +27,7 @@ public interface ITripService {
      * @return 보호자에게 알림을 만들었으면 true
      */
     boolean arrive(Long userId, Long tripId, String destinationName);
+
+    /** 도착으로 기록하지 않고 본인의 진행 중인 이동만 종료한다. */
+    void cancel(Long userId, Long tripId);
 }

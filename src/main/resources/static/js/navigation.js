@@ -27,6 +27,8 @@
   let arrivalOutcome = null;
   let arrivalSent = false,
     live = true;
+  let tripStartTask = null, endPromptOpen = false, ending = false, ended = false;
+  let tripStartFailed = false;
   let landmarks = [],
     shownLandmark = null,
     announcedLandmarkId = null,
@@ -61,6 +63,7 @@
   const guideText = (step) => step?.easyGuidance || step?.guidance || "";
   const routeKey = () => JourneyState.key(selection);
   function persist() {
+    if (ended) return;
     try {
       sessionStorage.setItem(
         "navigationProgress",
@@ -413,7 +416,7 @@
     if (following) view.map.setCenter(ll);
   }
   function onPosition(fix) {
-    if (!live || index >= steps.length) return;
+    if (!live || ending || index >= steps.length) return;
     if (!valid(fix)) return;
     position = fix;
     paintPosition();
@@ -546,7 +549,10 @@
     if (watchId != null) navigator.geolocation?.clearWatch(watchId);
     watchId = null;
   }
-  async function startTrip() {
+  function startTrip() {
+    return tripStartTask ||= beginTrip().finally(() => { tripStartTask = null; });
+  }
+  async function beginTrip() {
     const savedTripKey = sessionStorage.getItem("tripRouteKey");
     tripId =
       savedTripKey === routeKey()
@@ -562,6 +568,7 @@
     }
     if (tripStarting) return;
     tripStarting = true;
+    tripStartFailed = false;
     try {
       // 실제 안내를 시작한 일반 경로만 기록한다. 식별 실패 시에도 기존 안내는 계속한다.
       const historyKey = selection.guardianRouteId ? "" : await RouteHistory.key(selection.route).catch(() => "");
@@ -584,6 +591,7 @@
         }),
       });
       tripId = r.tripId;
+      if (!tripId) throw new Error("이동 기록을 확인하지 못했습니다.");
       if (tripId) {
         sessionStorage.setItem("currentTripId", String(tripId));
         sessionStorage.setItem("tripRouteKey", routeKey());
@@ -592,6 +600,7 @@
       if (index >= steps.length) notifyArrival();
       else sendLocation();
     } catch {
+      tripStartFailed = true;
       text(
         "gpsStatus",
         "보호자에게 이동 시작을 알리지 못했습니다. 길안내는 계속됩니다.",
@@ -667,6 +676,7 @@
   });
   async function sendLocation() {
     if (
+      ending ||
       !shareLocation ||
       !tripId ||
       !position ||
@@ -723,6 +733,7 @@
     setTimeout(goHome, 4000);
   }
   async function notifyArrival() {
+    if (ending) return;
     if (arrivalOutcome) { text("arrivalNotificationStatus", arrivalMessage(arrivalOutcome.notified)); return; }
     if (arrivalSent) return;
     if (!tripId) {
@@ -850,6 +861,42 @@
       $("rerouteButton").disabled = false;
     }
   }
+  async function endGuidance() {
+    if (ending || endPromptOpen || !live) return;
+    endPromptOpen = true;
+    const confirmed = await AppConfirm("길안내를 종료할까요?", "안내 종료");
+    endPromptOpen = false;
+    if (!confirmed || !live) return;
+    ending = true;
+    // 종료 요청 중 도착 판정이나 늦게 도착한 재탐색 응답이 새 이동을 만들지 않게 잠시 멈춘다.
+    live = false;
+    stopWatch();
+    stopRealtime();
+    $("endGuidanceButton").disabled = true;
+    $("endGuidanceStatus").hidden = true;
+    try {
+      // 시작 요청 중에 종료해도 새 이동 기록이 뒤늦게 남지 않게 기다린다.
+      if (tripStartTask) await tripStartTask;
+      if (!tripId && tripStartFailed && index < steps.length) await startTrip();
+      if (!tripId && tripStartFailed && index < steps.length) throw new Error("이동 기록 확인 실패");
+      if (tripId) await api("/trip/cancel", {
+        method: "POST", body: new URLSearchParams({ tripId }),
+      });
+      ended = true;
+      cleanup();
+      JourneyState.clear(sessionStorage);
+      location.replace("/user-home.html");
+    } catch {
+      ending = false;
+      live = true;
+      startWatch();
+      refreshRealtime();
+      $("endGuidanceButton").disabled = false;
+      text("endGuidanceStatus", "종료하지 못했어요. 연결을 확인하고 다시 눌러주세요.");
+      $("endGuidanceStatus").hidden = false;
+    }
+  }
+  $("endGuidanceButton").addEventListener("click", endGuidance);
   function cleanup() {
     rerouteRequest?.abort(); offRoute.reset();
     if (navigationStartedAt && steps.length) persist();

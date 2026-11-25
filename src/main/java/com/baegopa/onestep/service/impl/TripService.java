@@ -386,6 +386,16 @@ public class TripService implements ITripService {
         return notificationService.createArrivedNotification(userId, destinationName);
     }
 
+    @Override
+    @Transactional
+    public void cancel(Long userId, Long tripId) {
+        TripDTO trip = findOwnedTrip(userId, tripId);
+        if ("MOVING".equals(trip.getTripStatus())) {
+            tripMapper.updateTripCancelled(userId, tripId);
+        }
+        // 종료 재요청은 허용한다. 도착 기록이나 도착 알림은 만들지 않는다.
+    }
+
     /** 남의 이동에 기록하지 못하도록 주인을 확인한다 */
     private TripDTO findOwnedTrip(Long userId, Long tripId) {
         TripDTO trip = tripId == null ? null : tripMapper.getTrip(tripId);
