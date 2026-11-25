@@ -107,3 +107,42 @@
 .navigation-page #guideCard .guide-copy {
     padding: 0;
 }
+
+/* Only a trustworthy north-referenced compass reading turns the position dot into an arrow. */
+.navigation-page .current-location-arrow { display: none; }
+.navigation-page .current-location-dot.has-heading {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.navigation-page .has-heading .current-location-arrow {
+    display: block;
+    width: 32px;
+    height: 32px;
+    transform: rotate(var(--compass-heading, 0deg));
+    transform-origin: center;
+    transition: transform 120ms linear;
+    filter: drop-shadow(0 1px 3px #1236);
+}
+.navigation-page .compass-button {
+    position: absolute;
+    left: 14px;
+    bottom: 44px;
+    z-index: 5;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid #dce5de;
+    border-radius: 20px;
+    background: #fff;
+    color: #176b35;
+    box-shadow: 0 2px 8px #1232;
+    font: inherit;
+    font-size: 12px;
+}
+.navigation-page .compass-button:disabled { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+    .navigation-page .has-heading .current-location-arrow { transition: none; }
+}

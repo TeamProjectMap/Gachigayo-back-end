@@ -10,6 +10,10 @@
     view,
     position,
     locationMarker,
+    locationElement,
+    compass,
+    compassHeading = null,
+    markerRotation = null,
     watchId,
     confirmations = 0,
     lastConfirmation = 0;
@@ -338,6 +342,27 @@
             .catch((e) => text("gpsStatus", e.message));
       });
       shell.append(button);
+      const directionButton = document.createElement("button");
+      directionButton.type = "button";
+      directionButton.id = "directionButton";
+      directionButton.className = "compass-button";
+      directionButton.addEventListener("click", () => compass?.enable());
+      shell.append(directionButton);
+      compass ||= NavigationCompass.create(paintHeading, (status) => {
+        const labels = {
+          permission: "방향 켜기", requesting: "권한 확인 중", waiting: "방향 확인 중",
+          active: "나침반 켜짐", unreliable: "방향 확인 필요", unavailable: "방향 다시 확인",
+          denied: "방향 권한 필요", unsupported: "방향 센서 없음", paused: "방향 확인 중",
+        };
+        directionButton.textContent = labels[status];
+        directionButton.disabled = ["unsupported", "requesting", "active", "waiting", "paused"].includes(status);
+        directionButton.setAttribute("aria-label", status === "active"
+          ? "현재 위치 화살표는 휴대폰 화면 위쪽이 향하는 방향입니다"
+          : status === "unreliable" ? "방향을 확인할 수 없어요. 휴대폰을 조금 눕혀 다시 확인해주세요"
+            : status === "denied" ? "방향 권한 필요. 브라우저에서 동작 및 방향 센서 권한을 허용해주세요"
+              : labels[status]);
+      });
+      compass.start();
       shell.classList.add("map-ready");
       kakao.maps.event.addListener(view.map, "dragstart", () => {
         following = false;
@@ -349,18 +374,33 @@
         "지도를 불러오지 못했습니다. 연결 상태를 확인하고 새로고침해주세요.";
     }
   }
+  function paintHeading(heading) {
+    compassHeading = heading;
+    if (!locationElement) return;
+    locationElement.classList.toggle("has-heading", heading !== null);
+    locationElement.setAttribute("aria-label", heading === null ? "현재 위치, 방향 확인 안 됨" : "현재 위치와 휴대폰이 향하는 방향");
+    if (heading === null) { markerRotation = null; return; }
+    // Cross north by the shortest angle instead of spinning almost a full turn.
+    markerRotation = markerRotation === null ? heading : markerRotation + ((heading - markerRotation + 540) % 360 + 360) % 360 - 180;
+    locationElement.style.setProperty("--compass-heading", `${markerRotation}deg`);
+  }
   function paintPosition() {
     if (!view || !valid(position)) return;
     const ll = new kakao.maps.LatLng(position.latitude, position.longitude);
     if (!locationMarker) {
       const dot = document.createElement("div");
       dot.className = "current-location-dot";
-      dot.setAttribute("aria-label", "현재 위치");
+      dot.setAttribute("role", "img");
+      dot.innerHTML = '<svg class="current-location-arrow" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 29 29 16 23 3 29Z" fill="#2379f5" stroke="white" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+      locationElement = dot;
+      paintHeading(compassHeading);
       locationMarker = new kakao.maps.CustomOverlay({
         map: view.map,
         position: ll,
         content: dot,
         zIndex: 10,
+        xAnchor: 0.5,
+        yAnchor: 0.5,
       });
     } else locationMarker.setPosition(ll);
     if (following) view.map.setCenter(ll);
@@ -751,6 +791,7 @@
   function cleanup() {
     if (navigationStartedAt && steps.length) persist();
     live = false;
+    compass?.stop();
     stopWatch();
     stopRealtime();
   }
@@ -791,6 +832,7 @@
   window.addEventListener("pageshow", (e) => {
     if (e.persisted && selection) {
       live = true;
+      compass?.start();
       applyDevicePreferences();
       startWatch();
       refreshRealtime();
