@@ -42,7 +42,7 @@
     var version = endpointRevision;
     var origin = NavigationUI.read("currentOrigin");
     if (!NavigationUI.coordinate(origin)) {
-      setMessage("현재 위치를 확인하고 출발·도착을 바꾸고 있습니다…");
+      setMessage("");
       try {
         origin = await NavigationUI.locate();
       } catch (error) {
@@ -70,7 +70,7 @@
     renderDestination(selectedDestination);
     checkFavorite();
     drawEndpoints();
-    setMessage("출발지와 도착지를 바꿨습니다. 경로를 다시 검색해주세요.");
+    setMessage("");
   }
 
   $(function () {
@@ -87,7 +87,7 @@
         sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
         $("#originSelectionName").text("현재 위치");
         drawEndpoints();
-        setMessage("현재 위치를 출발지로 지정했습니다.");
+        setMessage("");
       } catch (error) {
         if (version === endpointRevision) {
           var original = NavigationUI.read("currentOrigin");
@@ -270,7 +270,7 @@
         }
 
         renderFavorite(true);
-        setMessage(json.message || "자주 가는 곳에 저장했습니다.");
+        setMessage("");
       },
       error: function () {
         setMessage("즐겨찾기 저장 중 오류가 발생했습니다.");
@@ -307,7 +307,7 @@
         }
 
         sessionStorage.removeItem(destinationKey);
-        setMessage("자주 가는 곳에 등록했어요.");
+        setMessage("");
         window.setTimeout(function () {
           window.location.href = "/route-search.html?view=favorites";
         }, 500);
@@ -334,7 +334,7 @@
         }
 
         renderFavorite(false);
-        setMessage(json.message || "자주 가는 곳에서 삭제했습니다.");
+        setMessage("");
       },
       error: function () {
         setMessage("즐겨찾기 삭제 중 오류가 발생했습니다.");
@@ -395,7 +395,7 @@
     }
 
     setLoading(true);
-    setMessage("현재 위치 확인 중...");
+    setMessage("");
 
     // 몇 초 동안 위치를 받아 가장 정확한 값을 쓴다 (첫 위치는 수백 m 틀릴 때가 많다)
     NavigationUI.locate().then(
@@ -422,7 +422,7 @@
       return;
     }
     var version = endpointRevision;
-    setMessage("경로 찾는 중...");
+    setMessage("");
     $("#confirmDestinationButton").text("경로 찾는 중…");
     // 역이면 출발지에서 가장 가까운 출구로 도착지를 바꾼 뒤 찾는다
     NavigationUI.nearestStationExit(selectedDestination, currentOrigin).then(function (destination) {
@@ -467,7 +467,7 @@
           return;
         }
         sessionStorage.setItem("routeSearchResult", JSON.stringify(json));
-        setMessage(createRouteSummaryMessage(json));
+        setMessage("");
         window.location.href = "/route-compare.html";
       },
       error: function (_, status) {
@@ -626,6 +626,6 @@
   }
 
   function setMessage(message) {
-    $("#detailMessage").text(message);
+    $("#detailMessage").text(message).prop("hidden", !message);
   }
 })(jQuery);

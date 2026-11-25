@@ -230,7 +230,7 @@
     if (!selectedDestination) return;
 
     if (!hasOrigin) {
-      setMessage("현재 위치를 확인하고 있어요. 출발지를 직접 선택할 수도 있어요.");
+      setMessage("");
       try {
         currentOrigin = await NavigationUI.locate();
         hasOrigin = NavigationUI.coordinate(currentOrigin);
@@ -248,7 +248,7 @@
     }
 
     if (!routeSearchResult) {
-      setMessage("경로를 찾고 있어요.");
+      setMessage("");
       try {
         await useNearestStationExit();
         var query = new URLSearchParams({
@@ -339,7 +339,7 @@
     updateGuideButton(false);
     setMessage(!selectedDestination
       ? "위의 도착 칸을 눌러 도착지를 선택해주세요."
-      : !hasOrigin ? "위의 출발 칸을 눌러 출발지를 선택해주세요." : "경로를 찾고 있어요.");
+      : !hasOrigin ? "위의 출발 칸을 눌러 출발지를 선택해주세요." : "");
   }
 
   async function loadCompletedRanks(routes) {
@@ -1406,6 +1406,6 @@
   }
 
   function setMessage(message) {
-    $("#compareMessage").text(message);
+    $("#compareMessage").text(message).prop("hidden", !message);
   }
 })(jQuery);

@@ -70,7 +70,10 @@
     $("autocompleteList").append(row);
   }
   const input = $("destinationSearchInput");
-  const message = (text) => ($("searchMessage").textContent = text);
+  const message = (text) => {
+    $("searchMessage").textContent = text;
+    $("searchMessage").hidden = !text;
+  };
   const normalize = (p) => ({
     ...p,
     id: p.id || p.kakaoPlaceId,
@@ -287,7 +290,7 @@
     const currentRevision = ++revision,
       nextPage = append ? page + 1 : 1;
     $("moreResults").disabled = true;
-    message("장소를 검색하고 있습니다…");
+    message("");
     if (!append) {
       places = [];
       render();
@@ -467,7 +470,7 @@
     const currentRevision = ++revision;
     selectMode(next);
     setSearching(false);
-    message("목록을 불러오고 있습니다…");
+    message("");
     $("moreResults").hidden = true;
     try {
       const result = await api(`/place/${next}`);
