@@ -81,6 +81,9 @@
 }
 
 .navigation-page #guideCard .guide-actions { grid-template-columns: minmax(0, 1fr); }
+.navigation-page #guideCard .reroute-status { font-size: 13px; line-height: 1.5; color: #176b35; margin-top: 10px; }
+.navigation-page #guideCard .reroute-retry { min-height: 40px; padding: 8px 14px; margin-top: 8px; border-radius: 12px; background: #eef5eb; color: #176b35; }
+.navigation-page #guideCard .reroute-status[hidden], .navigation-page #guideCard .reroute-retry[hidden] { display: none; }
 
 /* 안내 카드: 아이콘과 글씨를 카드 높이 한가운데에 (피그마처럼).
    방향 글씨(guide-cue)가 비어 있으면 자리를 차지하지 않게 숨긴다 */

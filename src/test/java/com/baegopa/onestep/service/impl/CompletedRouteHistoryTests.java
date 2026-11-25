@@ -48,6 +48,17 @@ class CompletedRouteHistoryTests {
         verify(trips).insertTripEvent(event.capture());assertTrue(event.getValue().getEventMessage().startsWith(selected.getHistoryKey()));
         verify(routes,never()).insertRoute(any());
     }
+    @Test void reroutedJourneyUsesFreshRouteWithoutChangingGuardianSavedRoute() {
+        var selected=selection();selected.setRerouted(true);selected.setRouteId(99L);selected.setTotalDuration(600);
+        doAnswer(i->{var r=(RouteDTO)i.getArgument(0);assertNull(r.getRouteId());r.setRouteId(101L);return 1;}).when(routes).insertRoute(any());
+        doAnswer(i->{((TripDTO)i.getArgument(0)).setTripId(21L);return 1;}).when(trips).insertTrip(any());
+        assertEquals(21L,service.startTrip(7L,selected));
+        verify(trips).updateOngoingTripsCancelled(7L);
+        verify(routes,never()).getRoute(any());
+        verify(routes,never()).getNearestGuardianRoute(any(),any(),any());
+        verify(routes,never()).getGuardianRouteByEndName(any(),any());
+        verify(routes).insertRoute(argThat(r->"RECOMMENDED".equals(r.getRouteType())&&r.getTotalDuration()==600));
+    }
     @Test void completedHistoryIsScopedToAuthenticatedUser() {
         var controller=new TripController(mock(ITripService.class),mock(NavigationLandmarkService.class),mock(IRouteService.class),trips);
         var session=new MockHttpSession();assertEquals(false,controller.completedRoutes(session).get("success"));

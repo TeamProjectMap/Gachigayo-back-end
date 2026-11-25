@@ -132,6 +132,7 @@ public class TripController {
         routeDTO.setEndLat(toDecimal(getParameter(request, "endLatitude")));
         routeDTO.setEndLng(toDecimal(getParameter(request, "endLongitude")));
         routeDTO.setHistoryKey(getParameter(request, "historyKey"));
+        routeDTO.setRerouted(Boolean.parseBoolean(getParameter(request, "rerouted")));
         routeDTO.setStartLat(toDecimal(getParameter(request, "startLatitude")));
         routeDTO.setStartLng(toDecimal(getParameter(request, "startLongitude")));
         routeDTO.setTotalDistance(toInteger(getParameter(request, "totalDistance")));
