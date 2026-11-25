@@ -69,7 +69,8 @@ public class TripService implements ITripService {
         // 보호자가 이 목적지로 지정해둔 경로가 있으면 그 경로로 이동을 남긴다.
         // 그래야 보호자 화면에서 걸으며 기록한 구간·체크포인트를 이 이동에 겹쳐 볼 수 있다.
         // 이용자 화면은 그대로 두고 서버에서만 잇는다.
-        RouteDTO guardianRoute = findGuardianRoute(userId, routeDTO);
+        RouteDTO guardianRoute = routeDTO.isRerouted() ? null : findGuardianRoute(userId, routeDTO);
+        if (routeDTO.isRerouted()) routeDTO.setRouteId(null);
         Long routeId = guardianRoute != null
                 ? guardianRoute.getRouteId()
                 : insertRecommendedRoute(userId, routeDTO);
@@ -383,6 +384,16 @@ public class TripService implements ITripService {
         }
 
         return notificationService.createArrivedNotification(userId, destinationName);
+    }
+
+    @Override
+    @Transactional
+    public void cancel(Long userId, Long tripId) {
+        TripDTO trip = findOwnedTrip(userId, tripId);
+        if ("MOVING".equals(trip.getTripStatus())) {
+            tripMapper.updateTripCancelled(userId, tripId);
+        }
+        // 종료 재요청은 허용한다. 도착 기록이나 도착 알림은 만들지 않는다.
     }
 
     /** 남의 이동에 기록하지 못하도록 주인을 확인한다 */

@@ -82,6 +82,14 @@
           AND tripStatus = 'MOVING'
     </update>
 
+    <update id="updateTripCancelled">
+        UPDATE TRIPS t
+            INNER JOIN ROUTES r ON r.routeId = t.routeId
+        SET t.tripStatus = 'CANCELLED', t.endDt = NOW(6)
+        WHERE t.tripId = #{tripId} AND r.userId = #{userId}
+          AND t.tripStatus = 'MOVING'
+    </update>
+
     <!--
         도착을 누르지 않고 화면을 닫는 경우가 있어 이동이 계속 '진행 중'으로 남는다.
         새로 출발할 때 이전 것들을 정리한다.

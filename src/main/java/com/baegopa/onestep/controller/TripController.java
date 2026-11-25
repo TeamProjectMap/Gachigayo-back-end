@@ -132,6 +132,7 @@ public class TripController {
         routeDTO.setEndLat(toDecimal(getParameter(request, "endLatitude")));
         routeDTO.setEndLng(toDecimal(getParameter(request, "endLongitude")));
         routeDTO.setHistoryKey(getParameter(request, "historyKey"));
+        routeDTO.setRerouted(Boolean.parseBoolean(getParameter(request, "rerouted")));
         routeDTO.setStartLat(toDecimal(getParameter(request, "startLatitude")));
         routeDTO.setStartLng(toDecimal(getParameter(request, "startLongitude")));
         routeDTO.setTotalDistance(toInteger(getParameter(request, "totalDistance")));
@@ -202,6 +203,22 @@ public class TripController {
             // 길안내 화면을 막으면 안 되므로 실패해도 오류로 끝내지 않는다
             log.error("도착 처리 실패 userId={}", sessionUser.userId(), e);
             return createResponse(false, "도착 처리 중 오류가 발생했습니다.");
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/cancel")
+    public Map<String, Object> cancel(HttpServletRequest request, HttpSession session) {
+        SessionUser user = getSessionUser(session);
+        if (!user.valid()) return user.response();
+        try {
+            tripService.cancel(user.userId(), toLong(getParameter(request, "tripId")));
+            return createResponse(true, "길안내를 종료했습니다.");
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("길안내 종료 실패 userId={}", user.userId(), e);
+            return createResponse(false, "종료하지 못했어요. 연결을 확인하고 다시 시도해주세요.");
         }
     }
 

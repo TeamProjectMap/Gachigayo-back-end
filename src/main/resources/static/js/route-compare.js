@@ -71,123 +71,13 @@
       comparisonMap.route(
         selectedRoute && selectedRoute.route
           ? selectedRoute.mode === "PUBLIC_TRANSIT"
-            ? withAccessWalks(selectedRoute.route)
+            ? getValidSteps(selectedRoute.route)
             : selectedRoute.route.steps || []
           : [],
       );
     }
   }
 
-  /**
-   * 카카오 대중교통 경로에는 출발지 → 타는 곳, 내린 곳 → 도착지 도보가 빠져 있다.
-   * (총 21분인데 단계는 버스 12분 하나뿐인 식)
-   * 빠진 시간·거리를 앞뒤 도보 구간으로 채워서 막대와 지도에 출발지부터 도착지까지 다 보이게 한다.
-   * 앞뒤 나누기는 출발지~타는 곳, 내린 곳~도착지 직선거리 비율로 한다.
-   * 화면에 보여주기만 하고, 길안내에 넘기는 경로 데이터는 바꾸지 않는다.
-   */
-  function withAccessWalks(route) {
-    var steps = getValidSteps(route);
-    if (!steps.length) {
-      return steps;
-    }
-
-    var stepTime = 0;
-    var stepDistance = 0;
-    steps.forEach(function (step) {
-      stepTime += Math.max(safeNumber(step.time), 0);
-      stepDistance += Math.max(safeNumber(step.distance), 0);
-    });
-
-    var missingTime = safeNumber(route.totalTime) - stepTime;
-    var missingDistance = Math.max(
-      safeNumber(route.totalDistance) - stepDistance,
-      0,
-    );
-    if (missingTime < 30) {
-      return steps;
-    }
-
-    var firstPoint = firstPathPoint(steps);
-    var lastPoint = lastPathPoint(steps);
-    var before = straightDistance(currentOrigin, firstPoint);
-    var after = straightDistance(lastPoint, selectedDestination);
-    var beforeShare = before + after > 0 ? before / (before + after) : 0.5;
-
-    var result = steps.slice();
-    var beforeTime = Math.round(missingTime * beforeShare);
-    var afterTime = missingTime - beforeTime;
-
-    if (beforeTime >= 30) {
-      result.unshift(
-        accessWalk(beforeTime, missingDistance * beforeShare, currentOrigin, firstPoint),
-      );
-    }
-    if (afterTime >= 30) {
-      result.push(
-        accessWalk(afterTime, missingDistance * (1 - beforeShare), lastPoint, selectedDestination),
-      );
-    }
-    return result;
-  }
-
-  function accessWalk(time, distance, from, to) {
-    var points = [from, to]
-      .filter(isCoordinate)
-      .map(function (point) {
-        return {
-          longitude: Number(point.longitude),
-          latitude: Number(point.latitude),
-        };
-      });
-    return {
-      type: "WALKING",
-      time: time,
-      distance: Math.round(distance),
-      pathPoints: points.length === 2 ? points : [],
-      stops: [],
-      vehicles: [],
-    };
-  }
-
-  function firstPathPoint(steps) {
-    for (var i = 0; i < steps.length; i++) {
-      var points = steps[i].pathPoints || [];
-      if (points.length) {
-        return points[0];
-      }
-    }
-    return null;
-  }
-
-  function lastPathPoint(steps) {
-    for (var i = steps.length - 1; i >= 0; i--) {
-      var points = steps[i].pathPoints || [];
-      if (points.length) {
-        return points[points.length - 1];
-      }
-    }
-    return null;
-  }
-
-  function isCoordinate(point) {
-    return !!(window.NavigationUI && NavigationUI.coordinate(point));
-  }
-
-  /** 두 지점 사이 직선거리(m). 좌표가 없으면 0 */
-  function straightDistance(a, b) {
-    if (!isCoordinate(a) || !isCoordinate(b)) {
-      return 0;
-    }
-    var rad = Math.PI / 180;
-    var lat1 = Number(a.latitude) * rad;
-    var lat2 = Number(b.latitude) * rad;
-    var dLat = lat2 - lat1;
-    var dLng = (Number(b.longitude) - Number(a.longitude)) * rad;
-    var h =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-  }
   var selectedDestination = null;
   var currentOrigin = null;
   var routeSearchResult = null;
@@ -340,7 +230,7 @@
     if (!selectedDestination) return;
 
     if (!hasOrigin) {
-      setMessage("현재 위치를 확인하고 있어요. 출발지를 직접 선택할 수도 있어요.");
+      setMessage("");
       try {
         currentOrigin = await NavigationUI.locate();
         hasOrigin = NavigationUI.coordinate(currentOrigin);
@@ -358,7 +248,7 @@
     }
 
     if (!routeSearchResult) {
-      setMessage("경로를 찾고 있어요.");
+      setMessage("");
       try {
         await useNearestStationExit();
         var query = new URLSearchParams({
@@ -449,7 +339,7 @@
     updateGuideButton(false);
     setMessage(!selectedDestination
       ? "위의 도착 칸을 눌러 도착지를 선택해주세요."
-      : !hasOrigin ? "위의 출발 칸을 눌러 출발지를 선택해주세요." : "경로를 찾고 있어요.");
+      : !hasOrigin ? "위의 출발 칸을 눌러 출발지를 선택해주세요." : "");
   }
 
   async function loadCompletedRanks(routes) {
@@ -881,7 +771,7 @@
       }
       $card.append(createTimeBlock(route.totalTime));
       $card.append(createMeta(route));
-      $card.append(createSegmentBar(withAccessWalks(route)));
+      $card.append(createSegmentBar(getValidSteps(route)));
       $card.append(
         $("<div>").addClass("route-summary").text(createTransitSummary(route)),
       );
@@ -1516,6 +1406,6 @@
   }
 
   function setMessage(message) {
-    $("#compareMessage").text(message);
+    $("#compareMessage").text(message).prop("hidden", !message);
   }
 })(jQuery);

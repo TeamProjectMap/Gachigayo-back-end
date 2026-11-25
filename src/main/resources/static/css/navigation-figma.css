@@ -81,6 +81,9 @@
 }
 
 .navigation-page #guideCard .guide-actions { grid-template-columns: minmax(0, 1fr); }
+.navigation-page #guideCard .reroute-status { font-size: 13px; line-height: 1.5; color: #176b35; margin-top: 10px; }
+.navigation-page #guideCard .reroute-retry { min-height: 40px; padding: 8px 14px; margin-top: 8px; border-radius: 12px; background: #eef5eb; color: #176b35; }
+.navigation-page #guideCard .reroute-status[hidden], .navigation-page #guideCard .reroute-retry[hidden] { display: none; }
 
 /* 안내 카드: 아이콘과 글씨를 카드 높이 한가운데에 (피그마처럼).
    방향 글씨(guide-cue)가 비어 있으면 자리를 차지하지 않게 숨긴다 */
@@ -106,4 +109,49 @@
 }
 .navigation-page #guideCard .guide-copy {
     padding: 0;
+}
+
+/* Only a trustworthy north-referenced compass reading turns the position dot into an arrow. */
+.navigation-page .current-location-arrow { display: none; }
+.navigation-page .current-location-dot {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border: 3px solid white;
+    border-radius: 50%;
+    color: var(--danger, #ff363b);
+    background: var(--danger, #ff363b);
+    box-shadow: 0 0 0 6px #ff363b26, 0 1px 4px #1233;
+}
+.navigation-page .has-heading .current-location-arrow {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -22px 0 0 -22px;
+    width: 44px;
+    height: 44px;
+    transform: rotate(var(--compass-heading, 0deg));
+    transform-origin: center;
+    transition: transform 120ms linear;
+    filter: drop-shadow(0 1px 3px #1236);
+}
+.navigation-page .compass-button {
+    position: absolute;
+    left: 14px;
+    bottom: 44px;
+    z-index: 5;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid #dce5de;
+    border-radius: 20px;
+    background: #fff;
+    color: #176b35;
+    box-shadow: 0 2px 8px #1232;
+    font: inherit;
+    font-size: 12px;
+}
+.navigation-page .compass-button:disabled { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+    .navigation-page .has-heading .current-location-arrow { transition: none; }
 }

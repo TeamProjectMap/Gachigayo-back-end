@@ -16,6 +16,8 @@ public class PublicTransitStepDTO {
     private String easyGuidance;
     private Integer distance;
     private Integer time;
+    private Double longitude;
+    private Double latitude;
     private List<PathPointDTO> pathPoints = new ArrayList<>();
     private List<String> stops = new ArrayList<>();
     private List<TransitVehicleDTO> vehicles = new ArrayList<>();
