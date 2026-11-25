@@ -12,9 +12,10 @@
     <link rel="stylesheet" href="/css/app-frame.css?v=20261121-black" />
       <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-find">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
-    <link rel="stylesheet" href="/css/navigation-figma.css?v=20261123-center">
+    <link rel="stylesheet" href="/css/navigation-figma.css?v=20261125-navigation">
     <link rel="stylesheet" href="/css/landmark-popup.css?v=20261121-arrive">
     <link rel="stylesheet" href="/css/desktop-frame.css?v=20261123">
+    <link rel="stylesheet" href="/css/navigation-actions.css?v=20261125">
 </head>
   <body>
     <main class="navigation-page hidden" id="navigationPage">
@@ -78,7 +79,9 @@
           <button type="button" class="help-button" id="helpButton">
             도움이 필요해요
           </button>
+          <button type="button" class="end-guidance-button" id="endGuidanceButton">안내 종료</button>
         </div>
+        <p id="endGuidanceStatus" class="end-guidance-status" role="status" hidden></p>
       </section>
 
       <section id="landmarkCard" class="landmark-card" hidden aria-label="보호자가 등록한 랜드마크">
@@ -130,6 +133,7 @@
     </main>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/js/confirm-dialog.js?v=20261125-stop"></script>
     <script src="/js/navigation-map.js?v=20261123-speed"></script>
     <script src="/js/transit-realtime.js"></script>
     <script src="/js/navigation-geometry.js"></script>
@@ -137,6 +141,6 @@
     <script src="/js/route-history.js?v=20261121"></script>
     <script src="/js/journey-state.js?v=20261121-no-voice"></script>
     <script src="/js/navigation-cue.js?v=20261121"></script>
-    <script src="/js/navigation.js?v=20261123-accuracy"></script>
+    <script src="/js/navigation.js?v=20261125-navigation"></script>
   </body>
 </html>

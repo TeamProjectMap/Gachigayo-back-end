@@ -205,6 +205,22 @@ public class TripController {
         }
     }
 
+    @ResponseBody
+    @PostMapping("/cancel")
+    public Map<String, Object> cancel(HttpServletRequest request, HttpSession session) {
+        SessionUser user = getSessionUser(session);
+        if (!user.valid()) return user.response();
+        try {
+            tripService.cancel(user.userId(), toLong(getParameter(request, "tripId")));
+            return createResponse(true, "길안내를 종료했습니다.");
+        } catch (IllegalArgumentException e) {
+            return createResponse(false, e.getMessage());
+        } catch (Exception e) {
+            log.error("길안내 종료 실패 userId={}", user.userId(), e);
+            return createResponse(false, "종료하지 못했어요. 연결을 확인하고 다시 시도해주세요.");
+        }
+    }
+
     private Long toLong(String value) {
         try {
             return isBlank(value) ? null : Long.valueOf(value.trim());

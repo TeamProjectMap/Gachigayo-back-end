@@ -1,0 +1,32 @@
+/* A large help action and a smaller end action, including inside the app frame. */
+.navigation-page #guideCard .guide-actions {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 1fr);
+}
+.navigation-page .guide-actions .end-guidance-button {
+    background: #fff;
+    color: #363636;
+    border: 1px solid #c8c8c8;
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: keep-all;
+    padding: 4px;
+}
+.navigation-page .end-guidance-status:not([hidden]) {
+    position: fixed;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 13;
+    width: min(372px, calc(100% - 30px));
+    padding: 10px;
+    border-radius: 12px;
+    background: #fff;
+    color: #a1262a;
+    box-shadow: 0 2px 8px #1232;
+    font-size: 13px;
+    line-height: 1.5;
+}
+@media (max-width: 350px) {
+    .navigation-page .guide-actions .end-guidance-button { font-size: 12px; }
+}
