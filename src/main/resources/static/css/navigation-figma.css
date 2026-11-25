@@ -125,9 +125,9 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    margin: -20px 0 0 -20px;
-    width: 40px;
-    height: 40px;
+    margin: -22px 0 0 -22px;
+    width: 44px;
+    height: 44px;
     transform: rotate(var(--compass-heading, 0deg));
     transform-origin: center;
     transition: transform 120ms linear;
