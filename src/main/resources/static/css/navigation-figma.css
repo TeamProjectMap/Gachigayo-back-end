@@ -110,18 +110,23 @@
 
 /* Only a trustworthy north-referenced compass reading turns the position dot into an arrow. */
 .navigation-page .current-location-arrow { display: none; }
-.navigation-page .current-location-dot.has-heading {
-    width: 32px;
-    height: 32px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+.navigation-page .current-location-dot {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border: 3px solid white;
+    border-radius: 50%;
+    background: #2379f5;
+    box-shadow: 0 0 0 6px #2379f526, 0 1px 4px #1233;
 }
 .navigation-page .has-heading .current-location-arrow {
     display: block;
-    width: 32px;
-    height: 32px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -20px 0 0 -20px;
+    width: 40px;
+    height: 40px;
     transform: rotate(var(--compass-heading, 0deg));
     transform-origin: center;
     transition: transform 120ms linear;

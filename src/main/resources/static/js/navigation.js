@@ -391,7 +391,7 @@
       const dot = document.createElement("div");
       dot.className = "current-location-dot";
       dot.setAttribute("role", "img");
-      dot.innerHTML = '<svg class="current-location-arrow" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 29 29 16 23 3 29Z" fill="#2379f5" stroke="white" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+      dot.innerHTML = '<svg class="current-location-arrow" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 1 25 9 15 9Z" fill="#2379f5" stroke="white" stroke-width="1.8" stroke-linejoin="round"/></svg>';
       locationElement = dot;
       paintHeading(compassHeading);
       locationMarker = new kakao.maps.CustomOverlay({
