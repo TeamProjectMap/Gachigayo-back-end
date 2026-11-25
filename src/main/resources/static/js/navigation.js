@@ -30,6 +30,13 @@
   let sessionUserId = null,
     shareLocation = true,
     boarded = new Set();
+  const offRoute = NavigationReroute.detector();
+  let rerouteRequest = null;
+  function rerouteStatus(message, retry = false) {
+    text("rerouteStatus", message);
+    $("rerouteStatus").hidden = !message;
+    $("retryRerouteButton").hidden = !retry;
+  }
   // 탑승 자동 감지 + 막혔을 때만 버튼 보이기
   const BOARD_SPEED = 4.2; // m/s (약 15km/h) 넘게 노선을 따라 움직이면 탄 것으로 본다
   const NO_FIX_STUCK_MS = 45000; // 이만큼 쓸 만한 위치가 없으면(지하·실내) 손으로 넘기게 한다
@@ -382,6 +389,7 @@
         : "위치 정확도를 확인 중입니다.",
     );
     if (!Number.isFinite(accuracy) || accuracy > 50) {
+      offRoute.reset();
       confirmations = 0;
       text("gpsStatus", "위치 오차가 커서 자동 단계 전환을 기다리고 있습니다.");
       return;
@@ -391,8 +399,9 @@
     const before = prevFix;
     prevFix = fix;
     // 버튼 없이 알아서: 목적지 근처면 바로 도착, 뒤 단계 길 위에 있으면 그 단계로 건너뛴다
-    if (autoArrive(fix) || autoCatchUp(fix)) return;
+    if (autoArrive(fix) || autoCatchUp(fix)) { offRoute.reset(); return; }
     if (mode(step) !== "WALKING" && !boarded.has(index)) {
+      offRoute.reset();
       confirmations = 0;
       // 탑승 자동 감지: 노선 근처에서 빠르게(약 15km/h↑) 움직이면 두 번 연속 확인 후 탄 것으로 본다
       const speed = Number.isFinite(Number(fix.speed)) && fix.speed !== null
@@ -412,6 +421,7 @@
       return;
     }
     if (points.length < 2) {
+      offRoute.reset();
       confirmations = 0;
       text(
         "gpsStatus",
@@ -420,15 +430,21 @@
       return;
     }
     const progress = match(fix, points);
+    const fixAge = Date.now() - Number(fix.capturedAt);
+    const shouldReroute = offRoute.observe({now: Date.now(), accuracy, distance: progress.distance,
+      active: mode(step) === "WALKING" && Number.isFinite(fixAge) && fixAge >= -2000 && fixAge <= 15000
+        && !document.hidden && !rerouteRequest && !tripStarting});
+    if (progress.distance <= 70 && !rerouteRequest && !$("retryRerouteButton").hidden) rerouteStatus("");
     if (mode(step) === "WALKING") {
       stepRemaining = progress.remaining;
       text("guideSubtitle", `약 ${Math.round(progress.remaining)}m 남았어요`);
       if (progress.distance > 70) {
         text(
           "gpsStatus",
-          "경로에서 벗어난 것 같아요. 위치를 확인하고 경로를 다시 찾아주세요.",
+          "경로에서 벗어난 것 같아요. 현재 위치에서 갈 수 있는 길을 확인하고 있어요.",
         );
         confirmations = 0;
+        if (shouldReroute) reroute({ automatic: true });
         return;
       }
     }
@@ -474,6 +490,7 @@
           capturedAt: p.timestamp,
         }),
       (e) => {
+        offRoute.reset();
         confirmations = 0;
         text(
           "gpsStatus",
@@ -518,6 +535,7 @@
           endLongitude: selection.destination?.longitude ?? "",
           // '보호자 경로'에서 고른 길안내면 그 경로로 이동을 잇는다 (체크포인트 사진·알림)
           guardianRouteId: selection.guardianRouteId ?? "",
+          rerouted: selection.rerouted ? "true" : "false",
           totalDistance: selection.route.totalDistance || 0,
           totalDuration: selection.route.totalTime || 0,
           historyKey,
@@ -719,11 +737,22 @@
       upcoming.slice(0, 2),
     );
   }
-  async function reroute() {
+  async function reroute(options = {}) {
+    if (rerouteRequest || tripStarting || !live || index >= steps.length) return;
+    const automatic = options.automatic === true;
+    const previous = selection, previousIndex = index;
+    const request = new AbortController();
+    rerouteRequest = request;
+    offRoute.requested(Date.now());
+    const timeout = setTimeout(() => request.abort(), 40000);
     $("rerouteButton").disabled = true;
+    $("retryRerouteButton").hidden = true;
+    rerouteStatus("현재 위치에서 길을 다시 찾고 있어요.");
     try {
-      const origin = await locate(),
+      const origin = automatic ? { ...position, placeName: "현재 위치", capturedAt: Date.now() } : await locate(),
         d = selection.destination;
+      if (!valid(origin) || !Number.isFinite(Number(origin.accuracy)) || Number(origin.accuracy) <= 0 || Number(origin.accuracy) > 50)
+        throw new Error("현재 위치를 정확히 확인하지 못했어요. 위치가 잡히면 다시 시도해요.");
       text("gpsStatus", "현재 위치에서 경로를 다시 찾고 있습니다…");
       const params = new URLSearchParams({
         startLongitude: origin.longitude,
@@ -733,22 +762,56 @@
         destinationName: d.placeName || "목적지",
       });
       const r = await api("/map/routes?" + params, {
-        signal: AbortSignal.timeout(40000),
+        signal: request.signal,
       });
-      if (!r.walking?.available && !r.publicTransit?.available)
+      if (!live || selection !== previous || index >= steps.length) return;
+      if (index !== previousIndex || (automatic && document.hidden)) { rerouteStatus(""); return; }
+      if (automatic && (!valid(position) || !Number.isFinite(Number(position.accuracy))
+          || Number(position.accuracy) <= 0 || Number(position.accuracy) > 40
+          || Date.now() - Number(position.capturedAt) > 15000)) {
+        rerouteStatus("위치가 정확히 잡히면 길을 다시 확인할게요.");
+        return;
+      }
+      if (automatic && (match(position, path(steps[index])).distance <= 70 || distance(position, origin) > 50)) {
+        rerouteStatus("현재 위치에 맞춰 안내를 이어가요.");
+        return;
+      }
+      const chosen = NavigationReroute.choose(r, selection, steps.slice(index));
+      if (!chosen)
         throw new Error(
           "현재 위치에서 경로를 찾지 못했습니다. 다시 시도해주세요.",
         );
+      const next = {
+        mode: chosen.mode, type: chosen.mode, route: chosen.route,
+        origin, destination: d, userId: sessionUserId, rerouted: true,
+        selectedAt: Math.max(Date.now(), Number(selection.selectedAt || 0) + 1),
+        navigationReady: true, selectionLabel: "AUTO_REROUTED", nextPath: "/navigation.html",
+      };
+      sessionStorage.setItem("selectedRoute", JSON.stringify(next));
       sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
       sessionStorage.setItem("routeSearchResult", JSON.stringify(r));
-      location.href = "/route-compare.html";
+      selection = next; steps = chosen.route.steps.filter(Boolean); index = 0;
+      boarded = new Set(); dismissedLandmarks = []; landmarks = [];
+      confirmations = 0; lastConfirmation = 0; arriveConfirm = 0; catchUpTarget = -1; catchUpConfirm = 0;
+      boardConfirm = 0; prevFix = null; stepProgress = 0; stepRemaining = null;
+      arrivalOutcome = null; arrivalSent = false; navigationStartedAt = Date.now(); stepStartedAt = Date.now();
+      tripId = null; lastSent = 0;
+      sessionStorage.removeItem("currentTripId"); sessionStorage.removeItem("tripRouteKey");
+      persist(); text("originName", "현재 위치");
+      render(); view?.route(steps); if (following) focusCurrent();
+      rerouteStatus("현재 위치에서 갈 수 있는 길로 다시 안내할게요.");
+      await startTrip();
     } catch (e) {
       text("gpsStatus", e.message);
+      if (live && selection === previous && index < steps.length) rerouteStatus("길을 다시 찾지 못했어요. 원래 길로 돌아오면 안내를 이어가요.", true);
     } finally {
+      clearTimeout(timeout);
+      if (rerouteRequest === request) rerouteRequest = null;
       $("rerouteButton").disabled = false;
     }
   }
   function cleanup() {
+    rerouteRequest?.abort(); offRoute.reset();
     if (navigationStartedAt && steps.length) persist();
     live = false;
     stopWatch();
@@ -764,6 +827,7 @@
   );
   $("overviewButton").addEventListener("click", overview);
   $("rerouteButton").addEventListener("click", reroute);
+  $("retryRerouteButton").addEventListener("click", reroute);
   $("boardingButton").addEventListener("click", () => markBoarded(false));
   // 시간이 지나 '막힘'이 될 수 있어 주기적으로 버튼을 다시 본다
   setInterval(() => {

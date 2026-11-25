@@ -30,6 +30,7 @@ public class RouteDTO {
     private String riskLevel;
     // 길안내 시작 시 선택한 경로 식별 정보. 보호자 경로 자체를 수정하지 않는다.
     private String historyKey;
+    private boolean rerouted;       // 현재 위치에서 다시 찾은 경로는 보호자 저장 경로와 별도로 기록
     private BigDecimal startLat;
     private BigDecimal startLng;
     private String routeJson;       // 보호자가 고른 경로 전체 (이용자가 그대로 길안내 받는다)

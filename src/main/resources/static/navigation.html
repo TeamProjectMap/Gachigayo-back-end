@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/css/app-frame.css?v=20261121-black" />
       <link rel="stylesheet" href="/css/figma-skin.css?v=20261120-find">
     <script defer src="/js/figma-skin.js?v=20261118-1"></script>
-    <link rel="stylesheet" href="/css/navigation-figma.css?v=20261123-center">
+    <link rel="stylesheet" href="/css/navigation-figma.css?v=20261125-navigation">
     <link rel="stylesheet" href="/css/landmark-popup.css?v=20261121-arrive">
     <link rel="stylesheet" href="/css/desktop-frame.css?v=20261123">
 </head>
@@ -62,6 +62,8 @@
           <div class="guide-copy">
             <h2 id="guideTitle">안내를 불러오는 중입니다.</h2>
             <p id="guideSubtitle"></p>
+            <p id="rerouteStatus" class="reroute-status" role="status" aria-live="polite" hidden></p>
+            <button id="retryRerouteButton" class="reroute-retry" type="button" hidden>다시 찾기</button>
             <button type="button" id="boardingButton" class="boarding-button" hidden>탑승했어요</button>
             <!-- 위치가 안 잡혀 자동으로 안 넘어갈 때 직접 다음 안내로 넘기는 버튼 (피그마엔 없지만 꼭 필요) -->
             <div class="step-fallback hidden" id="stepFallback">
@@ -132,11 +134,12 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="/js/navigation-map.js?v=20261123-speed"></script>
     <script src="/js/transit-realtime.js"></script>
+    <script src="/js/navigation-reroute.js?v=20261125"></script>
     <script src="/js/navigation-geometry.js"></script>
     <script src="/js/navigation-landmarks.js?v=20261120"></script>
     <script src="/js/route-history.js?v=20261121"></script>
     <script src="/js/journey-state.js?v=20261121-no-voice"></script>
     <script src="/js/navigation-cue.js?v=20261121"></script>
-    <script src="/js/navigation.js?v=20261123-accuracy"></script>
+    <script src="/js/navigation.js?v=20261125-navigation"></script>
   </body>
 </html>
