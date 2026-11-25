@@ -812,7 +812,9 @@
         endLatitude: d.latitude,
         destinationName: d.placeName || "목적지",
       });
-      const r = await api("/map/routes?" + params, {
+      const endpoint = NavigationReroute.walkingOnly(selection, steps.slice(index))
+        ? "/map/walking-reroute?" : "/map/routes?";
+      const r = await api(endpoint + params, {
         signal: request.signal,
       });
       if (!live || selection !== previous || index >= steps.length) return;
@@ -842,6 +844,7 @@
       sessionStorage.setItem("currentOrigin", JSON.stringify(origin));
       sessionStorage.setItem("routeSearchResult", JSON.stringify(r));
       selection = next; steps = chosen.route.steps.filter(Boolean); index = 0;
+      offRoute.applied();
       boarded = new Set(); dismissedLandmarks = []; landmarks = [];
       confirmations = 0; lastConfirmation = 0; arriveConfirm = 0; catchUpTarget = -1; catchUpConfirm = 0;
       boardConfirm = 0; prevFix = null; stepProgress = 0; stepRemaining = null;

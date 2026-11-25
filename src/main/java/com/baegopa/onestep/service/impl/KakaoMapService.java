@@ -227,11 +227,42 @@ public class KakaoMapService implements IKakaoMapService {
         }
     }
 
+    @Override
+    public WalkingRouteResultDTO searchFastestWalkingRoute(String startLongitude, String startLatitude,
+            String endLongitude, String endLatitude, String destinationName) {
+        if (isBlank(kakaoRestApiKey)) throw new IllegalStateException("Kakao REST API key is not configured.");
+        var candidates = java.util.stream.Stream.of("BROAD_FIRST", "SHORTEST").map(mode ->
+                java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return searchWalkingRoute(startLongitude, startLatitude, endLongitude, endLatitude, destinationName, mode);
+                    } catch (Exception error) {
+                        return new WalkingRouteResultDTO();
+                    }
+                }, ROUTE_EXECUTOR)).toList();
+        // 최단 거리가 반드시 최단 시간은 아니므로 실제 응답 시간을 비교한다.
+        return candidates.stream().map(java.util.concurrent.CompletableFuture::join)
+                .filter(route -> route.isAvailable() && route.getTotalTime() != null && route.getTotalTime() > 0
+                        && route.getSteps() != null && !route.getSteps().isEmpty())
+                .min(java.util.Comparator.comparing(WalkingRouteResultDTO::getTotalTime)
+                        .thenComparing(route -> route.getTotalDistance() == null ? Integer.MAX_VALUE : route.getTotalDistance()))
+                .orElseGet(() -> {
+                    var unavailable = new WalkingRouteResultDTO();
+                    unavailable.setStatus("NO_RESULTS");
+                    unavailable.setMessage("현재 위치에서 도보 경로를 찾지 못했습니다. 다시 시도해주세요.");
+                    return unavailable;
+                });
+    }
+
     private WalkingRouteResultDTO searchWalkingRoute(String startLongitude,
                                                      String startLatitude,
                                                      String endLongitude,
                                                      String endLatitude,
                                                      String destinationName) {
+        return searchWalkingRoute(startLongitude, startLatitude, endLongitude, endLatitude, destinationName, ROUTE_MODE_WALKING_DEFAULT);
+    }
+
+    private WalkingRouteResultDTO searchWalkingRoute(String startLongitude, String startLatitude,
+            String endLongitude, String endLatitude, String destinationName, String routeMode) {
         try {
             JsonNode responseNode = restClient
                     .get()
@@ -242,7 +273,7 @@ public class KakaoMapService implements IKakaoMapService {
                             .queryParam("end_y", endLatitude)
                             .queryParam("s_name", "현재 위치")
                             .queryParam("e_name", isBlank(destinationName) ? "도착" : destinationName)
-                            .queryParam("route_mode", ROUTE_MODE_WALKING_DEFAULT)
+                            .queryParam("route_mode", routeMode)
                             .build())
                     .header("Authorization", "KakaoAK " + kakaoRestApiKey)
                     .retrieve()
