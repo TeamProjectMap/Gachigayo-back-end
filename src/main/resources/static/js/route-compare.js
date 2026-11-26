@@ -935,8 +935,9 @@
         .css("width", percent + "%")
         .attr("title", minutes + "분");
 
-      // 구간마다 걸리는 시간. 칸이 너무 좁으면 글씨가 안 들어가서 생략한다
-      if (percent >= 12) {
+      // 짧은 구간도 1분 단위로 표시한다. 시간이 0인 구간에는 임의의 시간 라벨을 붙이지 않는다.
+      if (segment.time > 0) {
+        $segment.addClass("has-time");
         $segment.append($("<span>").addClass("segment-label").text(minutes + "분"));
       }
       $bar.append($segment);
