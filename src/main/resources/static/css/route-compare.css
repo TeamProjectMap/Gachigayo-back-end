@@ -427,6 +427,13 @@ body > main.route-compare-page .segment {
     overflow: hidden;
 }
 
+/* 짧은 구간에서도 시간 글자가 들어갈 너비는 확보한다. */
+body > main.route-compare-page .segment.has-time {
+    min-width: max-content;
+    padding: 0 5px;
+    box-sizing: border-box;
+}
+
 body > main.route-compare-page .segment.walking {
     background: #018B38 !important;
 }

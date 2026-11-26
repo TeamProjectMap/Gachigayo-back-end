@@ -905,8 +905,21 @@
 
   function createSegmentBar(steps) {
     var $bar = $("<div>").addClass("segment-bar");
-    var total = steps.reduce(function (sum, step) {
-      return sum + Math.max(safeNumber(step.time), 0);
+    // 막대는 이동 구간 요약이다. 직진·회전으로 나뉜 도보 안내는 이곳에서만 합친다.
+    // 원본 step은 지도·길안내에 그대로 쓰고, 환승 구간이나 서로 다른 탑승은 합치지 않는다.
+    var segments = steps.reduce(function (result, step) {
+      var kind = getSegmentClass(step);
+      var time = Math.max(safeNumber(step.time), 0);
+      var previous = result[result.length - 1];
+      if (kind === "walking" && previous && previous.kind === "walking") {
+        previous.time += time;
+      } else {
+        result.push({ kind: kind, time: time });
+      }
+      return result;
+    }, []);
+    var total = segments.reduce(function (sum, segment) {
+      return sum + segment.time;
     }, 0);
 
     if (total <= 0) {
@@ -914,16 +927,17 @@
       return $bar;
     }
 
-    $.each(steps, function (_, step) {
-      var percent = Math.max(4, (safeNumber(step.time) / total) * 100);
-      var minutes = Math.max(secondsToMinutes(step.time), 1);
+    $.each(segments, function (_, segment) {
+      var percent = Math.max(4, (segment.time / total) * 100);
+      var minutes = Math.max(secondsToMinutes(segment.time), 1);
       var $segment = $("<span>")
-        .addClass("segment " + getSegmentClass(step))
+        .addClass("segment " + segment.kind)
         .css("width", percent + "%")
         .attr("title", minutes + "분");
 
-      // 구간마다 걸리는 시간. 칸이 너무 좁으면 글씨가 안 들어가서 생략한다
-      if (percent >= 12) {
+      // 짧은 구간도 1분 단위로 표시한다. 시간이 0인 구간에는 임의의 시간 라벨을 붙이지 않는다.
+      if (segment.time > 0) {
+        $segment.addClass("has-time");
         $segment.append($("<span>").addClass("segment-label").text(minutes + "분"));
       }
       $bar.append($segment);
